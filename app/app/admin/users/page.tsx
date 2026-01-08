@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi, filesApi } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogPortal,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -44,10 +45,12 @@ import { toast } from "sonner"
 import { redirect } from "next/navigation"
 
 interface UserAccount {
+  id?: number
   username: string
   role: string
   organization_id?: string
   allowed_files?: string[]
+  created_at?: string
 }
 
 export default function UsersPage() {
@@ -63,7 +66,11 @@ export default function UsersPage() {
   const [newUsername, setNewUsername] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [newRole, setNewRole] = useState("user")
+  const [newAllowedFiles, setNewAllowedFiles] = useState<string[]>([])
   const [isCreating, setIsCreating] = useState(false)
+  const [createError, setCreateError] = useState("")
+  const createDialogRef = useRef<HTMLDivElement>(null)
+  const editDialogRef = useRef<HTMLDivElement>(null)
 
   // Edit user state
   const [editUser, setEditUser] = useState<UserAccount | null>(null)
@@ -132,14 +139,24 @@ export default function UsersPage() {
   }, [searchQuery, users])
 
   const handleCreateUser = async () => {
-    if (!token || !newUsername.trim() || !newPassword.trim()) return
+    if (!token || !newUsername.trim() || !newPassword.trim()) {
+      setCreateError("Username and password are required")
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setCreateError("Password must be at least 6 characters long")
+      return
+    }
 
     setIsCreating(true)
+    setCreateError("")
     try {
       const result = await adminApi.createUser(token, {
         username: newUsername.trim(),
         password: newPassword,
         role: newRole,
+        allowed_files: newAllowedFiles,
       })
 
       if (result.status === "success") {
@@ -148,12 +165,16 @@ export default function UsersPage() {
         setNewUsername("")
         setNewPassword("")
         setNewRole("user")
+        setNewAllowedFiles([])
+        setCreateError("")
         fetchData()
       } else {
+        setCreateError(result.message || "Failed to create user")
         toast.error(result.message || "Failed to create user")
       }
     } catch (error) {
       console.error("Create user error:", error)
+      setCreateError("Network error occurred")
       toast.error("Failed to create user")
     } finally {
       setIsCreating(false)
@@ -214,10 +235,32 @@ export default function UsersPage() {
     }
   }
 
-  const toggleFilePermission = (filename: string) => {
-    setEditPermittedFiles((prev) =>
-      prev.includes(filename) ? prev.filter((f) => f !== filename) : [...prev, filename],
-    )
+  const toggleFilePermission = (filename: string, isCreating = false) => {
+    if (isCreating) {
+      setNewAllowedFiles((prev) =>
+        prev.includes(filename) ? prev.filter((f) => f !== filename) : [...prev, filename]
+      )
+    } else {
+      setEditPermittedFiles((prev) =>
+        prev.includes(filename) ? prev.filter((f) => f !== filename) : [...prev, filename]
+      )
+    }
+  }
+
+  const toggleAllFiles = (isCreating = false) => {
+    if (isCreating) {
+      if (newAllowedFiles.length === allFiles.length) {
+        setNewAllowedFiles([])
+      } else {
+        setNewAllowedFiles(allFiles)
+      }
+    } else {
+      if (editPermittedFiles.length === allFiles.length) {
+        setEditPermittedFiles([])
+      } else {
+        setEditPermittedFiles(allFiles)
+      }
+    }
   }
 
   if (authLoading || isLoading) {
@@ -244,69 +287,153 @@ export default function UsersPage() {
             <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
             <p className="text-muted-foreground">Manage user accounts and permissions</p>
           </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Add User
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New User</DialogTitle>
-                <DialogDescription>Add a new user to the system</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    placeholder="Enter username"
-                    value={newUsername}
-                    onChange={(e) => setNewUsername(e.target.value)}
-                  />
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add User
+          </Button>
+        </div>
+
+        {/* Create User Modal */}
+        {isCreateOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-background rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Create New User</h2>
+                    <p className="text-sm text-muted-foreground">Add a new user to the system</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(false)}>
+                    ×
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      placeholder="Enter username"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      disabled={isCreating}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter password (min 6 characters)"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      disabled={isCreating}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="role">Role</Label>
+                    <div className="relative">
+                      <select
+                        id="role"
+                        value={newRole}
+                        onChange={(e) => setNewRole(e.target.value)}
+                        disabled={isCreating}
+                        className="w-full h-11 px-4 pr-10 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
+                      >
+                        <option value="user">👤 User</option>
+                        <option value="admin">🛡️ Admin</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                      {newRole === "admin" ? (
+                        <>
+                          <Shield className="w-3 h-3" />
+                          Full system access and user management
+                        </>
+                      ) : (
+                        <>
+                          <User className="w-3 h-3" />
+                          Standard user with assigned file permissions
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>File Permissions</Label>
+                      {allFiles.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleAllFiles(true)}
+                          disabled={isCreating}
+                          className="text-xs"
+                        >
+                          {newAllowedFiles.length === allFiles.length ? "Deselect All" : "Select All"}
+                        </Button>
+                      )}
+                    </div>
+                    <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
+                      {allFiles.length > 0 ? (
+                        <div className="space-y-2">
+                          {allFiles.map((file) => (
+                            <div key={file} className="flex items-center gap-2">
+                              <Checkbox
+                                id={`create-${file}`}
+                                checked={newAllowedFiles.includes(file)}
+                                onCheckedChange={() => toggleFilePermission(file, true)}
+                                disabled={isCreating}
+                              />
+                              <label htmlFor={`create-${file}`} className="text-sm cursor-pointer truncate">
+                                {file}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No files available</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {createError && (
+                    <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                      {createError}
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={newRole} onValueChange={setNewRole}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
+                
+                <div className="flex gap-2 mt-6">
+                  <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isCreating} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleCreateUser} 
+                    disabled={!newUsername.trim() || !newPassword.trim() || newPassword.length < 6 || isCreating}
+                    className="flex-1"
+                  >
+                    {isCreating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      "Create User"
+                    )}
+                  </Button>
                 </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateUser} disabled={!newUsername.trim() || !newPassword.trim() || isCreating}>
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    "Create User"
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
@@ -337,6 +464,7 @@ export default function UsersPage() {
                   <TableHead>Role</TableHead>
                   <TableHead>Organization</TableHead>
                   <TableHead>Files Access</TableHead>
+                  <TableHead>Created</TableHead>
                   <TableHead className="w-[80px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -363,9 +491,12 @@ export default function UsersPage() {
                         {user.role}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{user.organization_id || ""}</TableCell>
+                    <TableCell className="text-muted-foreground">{user.organization_id || "N/A"}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{user.allowed_files?.length || 0} files</Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -401,67 +532,119 @@ export default function UsersPage() {
           </CardContent>
         </Card>
 
-        {/* Edit User Dialog */}
-        <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Edit User: {editUser?.username}</DialogTitle>
-              <DialogDescription>Update user role and file permissions</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select value={editRole} onValueChange={setEditRole}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>File Permissions</Label>
-                <ScrollArea className="h-[200px] border rounded-md p-4">
-                  {allFiles.length > 0 ? (
-                    <div className="space-y-2">
-                      {allFiles.map((file) => (
-                        <div key={file} className="flex items-center gap-2">
-                          <Checkbox
-                            id={file}
-                            checked={editPermittedFiles.includes(file)}
-                            onCheckedChange={() => toggleFilePermission(file)}
-                          />
-                          <label htmlFor={file} className="text-sm cursor-pointer truncate">
-                            {file}
-                          </label>
-                        </div>
-                      ))}
+        {/* Edit User Modal */}
+        {editUser && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-background rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Edit User: {editUser.username}</h2>
+                    <p className="text-sm text-muted-foreground">Update user role and file permissions</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setEditUser(null)}>
+                    ×
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Username</Label>
+                    <Input value={editUser.username} disabled className="bg-muted" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-role">Role</Label>
+                    <div className="relative">
+                      <select
+                        id="edit-role"
+                        value={editRole}
+                        onChange={(e) => setEditRole(e.target.value)}
+                        disabled={isSaving}
+                        className="w-full h-11 px-4 pr-10 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
+                      >
+                        <option value="user">👤 User</option>
+                        <option value="admin">🛡️ Admin</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">No files available</p>
-                  )}
-                </ScrollArea>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                      {editRole === "admin" ? (
+                        <>
+                          <Shield className="w-3 h-3" />
+                          Full system access and user management
+                        </>
+                      ) : (
+                        <>
+                          <User className="w-3 h-3" />
+                          Standard user with assigned file permissions
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>File Permissions</Label>
+                      {allFiles.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleAllFiles(false)}
+                          disabled={isSaving}
+                          className="text-xs"
+                        >
+                          {editPermittedFiles.length === allFiles.length ? "Deselect All" : "Select All"}
+                        </Button>
+                      )}
+                    </div>
+                    <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
+                      {allFiles.length > 0 ? (
+                        <div className="space-y-2">
+                          {allFiles.map((file) => (
+                            <div key={file} className="flex items-center gap-2">
+                              <Checkbox
+                                id={`edit-${file}`}
+                                checked={editPermittedFiles.includes(file)}
+                                onCheckedChange={() => toggleFilePermission(file, false)}
+                                disabled={isSaving}
+                              />
+                              <label htmlFor={`edit-${file}`} className="text-sm cursor-pointer truncate">
+                                {file}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No files available</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 mt-6">
+                  <Button variant="outline" onClick={() => setEditUser(null)} disabled={isSaving} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveUser} disabled={isSaving} className="flex-1">
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditUser(null)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveUser} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </div>
+        )}
 
         {/* Delete User Confirmation */}
         <AlertDialog open={!!deleteUsername} onOpenChange={() => setDeleteUsername(null)}>
