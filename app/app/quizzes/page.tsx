@@ -546,8 +546,8 @@ export default function QuizzesPage() {
     )
   }
 
-  const currentQuestion = selectedQuiz.questions[currentQuestionIndex]
-  const progress = ((currentQuestionIndex + 1) / selectedQuiz.questions.length) * 100
+  const currentQuestion: Question | undefined = selectedQuiz.questions?.[currentQuestionIndex]
+  const progress = ((currentQuestionIndex + 1) / (selectedQuiz.questions?.length || 1)) * 100
 
   return (
     <>
@@ -560,7 +560,7 @@ export default function QuizzesPage() {
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">{selectedQuiz.title}</h1>
                 <p className="text-muted-foreground">
-                  Question {currentQuestionIndex + 1} of {selectedQuiz.questions.length}
+                  Question {currentQuestionIndex + 1} of {selectedQuiz.questions?.length || 0}
                 </p>
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -579,16 +579,20 @@ export default function QuizzesPage() {
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
-                  <CardTitle className="text-lg">{currentQuestion.question}</CardTitle>
+                  <CardTitle className="text-lg">{currentQuestion?.question || "Loading question..."}</CardTitle>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{currentQuestion.type}</Badge>
-                    <span className="text-sm text-muted-foreground">{currentQuestion.points} points</span>
+                    <Badge variant="outline">{currentQuestion?.type || "unknown"}</Badge>
+                    <span className="text-sm text-muted-foreground">{currentQuestion?.points || 0} points</span>
                   </div>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {renderQuestion(currentQuestion)}
+              {currentQuestion ? renderQuestion(currentQuestion) : (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -603,7 +607,7 @@ export default function QuizzesPage() {
             </Button>
 
             <div className="flex items-center gap-2">
-              {selectedQuiz.questions.map((_, index) => (
+              {(selectedQuiz.questions || []).map((_, index) => (
                 <div
                   key={index}
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
@@ -619,7 +623,7 @@ export default function QuizzesPage() {
               ))}
             </div>
 
-            {currentQuestionIndex === selectedQuiz.questions.length - 1 ? (
+            {currentQuestionIndex === (selectedQuiz.questions?.length || 0) - 1 ? (
               <Button onClick={handleQuizSubmit}>
                 Submit Quiz
                 <ChevronRight className="w-4 h-4 ml-2" />
