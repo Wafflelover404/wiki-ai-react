@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { adminApi } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,7 @@ import {
   Play,
   RotateCcw,
   ChevronRight,
+  Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -33,9 +35,12 @@ interface Quiz {
   description: string
   category: string
   difficulty: "easy" | "medium" | "hard"
-  timeLimit: number // in minutes
+  time_limit: number
+  passing_score: number
   questions: Question[]
-  passingScore: number
+  created_at: string
+  updated_at: string
+  organization_id: string
 }
 
 interface Question {
@@ -43,7 +48,7 @@ interface Question {
   type: "multiple-choice" | "true-false" | "text"
   question: string
   options?: string[]
-  correctAnswer: string | number
+  correct_answer: string | number
   explanation?: string
   points: number
 }
@@ -58,86 +63,9 @@ interface QuizResult {
   completedAt: string
 }
 
-const sampleQuizzes: Quiz[] = [
-  {
-    id: "1",
-    title: "Knowledge Base Basics",
-    description: "Test your understanding of the knowledge base system",
-    category: "General",
-    difficulty: "easy",
-    timeLimit: 10,
-    passingScore: 70,
-    questions: [
-      {
-        id: "q1",
-        type: "multiple-choice",
-        question: "What is the primary purpose of a knowledge base?",
-        options: [
-          "To store documents",
-          "To organize and retrieve information efficiently",
-          "To replace human experts",
-          "To create backups"
-        ],
-        correctAnswer: 1,
-        explanation: "A knowledge base organizes information for efficient retrieval and access.",
-        points: 10
-      },
-      {
-        id: "q2",
-        type: "true-false",
-        question: "Knowledge bases can only contain text documents.",
-        correctAnswer: "false",
-        explanation: "Modern knowledge bases can contain various media types including images, videos, and structured data.",
-        points: 10
-      },
-      {
-        id: "q3",
-        type: "text",
-        question: "What is one benefit of using a knowledge base for customer support?",
-        correctAnswer: "Reduced response time",
-        points: 20
-      }
-    ]
-  },
-  {
-    id: "2",
-    title: "Advanced Search Techniques",
-    description: "Master advanced search and query techniques",
-    category: "Search",
-    difficulty: "medium",
-    timeLimit: 15,
-    passingScore: 75,
-    questions: [
-      {
-        id: "q1",
-        type: "multiple-choice",
-        question: "Which operator would you use to exclude terms from search?",
-        options: ["AND", "OR", "NOT", "XOR"],
-        correctAnswer: 2,
-        explanation: "The NOT operator excludes terms from search results.",
-        points: 15
-      },
-      {
-        id: "q2",
-        type: "multiple-choice",
-        question: "What does RAG stand for in AI search systems?",
-        options: [
-          "Retrieval Augmented Generation",
-          "Random Access Generation",
-          "Real-time Analysis Gateway",
-          "Recursive Algorithm Generation"
-        ],
-        correctAnswer: 0,
-        explanation: "RAG combines retrieval systems with generative AI for better responses.",
-        points: 20
-      }
-    ]
-  }
-]
-
 export default function QuizzesPage() {
   const { token, user } = useAuth()
-  const [quizzes] = useState<Quiz[]>(sampleQuizzes)
+  const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string | number>>({})
@@ -146,6 +74,72 @@ export default function QuizzesPage() {
   const [timeRemaining, setTimeRemaining] = useState(0)
   const [quizResults, setQuizResults] = useState<QuizResult | null>(null)
   const [userQuizHistory, setUserQuizHistory] = useState<QuizResult[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchQuizzes()
+  }, [])
+
+  const fetchQuizzes = async () => {
+    try {
+      setLoading(true)
+      const response = await adminApi.getQuizzes(token)
+      if (response.success) {
+        setQuizzes(response.response.quizzes)
+      }
+    } catch (error) {
+      toast.error("Failed to fetch quizzes")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const submitQuizResults = async () => {
+    if (!selectedQuiz || !token) return
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
+      const response = await fetch(`${apiUrl}/quizzes/${selectedQuiz.id}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          answers: answers,
+          time_spent: selectedQuiz.time_limit * 60 - timeRemaining
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          // Update local history
+          const newResult: QuizResult = {
+            quizId: selectedQuiz.id,
+            score: result.response.score,
+            totalPoints: result.response.total_points,
+            passed: result.response.passed,
+            timeSpent: result.response.time_spent,
+            answers: answers,
+            completedAt: new Date().toISOString()
+          }
+          
+          setUserQuizHistory(prev => [...prev, newResult])
+          setQuizResults(newResult)
+          setQuizCompleted(true)
+          
+          if (result.response.passed) {
+            toast.success(`Congratulations! You passed with ${result.response.score}/${result.response.total_points} points!`)
+          } else {
+            toast.error(`Quiz completed. You scored ${result.response.score}/${result.response.total_points} points. Try again!`)
+          }
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to submit quiz")
+    }
+  }
 
   // Timer effect
   useEffect(() => {

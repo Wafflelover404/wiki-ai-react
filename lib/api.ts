@@ -865,4 +865,167 @@ export const dashboardApi = {
       token,
       params: { since, scope },
     }),
+
+  // Quiz Management
+  getQuizzes: async (token: string, category?: string, difficulty?: string) => {
+    const params: Record<string, string> = {}
+    if (category) params.category = category
+    if (difficulty) params.difficulty = difficulty
+
+    return apiRequest<{
+      quizzes: Array<{
+        id: string
+        title: string
+        description: string
+        category: string
+        difficulty: "easy" | "medium" | "hard"
+        time_limit: number
+        passing_score: number
+        questions: Array<{
+          id: string
+          type: "multiple-choice" | "true-false" | "text"
+          question: string
+          options?: string[]
+          correct_answer: string | number
+          explanation?: string
+          points: number
+        }>
+        created_at: string
+        updated_at: string
+        organization_id: string
+      }>
+    }>({
+      url: "/admin/quizzes",
+      token,
+      params,
+    })
+  },
+
+  getQuiz: async (quizId: string, token: string) => {
+    return apiRequest<{
+      id: string
+      title: string
+      description: string
+      category: string
+      difficulty: "easy" | "medium" | "hard"
+      time_limit: number
+      passing_score: number
+      questions: Array<{
+        id: string
+        type: "multiple-choice" | "true-false" | "text"
+        question: string
+        options?: string[]
+        correct_answer: string | number
+        explanation?: string
+        points: number
+      }>
+      created_at: string
+      updated_at: string
+      organization_id: string
+    }>({
+      url: `/admin/quizzes/${quizId}`,
+      token,
+    })
+  },
+
+  createQuiz: async (quizData: {
+    title: string
+    description: string
+    category: string
+    difficulty: "easy" | "medium" | "hard"
+    time_limit: number
+    passing_score: number
+    questions: Array<{
+      type: "multiple-choice" | "true-false" | "text"
+      question: string
+      options?: string[]
+      correct_answer: string | number
+      explanation?: string
+      points: number
+    }>
+  }, token: string) => {
+    return apiRequest<{
+      id: string
+      message: string
+    }>({
+      url: "/admin/quizzes",
+      method: "POST",
+      token,
+      data: quizData,
+    })
+  },
+
+  updateQuiz: async (quizId: string, quizData: {
+    title?: string
+    description?: string
+    category?: string
+    difficulty?: "easy" | "medium" | "hard"
+    time_limit?: number
+    passing_score?: number
+    questions?: Array<{
+      id?: string
+      type: "multiple-choice" | "true-false" | "text"
+      question: string
+      options?: string[]
+      correct_answer: string | number
+      explanation?: string
+      points: number
+    }>
+  }, token: string) => {
+    return apiRequest<{
+      message: string
+    }>({
+      url: `/admin/quizzes/${quizId}`,
+      method: "PUT",
+      token,
+      data: quizData,
+    })
+  },
+
+  deleteQuiz: async (quizId: string, token: string) => {
+    return apiRequest<{
+      message: string
+    }>({
+      url: `/admin/quizzes/${quizId}`,
+      method: "DELETE",
+      token,
+    })
+  },
+
+  getQuizStats: async (quizId: string, token: string) => {
+    return apiRequest<{
+      total_submissions: number
+      pass_rate: number
+      avg_score: number
+      avg_time_spent: number
+      recent_submissions: Array<{
+        user_id: string
+        score: number
+        passed: boolean
+        submitted_at: string
+      }>
+    }>({
+      url: `/admin/quizzes/${quizId}/statistics`,
+      token,
+    })
+  },
+
+  getQuizSubmissions: async (quizId: string, token: string, limit: number = 50) => {
+    return apiRequest<{
+      submissions: Array<{
+        id: string
+        user_id: string
+        score: number
+        passed: boolean
+        time_spent: number
+        submitted_at: string
+        answers: Record<string, string | number>
+      }>
+      total: number
+    }>({
+      url: `/admin/quizzes/${quizId}/submissions`,
+      token,
+      params: { limit: limit.toString() },
+    })
+  },
 }
