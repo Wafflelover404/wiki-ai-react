@@ -143,10 +143,10 @@ const PDFViewer: React.FC<{ filename: string; content: string }> = ({ filename, 
     )
   }
 
-  if (err) {
+  if (error) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500">
-        {err}
+        {error}
       </div>
     )
   }
@@ -243,10 +243,10 @@ const WordViewer: React.FC<{ filename: string; content: string }> = ({ filename,
     )
   }
 
-  if (err) {
+  if (error) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500">
-        {err}
+        {error}
       </div>
     )
   }
@@ -343,10 +343,10 @@ const ExcelViewer: React.FC<{ filename: string; content: string }> = ({ filename
     )
   }
 
-  if (err) {
+  if (error) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500">
-        {err}
+        {error}
       </div>
     )
   }
@@ -448,10 +448,10 @@ const ImageViewer: React.FC<{ filename: string; content: string }> = ({ filename
     )
   }
 
-  if (err) {
+  if (error) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500">
-        {err}
+        {error}
       </div>
     )
   }
@@ -501,6 +501,7 @@ interface FileViewerContentProps {
 const FileContentViewer: React.FC<FileViewerContentProps> = async ({ file, token }) => {
   const [content, setContent] = useState<string>("")
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>("")
 
   useEffect(() => {
     const loadContent = async () => {
@@ -537,10 +538,10 @@ const FileContentViewer: React.FC<FileViewerContentProps> = async ({ file, token
     )
   }
 
-  if (err) {
+  if (error) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500">
-        {err}
+        {error}
       </div>
     )
   }
