@@ -46,8 +46,8 @@ import { redirect } from "next/navigation"
 interface UserAccount {
   username: string
   role: string
-  organization: string
-  permitted_files: string[]
+  organization_id?: string
+  allowed_files?: string[]
 }
 
 export default function UsersPage() {
@@ -86,7 +86,7 @@ export default function UsersPage() {
         setFilteredUsers(usersRes.response.accounts || [])
       }
       if (filesRes.status === "success" && filesRes.response) {
-        setAllFiles(filesRes.response.files || [])
+        setAllFiles((filesRes.response.documents || []).map((d: any) => d.filename).filter(Boolean))
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
@@ -152,7 +152,7 @@ export default function UsersPage() {
   const handleEditUser = (user: UserAccount) => {
     setEditUser(user)
     setEditRole(user.role)
-    setEditPermittedFiles(user.permitted_files || [])
+    setEditPermittedFiles(user.allowed_files || [])
   }
 
   const handleSaveUser = async () => {
@@ -163,7 +163,7 @@ export default function UsersPage() {
       const result = await adminApi.editUser(token, {
         username: editUser.username,
         role: editRole,
-        permitted_files: editPermittedFiles,
+        allowed_files: editPermittedFiles,
       })
 
       if (result.status === "success") {
@@ -352,9 +352,9 @@ export default function UsersPage() {
                         {user.role}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{user.organization}</TableCell>
+                    <TableCell className="text-muted-foreground">{user.organization_id || ""}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{user.permitted_files?.length || 0} files</Badge>
+                      <Badge variant="outline">{user.allowed_files?.length || 0} files</Badge>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
