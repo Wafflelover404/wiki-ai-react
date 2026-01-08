@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import { UnifiedFileReader } from "@/components/ui/file-reader"
 import {
   Dialog,
   DialogContent,
@@ -67,10 +68,38 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+// Helper function to determine content type from filename
+const getContentType = (filename: string): string => {
+  const ext = filename.split('.').pop()?.toLowerCase()
+  switch (ext) {
+    case 'pdf': return 'application/pdf'
+    case 'doc': return 'application/msword'
+    case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    case 'xls': return 'application/vnd.ms-excel'
+    case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    case 'png': return 'image/png'
+    case 'jpg':
+    case 'jpeg': return 'image/jpeg'
+    case 'gif': return 'image/gif'
+    case 'webp': return 'image/webp'
+    case 'svg': return 'image/svg+xml'
+    default: return 'application/octet-stream'
+  }
+}
+
 interface FileItem {
   name: string
   type: string
   size?: number
+}
+
+interface FileReaderItem {
+  filename: string
+  size: number
+  upload_date: string
+  content_type: string
+  metadata?: any
+  indexed: boolean
 }
 
 function getFileIcon(filename: string) {
@@ -560,7 +589,7 @@ export default function FilesPage() {
   const [isUploading, setIsUploading] = useState(false)
 
   // View/Edit state
-  const [selectedFile, setSelectedFile] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<FileReaderItem | null>(null)
   const [fileContent, setFileContent] = useState("")
   const [isViewOpen, setIsViewOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -632,16 +661,35 @@ export default function FilesPage() {
   const handleViewFile = async (filename: string) => {
     if (!token) return
 
-    setSelectedFile(filename)
     setIsLoadingContent(true)
     setIsViewOpen(true)
 
     try {
-      const result = await filesApi.getContent(token, filename)
-      if (result.status === "success" && result.response) {
-        setFileContent(result.response.content || "")
-      } else {
-        setFileContent("Failed to load file content")
+      const result = await filesApi.list(token)
+      if (result.status === "success" && result.response?.documents) {
+        // Find the file in the list to get actual file data
+        const fileData = result.response.documents.find((doc: any) => doc.filename === filename)
+        if (fileData) {
+          const fileItem: FileReaderItem = {
+            filename: fileData.filename || fileData.original_filename || filename,
+            size: fileData.size || 0,
+            upload_date: fileData.uploaded_at || new Date().toISOString(),
+            content_type: 'application/octet-stream', // We'll determine this from file extension
+            indexed: false, // We'll assume false for now
+            metadata: fileData.metadata || {}
+          }
+          setSelectedFile(fileItem)
+          
+          // Now get the actual content
+          const contentResult = await filesApi.getContent(token, filename)
+          if (contentResult.status === "success" && contentResult.response) {
+            setFileContent(contentResult.response.content || "")
+          } else {
+            setFileContent("Failed to load file content")
+          }
+        } else {
+          toast.error("File not found in list")
+        }
       }
     } catch (error) {
       console.error("Failed to load file:", error)
@@ -654,19 +702,38 @@ export default function FilesPage() {
   const handleEditFile = async (filename: string) => {
     if (!token || !isAdmin) return
 
-    setSelectedFile(filename)
     setIsLoadingContent(true)
     setIsEditOpen(true)
 
     try {
-      const result = await filesApi.getContent(token, filename)
-      if (result.status === "success" && result.response) {
-        setEditedContent(result.response.content || "")
+      const result = await filesApi.list(token)
+      if (result.status === "success" && result.response?.documents) {
+        // Find the file in the list to get actual file data
+        const fileData = result.response.documents.find((doc: any) => doc.filename === filename)
+        if (fileData) {
+          const fileItem: FileReaderItem = {
+            filename: fileData.filename || fileData.original_filename || filename,
+            size: fileData.size || 0,
+            upload_date: fileData.uploaded_at || new Date().toISOString(),
+            content_type: getContentType(fileData.filename || filename),
+            indexed: false
+          }
+          setSelectedFile(fileItem)
+          
+          // Get the actual content
+          const contentResult = await filesApi.getContent(token, filename)
+          if (contentResult.status === "success" && contentResult.response) {
+            setEditedContent(contentResult.response.content || "")
+          } else {
+            setEditedContent("Failed to load file content")
+          }
+        } else {
+          toast.error("File not found in list")
+        }
       }
     } catch (error) {
       console.error("Failed to load file:", error)
-      toast.error("Failed to load file for editing")
-      setIsEditOpen(false)
+      setEditedContent("Error loading file content")
     } finally {
       setIsLoadingContent(false)
     }
@@ -677,7 +744,7 @@ export default function FilesPage() {
 
     setIsSaving(true)
     try {
-      const result = await filesApi.edit(token, selectedFile, editedContent)
+      const result = await filesApi.edit(token, selectedFile.filename, editedContent)
       if (result.status === "success") {
         toast.success("File saved successfully")
         setIsEditOpen(false)
@@ -954,59 +1021,12 @@ export default function FilesPage() {
         )}
 
         {/* View File Dialog */}
-        <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-          <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] w-full">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg">
-                {selectedFile && getFileIcon(selectedFile)}
-                <span className="truncate">{selectedFile}</span>
-              </DialogTitle>
-              <DialogDescription>File contents</DialogDescription>
-            </DialogHeader>
-            <div className="h-[50vh] md:h-[60vh]">
-              {isLoadingContent ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              ) : (
-                <div className="h-full">
-                  {selectedFile && (
-                    <>
-                      {selectedFile.toLowerCase().endsWith('.pdf') ? (
-                        <PDFViewer filename={selectedFile} content={fileContent} />
-                      ) : selectedFile.toLowerCase().endsWith('.doc') || selectedFile.toLowerCase().endsWith('.docx') ? (
-                        <WordViewer filename={selectedFile} content={fileContent} />
-                      ) : (
-                        <ScrollArea className="h-full rounded-md border p-4">
-                          <pre className="text-sm font-mono whitespace-pre-wrap break-words">{fileContent}</pre>
-                        </ScrollArea>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-            <DialogFooter className="flex flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setIsViewOpen(false)} className="w-full sm:w-auto">
-                <X className="w-4 h-4 mr-2" />
-                Close
-              </Button>
-              {isAdmin && selectedFile && !selectedFile.toLowerCase().endsWith('.pdf') && 
-               !selectedFile.toLowerCase().endsWith('.doc') && !selectedFile.toLowerCase().endsWith('.docx') && (
-                <Button
-                  onClick={() => {
-                    setIsViewOpen(false)
-                    if (selectedFile) handleEditFile(selectedFile)
-                  }}
-                  className="w-full sm:w-auto"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <UnifiedFileReader
+          file={selectedFile}
+          token={token}
+          open={isViewOpen}
+          onOpenChange={setIsViewOpen}
+        />
 
         {/* Edit File Dialog */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -1014,7 +1034,7 @@ export default function FilesPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg">
                 <Edit className="w-5 h-5" />
-                <span className="truncate">Edit: {selectedFile}</span>
+                <span className="truncate">Edit: {selectedFile?.filename}</span>
               </DialogTitle>
               <DialogDescription>Make changes to the file content</DialogDescription>
             </DialogHeader>

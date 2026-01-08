@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import { UnifiedFileReader } from "@/components/ui/file-reader"
 import {
   Dialog,
   DialogContent,
@@ -80,224 +81,6 @@ function normalizePdfBase64Content(content: string): string {
   return trimmed
 }
 
-// PDF Viewer Component
-function PDFViewer({ filename, content }: { filename: string; content: string }) {
-  const [pdfUrl, setPdfUrl] = useState<string>("")
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string>("")
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const viewerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    console.log("PDFViewer: Starting to load PDF", { filename, contentLength: content?.length })
-
-    setIsLoading(true)
-    setError("")
-
-    if (!content) {
-      setError("No content available")
-      setIsLoading(false)
-      return
-    }
-
-    try {
-      const base64Content = normalizePdfBase64Content(content)
-
-      console.log("PDFViewer: Processing base64 content", { base64Length: base64Content.length })
-
-      const binaryString = atob(base64Content)
-      const bytes = new Uint8Array(binaryString.length)
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i)
-      }
-
-      const blob = new Blob([bytes], { type: 'application/pdf' })
-      const url = URL.createObjectURL(blob)
-
-      console.log("PDFViewer: Created blob URL", { url })
-      setPdfUrl(url)
-      setIsLoading(false)
-
-      return () => {
-        if (url) {
-          URL.revokeObjectURL(url)
-        }
-      }
-    } catch (err) {
-      console.error("PDFViewer: Error loading PDF", err)
-      setError(`Failed to load PDF: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      setIsLoading(false)
-    }
-  }, [content, filename])
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-    }
-  }, [])
-
-  const toggleFullscreen = () => {
-    if (!viewerRef.current) return
-
-    if (!document.fullscreenElement) {
-      viewerRef.current.requestFullscreen().catch((err) => {
-        console.error('Error attempting to enable fullscreen:', err)
-      })
-    } else {
-      document.exitFullscreen()
-    }
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-4">
-        <div className="text-red-500 text-center">
-          <FileText className="w-12 h-12 mx-auto mb-2" />
-          <p className="text-sm">{error}</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    )
-  }
-
-  return (
-    <div className="h-full flex flex-col">
-      <div className="flex justify-end mb-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleFullscreen}
-          className="flex items-center gap-1"
-        >
-          {isFullscreen ? (
-            <>
-              <Minimize2 className="w-4 h-4" />
-              Exit Fullscreen
-            </>
-          ) : (
-            <>
-              <Maximize2 className="w-4 h-4" />
-              Fullscreen
-            </>
-          )}
-        </Button>
-      </div>
-      <div ref={viewerRef} className="flex-1 relative">
-        <iframe
-          src={pdfUrl}
-          className="w-full h-full border-0 rounded"
-          style={{
-            minHeight: '400px',
-            maxWidth: isFullscreen ? 'none' : '100%'
-          }}
-          title={`PDF: ${filename}`}
-          onLoad={() => console.log("PDFViewer: PDF loaded successfully")}
-          onError={(e) => console.error("PDFViewer: iframe error", e)}
-        />
-      </div>
-    </div>
-  )
-}
-
-// Enhanced Word Document Viewer Component
-function WordViewer({ filename, content }: { filename: string; content: string }) {
-  const [docxUrl, setDocxUrl] = useState<string>("")
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string>("")
-  const [isFullscreen, setIsFullscreen] = useState(false)
-
-  useEffect(() => {
-    console.log("WordViewer: Starting to load Word document", { filename, contentLength: content?.length })
-
-    setIsLoading(true)
-    setError("")
-
-    if (!content) {
-      setError("No content available")
-      setIsLoading(false)
-      return
-    }
-
-    try {
-      const base64Content = normalizePdfBase64Content(content)
-
-      console.log("WordViewer: Processing base64 content", { base64Length: base64Content.length })
-
-      const binaryString = atob(base64Content)
-      const bytes = new Uint8Array(binaryString.length)
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i)
-      }
-
-      let mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      if (filename.toLowerCase().endsWith('.doc')) {
-        mimeType = 'application/msword'
-      }
-
-      const blob = new Blob([bytes], { type: mimeType })
-      const url = URL.createObjectURL(blob)
-
-      console.log("WordViewer: Created blob URL", { url, mimeType })
-      setDocxUrl(url)
-      setIsLoading(false)
-
-      return () => {
-        if (url) {
-          URL.revokeObjectURL(url)
-        }
-      }
-    } catch (err) {
-      console.error("WordViewer: Error loading Word document", err)
-      setError(`Failed to load Word document: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      setIsLoading(false)
-    }
-  }, [content, filename])
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-4">
-        <div className="text-red-500 text-center">
-          <FileText className="w-12 h-12 mx-auto mb-2" />
-          <p className="text-sm">{error}</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    )
-  }
-
-  return (
-    <div className="h-full">
-      <iframe
-        src={docxUrl}
-        className="w-full h-full border-0 rounded"
-        style={{ minHeight: '400px' }}
-        title={`Word Document: ${filename}`}
-        onLoad={() => console.log("WordViewer: Document loaded successfully")}
-        onError={(e) => console.error("WordViewer: iframe error", e)}
-      />
-    </div>
-  )
-}
-
 interface FileItem {
   filename: string
   size: number
@@ -307,102 +90,6 @@ interface FileItem {
   indexed: boolean
 }
 
-interface FileViewerProps {
-  file: FileItem
-  token: string | null
-  onClose: () => void
-}
-
-interface FileViewerContentProps {
-  file: FileItem
-  token: string | null
-}
-
-const FileViewerContent: React.FC<FileViewerContentProps> = ({ file, token }) => {
-  const [content, setContent] = useState<string>("")
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const loadContent = async () => {
-      if (!token) return
-      
-      try {
-        const response = await filesApi.getContent(token, file.filename)
-        if (response.status === "success") {
-          setContent(response.response.content || "")
-        }
-      } catch (error) {
-        toast.error("Failed to load file content")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (file.filename && token) {
-      loadContent()
-    }
-  }, [file.filename, token])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    )
-  }
-
-  return (
-    <div className="h-[50vh] md:h-[60vh]">
-      {file && (
-        <>
-          {file.filename.toLowerCase().endsWith('.pdf') ? (
-            <PDFViewer filename={file.filename} content={content} />
-          ) : file.filename.toLowerCase().endsWith('.doc') || file.filename.toLowerCase().endsWith('.docx') ? (
-            <WordViewer filename={file.filename} content={content} />
-          ) : (
-            <ScrollArea className="h-full rounded-md border p-4">
-              <pre className="text-sm font-mono whitespace-pre-wrap break-words">{content}</pre>
-            </ScrollArea>
-          )}
-        </>
-      )}
-    </div>
-  )
-}
-
-const FileViewer: React.FC<FileViewerProps> = ({ file, token, onClose }) => {
-  const getFileIcon = (contentType: string) => {
-    if (contentType.startsWith("image/")) return <Image className="h-4 w-4" />
-    if (contentType.includes("pdf")) return <FileText className="h-4 w-4" />
-    if (contentType.includes("text") || contentType.includes("code")) return <FileCode className="h-4 w-4" />
-    if (contentType.includes("zip") || contentType.includes("archive")) return <FileArchive className="h-4 w-4" />
-    return <File className="h-4 w-4" />
-  }
-
-  return (
-    <Dialog open={!!file} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {getFileIcon(file.content_type)}
-            {file.filename}
-          </DialogTitle>
-          <DialogDescription>
-            File content preview
-          </DialogDescription>
-        </DialogHeader>
-        <FileViewerContent file={file} token={token} />
-        <DialogFooter>
-          <Button variant="outline" onClick={() => window.open(`/api/files/download/${file.filename}`, "_blank")}>
-            <Download className="h-4 w-4 mr-2" />
-            Download
-          </Button>
-          <Button onClick={onClose}>Close</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 export default function AdminFilesPage() {
   const { token, user } = useAuth()
@@ -764,8 +451,8 @@ export default function AdminFilesPage() {
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span>{formatFileSize(file.size)}</span>
                             <span>{formatDate(file.upload_date)}</span>
-                            <Badge variant={file.indexed ? "default" : "secondary"}>
-                              {file.indexed ? "Indexed" : "Not Indexed"}
+                            <Badge variant={file.indexed ? "default" : "secondary"} className="bg-green-100">
+                              Indexed
                             </Badge>
                           </div>
                         </div>
@@ -820,32 +507,12 @@ export default function AdminFilesPage() {
         </Card>
 
         {/* File Viewer Dialog */}
-        {selectedFile && (
-          <Dialog open={!!selectedFile} onOpenChange={(open) => !open && setSelectedFile(null)}>
-            <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] w-full">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  {getFileIcon(selectedFile.content_type)}
-                  <span className="truncate">{selectedFile.filename}</span>
-                </DialogTitle>
-                <DialogDescription>
-                  File content preview
-                </DialogDescription>
-              </DialogHeader>
-              <FileViewerContent file={selectedFile} token={token} />
-              <DialogFooter className="flex flex-col sm:flex-row gap-2">
-                <Button variant="outline" onClick={() => window.open(`/api/files/download/${selectedFile.filename}`, "_blank")}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
-                <Button onClick={() => setSelectedFile(null)} className="w-full sm:w-auto">
-                  <X className="h-4 h-4 mr-2" />
-                  Close
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+        <UnifiedFileReader
+          file={selectedFile}
+          token={token}
+          open={!!selectedFile}
+          onOpenChange={(open) => !open && setSelectedFile(null)}
+        />
 
         {/* Edit Metadata Dialog */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
