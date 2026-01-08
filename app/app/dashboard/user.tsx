@@ -43,9 +43,9 @@ export default function UserDashboard() {
 
       try {
         const [metricsRes, filesRes, queriesRes] = await Promise.all([
-          metricsApi.summary(token),
+          metricsApi.summary(token, "24h", "user"),
           filesApi.list(token),
-          metricsApi.queries(token, 5),
+          metricsApi.queries(token, 5, "24h", "user"),
         ])
 
         if (metricsRes.status === "success" && metricsRes.response) {

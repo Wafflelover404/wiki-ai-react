@@ -105,7 +105,7 @@ export default function UserDashboard() {
     if (!token) return
 
     try {
-      const result = await metricsApi.summary(token)
+      const result = await metricsApi.summary(token, "24h", "user")
       if (result.status === "success" && result.response) {
         const response = result.response as any
         setStats(prev => ({
@@ -122,6 +122,18 @@ export default function UserDashboard() {
   useEffect(() => {
     fetchFiles()
     fetchStats()
+  }, [token])
+
+  // Add 30-second polling for real-time updates
+  useEffect(() => {
+    if (!token) return
+
+    const interval = setInterval(() => {
+      fetchFiles()
+      fetchStats()
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
   }, [token])
 
   useEffect(() => {

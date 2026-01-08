@@ -94,7 +94,7 @@ export default function AdminDashboard() {
       const [usersRes, filesRes, metricsRes] = await Promise.all([
         adminApi.listAccounts(token),
         filesApi.list(token),
-        metricsApi.summary(token),
+        metricsApi.summary(token, "24h", "global"),
       ])
 
       const totalUsers = usersRes.status === "success" ? usersRes.response?.accounts?.length || 0 : 0

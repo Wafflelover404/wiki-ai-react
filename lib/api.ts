@@ -749,20 +749,120 @@ export const apiKeysApi = {
 
 // Metrics endpoints
 export const metricsApi = {
-  summary: (token: string) =>
+  summary: (token: string, since: string = "24h", scope: "user" | "org" | "global" = "org") =>
     apiRequest<{
       total_queries: number
       successful_queries: number
       failed_queries: number
       avg_response_time: number
+      period?: string
+      scope?: string
+      organization_id?: string | null
+      user_id?: string | null
     }>({
       url: "/metrics/summary",
       token,
+      params: { since, scope },
     }),
 
-  queries: (token: string, limit?: number) =>
-    apiRequest<{ queries: Array<{ question: string; answer: string; timestamp: string }> }>({
-      url: `/metrics/queries${limit ? `?limit=${limit}` : ""}`,
+  queries: (
+    token: string,
+    limit?: number,
+    since: string = "24h",
+    scope: "user" | "org" | "global" = "org",
+    offset: number = 0,
+  ) =>
+    apiRequest<{
+      queries: Array<{ question: string; answer: string; timestamp: string }>
+      period?: string
+      scope?: string
+      organization_id?: string | null
+      user_id?: string | null
+      limit?: number
+      offset?: number
+    }>({
+      url: "/metrics/queries",
       token,
+      params: {
+        since,
+        scope,
+        ...(typeof limit === "number" ? { limit: String(limit) } : {}),
+        offset: String(offset),
+      },
+    }),
+}
+
+// Enhanced dashboard endpoints
+export const dashboardApi = {
+  getEmployeeData: (token: string, since: string = "24h") =>
+    apiRequest<{
+      user_metrics: {
+        total_queries: number
+        successful_queries: number
+        failed_queries: number
+        avg_response_time: number
+        documents_accessed: number
+      }
+      recent_queries: Array<{ question: string; answer: string; timestamp: string; success?: boolean }>
+      organization_stats: {
+        organization_id: string
+        total_documents: number
+        new_documents: number
+        active_users: number
+      }
+    }>({
+      url: "/dashboard/employee",
+      token,
+      params: { since },
+    }),
+
+  getAdminData: (token: string, since: string = "24h", scope: "org" | "global" = "global") =>
+    apiRequest<{
+      system_health: {
+        status: "healthy" | "warning" | "critical"
+        uptime: number
+        api_response_time: number
+        error_rate: number
+        active_connections: number
+        database_status: "connected" | "disconnected" | "slow"
+        storage_usage: { used: number; total: number; percentage: number }
+      }
+      user_analytics: {
+        total_users: number
+        active_users_today: number
+        new_registrations_today: number
+        active_users_week: number
+        user_growth_rate: number
+        top_active_users: Array<{ username: string; queries: number; last_active: string }>
+        pending_approvals: number
+      }
+      content_metrics: {
+        total_documents: number
+        documents_uploaded_today: number
+        storage_used_gb: number
+        popular_documents: Array<{ filename: string; views: number; last_accessed: string }>
+        flagged_content: number
+        processing_queue: number
+      }
+      security_alerts: {
+        failed_logins: number
+        suspicious_activity: number
+        permission_denials: number
+        active_sessions: number
+        api_key_usage: Array<{ key_name: string; usage: number; last_used: string }>
+      }
+      business_intelligence: {
+        search_trends: Array<{ term: string; frequency: number; trend: "up" | "down" | "stable" }>
+        department_usage: Array<{ department: string; queries: number; users: number }>
+        productivity_metrics: { avg_queries_per_user: number; success_rate: number; response_time_avg: number }
+        cost_metrics: { cost_per_query: number; daily_operational_cost: number; monthly_projection: number }
+      }
+      scope: string
+      organization_id?: string | null
+      period: string
+    }>({
+      url: "/dashboard/admin",
+      token,
+      params: { since, scope },
     }),
 }

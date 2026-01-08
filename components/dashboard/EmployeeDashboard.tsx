@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
@@ -109,9 +109,9 @@ export default function EnhancedEmployeeDashboard() {
         // Fallback to old API if new one fails
         try {
           const [metricsRes, filesRes, queriesRes] = await Promise.all([
-            metricsApi.summary(token),
+            metricsApi.summary(token, "24h", "user"),
             filesApi.list(token),
-            metricsApi.queries(token, 5),
+            metricsApi.queries(token, 5, "24h", "user"),
           ])
 
           if (metricsRes.status === "success" && metricsRes.response) {
@@ -139,6 +139,79 @@ export default function EnhancedEmployeeDashboard() {
 
     fetchData()
   }, [token, user?.organization])
+
+  // Define fetchData for polling
+  const fetchData = useCallback(async () => {
+    if (!token) return
+
+    try {
+      // Use the new enhanced dashboard API
+      const dashboardRes = await dashboardApi.getEmployeeData(token)
+
+      if (dashboardRes.status === "success" && dashboardRes.response) {
+        const data = dashboardRes.response
+        
+        // Set user metrics
+        setMetrics({
+          total_queries: data.user_metrics.total_queries,
+          successful_queries: data.user_metrics.successful_queries,
+          failed_queries: data.user_metrics.failed_queries,
+          avg_response_time: data.user_metrics.avg_response_time,
+        })
+        
+        // Set recent queries
+        setRecentQueries(data.recent_queries)
+        
+        // Set organization stats
+        setOrgStats({
+          name: user?.organization || data.organization_stats.organization_id,
+          total_documents: data.organization_stats.total_documents,
+          new_this_week: data.organization_stats.new_documents,
+          active_users: data.organization_stats.active_users,
+          your_contribution: data.user_metrics.documents_accessed
+        })
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard data:", error)
+      // Fallback to old API if new one fails
+      try {
+        const [metricsRes, filesRes, queriesRes] = await Promise.all([
+          metricsApi.summary(token, "24h", "user"),
+          filesApi.list(token),
+          metricsApi.queries(token, 5, "24h", "user"),
+        ])
+
+        if (metricsRes.status === "success" && metricsRes.response) {
+          setMetrics(metricsRes.response)
+        }
+        if (filesRes.status === "success" && filesRes.response) {
+          setOrgStats({
+            name: user?.organization || "Default Organization",
+            total_documents: filesRes.response.documents?.length || 0,
+            new_this_week: Math.floor(Math.random() * 5) + 1,
+            active_users: Math.floor(Math.random() * 20) + 5,
+            your_contribution: Math.floor(Math.random() * 10) + 1
+          })
+        }
+        if (queriesRes.status === "success" && queriesRes.response) {
+          setRecentQueries(queriesRes.response.queries || [])
+        }
+      } catch (fallbackError) {
+        console.error("Failed to fetch fallback data:", fallbackError)
+      }
+    }
+  }, [token, user?.organization])
+
+  // Add 30-second polling for real-time updates
+  useEffect(() => {
+    if (!token) return
+
+    const interval = setInterval(() => {
+      fetchData()
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [token, fetchData])
 
   const successRate = metrics ? Math.round((metrics.successful_queries / (metrics.total_queries || 1)) * 100) : 0
   const responseTimeMs = metrics?.avg_response_time || 0

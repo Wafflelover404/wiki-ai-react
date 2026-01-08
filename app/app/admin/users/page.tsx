@@ -107,6 +107,17 @@ export default function UsersPage() {
     }
   }, [isAdmin, fetchData])
 
+  // Add 30-second polling for real-time updates
+  useEffect(() => {
+    if (!isAdmin || !token) return
+
+    const interval = setInterval(() => {
+      fetchData()
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [isAdmin, token, fetchData])
+
   useEffect(() => {
     if (searchQuery) {
       const filtered = users.filter(

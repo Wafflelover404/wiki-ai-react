@@ -38,21 +38,29 @@ import {
   BarChart3,
 } from "lucide-react"
 
-const mainNavItems = [
+interface NavItem {
+  title: string
+  url: string
+  icon: any
+}
+
+const userNavItems: NavItem[] = [
   { title: "Dashboard", url: "/app", icon: Home },
   { title: "Search", url: "/app/search", icon: Search },
   { title: "Files", url: "/app/files", icon: FileText },
+  { title: "Quizzes", url: "/app/quizzes", icon: Brain },
 ]
 
-const integrationItems = [
-  { title: "OpenCart Plugins", url: "/app/plugins", icon: ShoppingCart },
-  { title: "Catalogs", url: "/app/catalogs", icon: LayoutDashboard },
-]
-
-const adminItems = [
-  { title: "Admin Dashboard", url: "/app/admin", icon: BarChart3 },
+const adminNavItems: NavItem[] = [
+  { title: "Dashboard", url: "/app/admin", icon: BarChart3 },
   { title: "User Management", url: "/app/admin/users", icon: Users },
   { title: "API Keys", url: "/app/admin/api-keys", icon: Key },
+  { title: "Quizzes", url: "/app/quizzes", icon: Brain },
+]
+
+const integrationItems: NavItem[] = [
+  { title: "OpenCart Plugins", url: "/app/plugins", icon: ShoppingCart },
+  { title: "Catalogs", url: "/app/catalogs", icon: LayoutDashboard },
 ]
 
 export function AppSidebar() {
@@ -83,30 +91,12 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel>{isAdmin ? "Admin" : "Main"}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
+              {(isAdmin ? adminNavItems : userNavItems).map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Integrations</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {integrationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url || (isAdmin && pathname.startsWith(item.url))}>
                     <Link href={item.url}>
                       <item.icon className="w-4 h-4" />
                       <span>{item.title}</span>
@@ -120,12 +110,12 @@ export function AppSidebar() {
 
         {isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupLabel>Integrations</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminItems.map((item) => (
+                {integrationItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith(item.url)}>
+                    <SidebarMenuButton asChild isActive={pathname === item.url}>
                       <Link href={item.url}>
                         <item.icon className="w-4 h-4" />
                         <span>{item.title}</span>
