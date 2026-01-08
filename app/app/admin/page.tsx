@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
 
     try {
       const [metricsRes, autoRes, manualRes, filesRes, usersRes] = await Promise.all([
-        metricsApi.summary(token),
+        metricsApi.summary(token, "24h", "global"),
         reportsApi.getAuto(token),
         reportsApi.getManual(token),
         filesApi.list(token),
@@ -101,6 +101,17 @@ export default function AdminDashboardPage() {
       fetchData()
     }
   }, [isAdmin, fetchData])
+
+  // Add 30-second polling for real-time updates
+  useEffect(() => {
+    if (!isAdmin || !token) return
+
+    const interval = setInterval(() => {
+      fetchData()
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [isAdmin, token, fetchData])
 
   if (authLoading || isLoading) {
     return (
