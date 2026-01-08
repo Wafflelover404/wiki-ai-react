@@ -74,7 +74,12 @@ interface FileViewerProps {
   onClose: () => void
 }
 
-const FileViewer: React.FC<FileViewerProps> = ({ file, token, onClose }) => {
+interface FileViewerContentProps {
+  file: FileItem
+  token: string | null
+}
+
+const FileViewerContent: React.FC<FileViewerContentProps> = ({ file, token }) => {
   const [content, setContent] = useState<string>("")
   const [loading, setLoading] = useState(true)
 
@@ -99,6 +104,24 @@ const FileViewer: React.FC<FileViewerProps> = ({ file, token, onClose }) => {
     }
   }, [file.filename, token])
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <ScrollArea className="h-96 w-full border rounded-md p-4">
+      <div className="prose prose-sm max-w-none">
+        <pre className="whitespace-pre-wrap text-sm">{content}</pre>
+      </div>
+    </ScrollArea>
+  )
+}
+
+const FileViewer: React.FC<FileViewerProps> = ({ file, token, onClose }) => {
   const getFileIcon = (contentType: string) => {
     if (contentType.startsWith("image/")) return <Image className="h-4 w-4" />
     if (contentType.includes("pdf")) return <FileText className="h-4 w-4" />
@@ -107,40 +130,28 @@ const FileViewer: React.FC<FileViewerProps> = ({ file, token, onClose }) => {
     return <File className="h-4 w-4" />
   }
 
-  if (loading) {
-    return (
-      <DialogContent className="max-w-4xl max-h-[80vh]">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      </DialogContent>
-    )
-  }
-
   return (
-    <DialogContent className="max-w-4xl max-h-[80vh]">
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          {getFileIcon(file.content_type)}
-          {file.filename}
-        </DialogTitle>
-        <DialogDescription>
-          File content preview
-        </DialogDescription>
-      </DialogHeader>
-      <ScrollArea className="h-96 w-full border rounded-md p-4">
-        <div className="prose prose-sm max-w-none">
-          <pre className="whitespace-pre-wrap text-sm">{content}</pre>
-        </div>
-      </ScrollArea>
-      <DialogFooter>
-        <Button variant="outline" onClick={() => window.open(`/api/files/download/${file.filename}`, "_blank")}>
-          <Download className="h-4 w-4 mr-2" />
-          Download
-        </Button>
-        <Button onClick={onClose}>Close</Button>
-      </DialogFooter>
-    </DialogContent>
+    <Dialog open={!!file} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {getFileIcon(file.content_type)}
+            {file.filename}
+          </DialogTitle>
+          <DialogDescription>
+            File content preview
+          </DialogDescription>
+        </DialogHeader>
+        <FileViewerContent file={file} token={token} />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => window.open(`/api/files/download/${file.filename}`, "_blank")}>
+            <Download className="h-4 w-4 mr-2" />
+            Download
+          </Button>
+          <Button onClick={onClose}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -561,11 +572,27 @@ export default function AdminFilesPage() {
 
         {/* File Viewer Dialog */}
         {selectedFile && (
-          <FileViewer
-            file={selectedFile}
-            token={token}
-            onClose={() => setSelectedFile(null)}
-          />
+          <Dialog open={!!selectedFile} onOpenChange={(open) => !open && setSelectedFile(null)}>
+            <DialogContent className="max-w-4xl max-h-[80vh]">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {getFileIcon(selectedFile.content_type)}
+                  {selectedFile.filename}
+                </DialogTitle>
+                <DialogDescription>
+                  File content preview
+                </DialogDescription>
+              </DialogHeader>
+              <FileViewerContent file={selectedFile} token={token} />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => window.open(`/api/files/download/${selectedFile.filename}`, "_blank")}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button onClick={() => setSelectedFile(null)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
 
         {/* Edit Metadata Dialog */}
