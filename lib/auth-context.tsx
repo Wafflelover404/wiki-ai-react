@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({
         username: (data as any).username || "User",
         role: ((data as any).role as "admin" | "user") || "user",
-        organization: (data as any).organization || "",
+        organization: (data as any).organization_name || (data as any).organization || "",
       })
       return true
     }
@@ -60,12 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (result.status === "success" && result.token) {
       localStorage.setItem("auth_token", result.token)
       setToken(result.token)
-      // Set user directly from login response
-      setUser({
-        username: username,
-        role: result.role || "user",
-        organization: "",
-      })
+      // Hydrate user (incl. organization) from /token/validate
+      await validateAndSetToken(result.token)
       return { success: true }
     }
     return { success: false, error: result.message || "Login failed" }

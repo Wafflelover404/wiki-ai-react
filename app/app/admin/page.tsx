@@ -72,13 +72,13 @@ export default function AdminDashboardPage() {
         setMetrics(metricsRes.response)
       }
       if (autoRes.status === "success" && autoRes.response) {
-        setAutoReports(autoRes.response.reports || [])
+        setAutoReports((autoRes.response as any).reports || [])
       }
       if (manualRes.status === "success" && manualRes.response) {
-        setManualReports(manualRes.response.reports || [])
+        setManualReports((manualRes.response as any).reports || [])
       }
       if (filesRes.status === "success" && filesRes.response) {
-        setFileCount(filesRes.response.files?.length || 0)
+        setFileCount(filesRes.response.documents?.length || 0)
       }
       if (usersRes.status === "success" && usersRes.response) {
         setUserCount(usersRes.response.accounts?.length || 0)

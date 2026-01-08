@@ -140,6 +140,32 @@ function getFileType(filename: string) {
 }
 
 // Enhanced PDF Viewer Component
+function normalizePdfBase64Content(content: string) {
+  let base64 = (content || "").trim()
+
+  if (base64.startsWith("data:")) {
+    const commaIndex = base64.indexOf(",")
+    if (commaIndex >= 0) base64 = base64.slice(commaIndex + 1)
+  }
+
+  if (base64.includes("%")) {
+    try {
+      base64 = decodeURIComponent(base64)
+    } catch {
+      // ignore
+    }
+  }
+
+  base64 = base64.replace(/\s/g, "").replace(/-/g, "+").replace(/_/g, "/")
+
+  const missingPadding = base64.length % 4
+  if (missingPadding) {
+    base64 = base64 + "=".repeat(4 - missingPadding)
+  }
+
+  return base64
+}
+
 function PDFViewer({ filename, content }: { filename: string; content: string }) {
   const [pdfUrl, setPdfUrl] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
@@ -153,40 +179,35 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
 
   useEffect(() => {
     console.log("PDFViewer: Starting to load PDF", { filename, contentLength: content?.length })
-    
+
+    setIsLoading(true)
+    setError("")
+
     try {
-      let base64Content = content
-      
-      if (content.startsWith('data:application/pdf;base64,')) {
-        base64Content = content.split(',')[1]
-      }
-      
-      base64Content = base64Content.replace(/\s/g, '')
-      
+      const base64Content = normalizePdfBase64Content(content)
+
       console.log("PDFViewer: Processing base64 content", { base64Length: base64Content.length })
-      
+
       const binaryString = atob(base64Content)
       const bytes = new Uint8Array(binaryString.length)
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i)
       }
-      
+
       const blob = new Blob([bytes], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
-      
+
       console.log("PDFViewer: Created blob URL", { url })
       setPdfUrl(url)
       setIsLoading(false)
+
+      return () => {
+        URL.revokeObjectURL(url)
+      }
     } catch (err) {
       console.error("PDFViewer: Error loading PDF", err)
       setError(`Failed to load PDF: ${err instanceof Error ? err.message : 'Unknown error'}`)
       setIsLoading(false)
-    }
-
-    return () => {
-      if (pdfUrl) {
-        URL.revokeObjectURL(pdfUrl)
-      }
     }
   }, [content])
 
@@ -234,7 +255,13 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
         <p className="text-destructive mb-2">PDF Loading Failed</p>
         <p className="text-sm text-muted-foreground mb-4">{error}</p>
         <Button 
-          onClick={() => window.open(`data:application/pdf;base64,${content}`, '_blank')}
+          onClick={() => {
+            const base64Content = normalizePdfBase64Content(content)
+            const dataUrl = content.startsWith("data:")
+              ? content
+              : `data:application/pdf;base64,${base64Content}`
+            window.open(dataUrl, "_blank")
+          }}
           variant="outline"
           size="sm"
         >
@@ -339,41 +366,36 @@ function WordViewer({ filename, content }: { filename: string; content: string }
 
   useEffect(() => {
     console.log("WordViewer: Starting to load Word document", { filename, contentLength: content?.length })
-    
+
+    setIsLoading(true)
+    setError("")
+
     try {
-      let base64Content = content
-      
-      if (content.startsWith('data:application/') || content.startsWith('data:application/pdf;base64,')) {
-        base64Content = content.split(',')[1]
-      }
-      
-      base64Content = base64Content.replace(/\s/g, '')
-      
+      const base64Content = normalizePdfBase64Content(content)
+
       console.log("WordViewer: Processing base64 content", { base64Length: base64Content.length })
-      
+
       const binaryString = atob(base64Content)
       const bytes = new Uint8Array(binaryString.length)
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i)
       }
-      
+
       const mimeType = filename.endsWith('.doc') ? 'application/msword' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       const blob = new Blob([bytes], { type: mimeType })
       const url = URL.createObjectURL(blob)
-      
+
       console.log("WordViewer: Created blob URL", { url, mimeType })
       setDocxUrl(url)
       setIsLoading(false)
+
+      return () => {
+        URL.revokeObjectURL(url)
+      }
     } catch (err) {
       console.error("WordViewer: Error loading Word document", err)
       setError(`Failed to load Word document: ${err instanceof Error ? err.message : 'Unknown error'}`)
       setIsLoading(false)
-    }
-
-    return () => {
-      if (docxUrl) {
-        URL.revokeObjectURL(docxUrl)
-      }
     }
   }, [content, filename])
 

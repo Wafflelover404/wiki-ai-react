@@ -47,7 +47,7 @@ export default function DashboardPage() {
           setMetrics(metricsRes.response)
         }
         if (filesRes.status === "success" && filesRes.response) {
-          setFileCount(filesRes.response.files?.length || 0)
+          setFileCount(filesRes.response.documents?.length || 0)
         }
         if (reportsRes.status === "success" && reportsRes.response) {
           setReportCount(reportsRes.response.reports?.length || 0)

@@ -117,7 +117,14 @@ export const authApi = {
   },
 
   validateToken: (token: string) =>
-    apiRequest<{ valid: boolean; username: string; role: string; organization: string }>({
+    apiRequest<{
+      valid: boolean
+      username: string
+      role: string
+      organization?: string
+      organization_id?: string
+      organization_name?: string
+    }>({
       url: "/token/validate",
       token,
     }),
@@ -484,7 +491,9 @@ export const reportsApi = {
     const data = await res.json()
     return {
       status: "success" as const,
-      response: data.reports || data || [],
+      response: {
+        reports: data.reports || [],
+      },
     }
   },
 
@@ -508,7 +517,9 @@ export const reportsApi = {
     const data = await res.json()
     return {
       status: "success" as const,
-      response: data.reports || data || [],
+      response: {
+        reports: data.reports || [],
+      },
     }
   },
 
@@ -524,18 +535,59 @@ export const reportsApi = {
 
 export const adminApi = {
   // GET /accounts
-  listAccounts: (token: string) =>
-    apiRequest<{
-      accounts: Array<{
-        username: string
-        role: string
-        last_login?: string
-        allowed_files?: string[]
-      }>
-    }>({
-      url: "/accounts",
-      token,
-    }),
+  listAccounts: async (token: string) => {
+    // graphtalk returns a raw JSON array from GET /accounts
+    const headers: Record<string, string> = {
+      "ngrok-skip-browser-warning": "true",
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/accounts`, {
+        method: "GET",
+        headers,
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        return {
+          status: "error" as const,
+          message:
+            (data && (data.message || data.detail)) || `Failed to fetch accounts: ${res.status}`,
+        }
+      }
+
+      // If backend later changes to APIResponse, handle that too.
+      if (data && typeof data === "object" && !Array.isArray(data) && (data as any).status) {
+        const wrapped = data as any
+        const accounts = wrapped.response?.accounts || wrapped.response || wrapped.accounts || []
+        return {
+          status: wrapped.status as "success" | "error",
+          message: wrapped.message,
+          response: { accounts },
+        }
+      }
+
+      if (Array.isArray(data)) {
+        return {
+          status: "success" as const,
+          response: { accounts: data },
+        }
+      }
+
+      return {
+        status: "error" as const,
+        message: "Unexpected /accounts response format",
+      }
+    } catch (error) {
+      return {
+        status: "error" as const,
+        message: error instanceof Error ? error.message : "Network error",
+      }
+    }
+  },
 
   // POST /register
   createUser: (
