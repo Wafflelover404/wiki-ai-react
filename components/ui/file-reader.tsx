@@ -111,8 +111,8 @@ const PDFViewer: React.FC<{ filename: string; content: string }> = ({ filename, 
         return () => {
           URL.revokeObjectURL(url)
         }
-      } catch (err) {
-        setError(`Failed to load PDF: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      } catch (error) {
+        setError(`Failed to load PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
         setIsLoading(false)
       }
     }
@@ -143,10 +143,10 @@ const PDFViewer: React.FC<{ filename: string; content: string }> = ({ filename, 
     )
   }
 
-  if (error) {
+  if (err) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500">
-        {error}
+        {err}
       </div>
     )
   }
@@ -211,8 +211,8 @@ const WordViewer: React.FC<{ filename: string; content: string }> = ({ filename,
         return () => {
           URL.revokeObjectURL(url)
         }
-      } catch (err) {
-        setError(`Failed to load Word document: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      } catch (error) {
+        setError(`Failed to load Word document: ${error instanceof Error ? error.message : 'Unknown error'}`)
         setIsLoading(false)
       }
     }
@@ -243,10 +243,10 @@ const WordViewer: React.FC<{ filename: string; content: string }> = ({ filename,
     )
   }
 
-  if (error) {
+  if (err) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500">
-        {error}
+        {err}
       </div>
     )
   }
@@ -311,8 +311,8 @@ const ExcelViewer: React.FC<{ filename: string; content: string }> = ({ filename
         return () => {
           URL.revokeObjectURL(url)
         }
-      } catch (err) {
-        setError(`Failed to load Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      } catch (error) {
+        setError(`Failed to load Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`)
         setIsLoading(false)
       }
     }
@@ -343,10 +343,10 @@ const ExcelViewer: React.FC<{ filename: string; content: string }> = ({ filename
     )
   }
 
-  if (error) {
+  if (err) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500">
-        {error}
+        {err}
       </div>
     )
   }
@@ -416,8 +416,8 @@ const ImageViewer: React.FC<{ filename: string; content: string }> = ({ filename
             URL.revokeObjectURL(url)
           }
         }
-      } catch (err) {
-        setError(`Failed to load image: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      } catch (error) {
+        setError(`Failed to load image: ${error instanceof Error ? error.message : 'Unknown error'}`)
         setIsLoading(false)
       }
     }
@@ -448,10 +448,10 @@ const ImageViewer: React.FC<{ filename: string; content: string }> = ({ filename
     )
   }
 
-  if (error) {
+  if (err) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500">
-        {error}
+        {err}
       </div>
     )
   }
@@ -516,8 +516,8 @@ const FileContentViewer: React.FC<FileViewerContentProps> = async ({ file, token
         } else {
           setContent("Failed to load file content")
         }
-      } catch (error) {
-        console.error("Failed to load file content:", error)
+      } catch (err) {
+        console.error("Failed to load file content:", err)
         setContent("Error loading file content")
       } finally {
         setLoading(false)
@@ -537,10 +537,10 @@ const FileContentViewer: React.FC<FileViewerContentProps> = async ({ file, token
     )
   }
 
-  if (error) {
+  if (err) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500">
-        {error}
+        {err}
       </div>
     )
   }
@@ -585,16 +585,39 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
     return <File className="h-4 w-4" />
   }
 
-  const handleDownload = () => {
-    if (file) {
-      // Create download link using the content endpoint
-      const link = document.createElement('a')
-      link.href = `/files/content/${file.filename}`
-      link.download = file.filename
-      link.target = '_blank'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+  const handleDownload = async () => {
+    if (file && token) {
+      try {
+        // Fetch the file as a blob for proper download
+        const response = await fetch(`/files/content/${file.filename}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error(`Download failed: ${response.statusText}`)
+        }
+        
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        
+        // Create download link
+        const link = document.createElement('a')
+        link.href = url
+        link.download = file.filename
+        document.body.appendChild(link)
+        link.click()
+        
+        // Cleanup
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('Download failed:', err)
+        // Fallback to opening in new tab
+        window.open(`/files/content/${file.filename}`, '_blank')
+      }
     }
   }
 
