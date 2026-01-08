@@ -83,21 +83,41 @@ export default function QuizzesPage() {
   const fetchQuizzes = async () => {
     try {
       setLoading(true)
+      console.log("Fetching quizzes...")
+      console.log("Token:", token ? "present" : "missing")
+      
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
-      const response = await fetch(`${apiUrl}/quizzes`, {
+      const url = `${apiUrl}/quizzes`
+      console.log("Fetching from URL:", url)
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'ngrok-skip-browser-warning': 'true',
         }
       })
 
+      console.log("Response status:", response.status)
+      console.log("Response ok:", response.ok)
+
       if (response.ok) {
         const data = await response.json()
+        console.log("Response data:", data)
+        
         if (data.success) {
+          console.log("Setting quizzes:", data.response.quizzes)
           setQuizzes(data.response.quizzes)
+        } else {
+          console.error("API returned error:", data)
+          toast.error(data.message || "Failed to fetch quizzes")
         }
+      } else {
+        const errorText = await response.text()
+        console.error("HTTP error:", response.status, errorText)
+        toast.error(`Failed to fetch quizzes: ${response.status}`)
       }
     } catch (error) {
+      console.error("Fetch error:", error)
       toast.error("Failed to fetch quizzes")
     } finally {
       setLoading(false)
