@@ -55,6 +55,7 @@ const adminNavItems: NavItem[] = [
   { title: "Dashboard", url: "/app/admin", icon: BarChart3 },
   { title: "User Management", url: "/app/admin/users", icon: Users },
   { title: "API Keys", url: "/app/admin/api-keys", icon: Key },
+  { title: "Quiz Management", url: "/app/admin/quizzes", icon: Brain },
   { title: "Quizzes", url: "/app/quizzes", icon: Brain },
 ]
 
