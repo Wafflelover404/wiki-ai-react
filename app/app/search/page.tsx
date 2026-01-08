@@ -329,7 +329,7 @@ export default function SearchPage() {
           content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
           source: 'document'
         })) || [],
-        timestamp: new Date(),
+        timestamp: new Date(Date.now()),
       }
       setMessages(prev => [...prev, sourcesMessage])
       
@@ -339,7 +339,7 @@ export default function SearchPage() {
           id: crypto.randomUUID(),
           role: "assistant",
           content: "Generating AI overview...",
-          timestamp: new Date(),
+          timestamp: new Date(Date.now()),
         }
         setMessages(prev => [...prev, overviewLoadingMessage])
       }
@@ -354,7 +354,7 @@ export default function SearchPage() {
           id: crypto.randomUUID(),
           role: "overview",
           content: data.content || "",
-          timestamp: new Date(),
+          timestamp: new Date(Date.now()),
         }]
       })
     }
@@ -376,7 +376,7 @@ export default function SearchPage() {
       id: crypto.randomUUID(),
       role: "user",
       content: input.trim(),
-      timestamp: new Date(),
+      timestamp: new Date(Date.now()),
     }
 
     setMessages((prev) => [...prev, userMessage])
@@ -397,7 +397,7 @@ export default function SearchPage() {
         id: crypto.randomUUID(),
         role: "assistant",
         content: "Sorry, I encountered an error while searching. Please try again.",
-        timestamp: new Date(),
+        timestamp: new Date(Date.now()),
       }
       setMessages((prev) => [...prev, errorMessage])
     } finally {
@@ -472,7 +472,7 @@ export default function SearchPage() {
                       content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
                       source: 'document'
                     })),
-                    timestamp: new Date(),
+                    timestamp: new Date(Date.now()),
                   }
                   setMessages(prev => [...prev, sourcesMessage])
                   
@@ -482,7 +482,7 @@ export default function SearchPage() {
                       id: crypto.randomUUID(),
                       role: "assistant",
                       content: "Generating AI overview...",
-                      timestamp: new Date(),
+                      timestamp: new Date(Date.now()),
                     }
                     setMessages(prev => [...prev, overviewLoadingMessage])
                   }
@@ -499,7 +499,7 @@ export default function SearchPage() {
                     id: crypto.randomUUID(),
                     role: "overview",
                     content: message.data || "",
-                    timestamp: new Date(),
+                    timestamp: new Date(Date.now()),
                   }]
                 })
                 break
@@ -582,7 +582,7 @@ export default function SearchPage() {
             content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
             source: 'document'
           })),
-          timestamp: new Date(),
+          timestamp: new Date(Date.now()),
         }
         setMessages(prev => [...prev, sourcesMessage])
       }
@@ -592,7 +592,7 @@ export default function SearchPage() {
           id: crypto.randomUUID(),
           role: "overview",
           content: aiAnswer,
-          timestamp: new Date(),
+          timestamp: new Date(Date.now()),
         }
         setMessages(prev => [...prev, overviewMessage])
       }

@@ -40,7 +40,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Users, Plus, Search, MoreVertical, Edit, Trash2, Loader2, Shield, User } from "lucide-react"
+import { Users, Plus, Search, MoreVertical, Edit, Trash2, Loader2, Shield, User, Mail, Link, Copy } from "lucide-react"
 import { toast } from "sonner"
 import { redirect } from "next/navigation"
 
@@ -71,6 +71,16 @@ export default function UsersPage() {
   const [createError, setCreateError] = useState("")
   const createDialogRef = useRef<HTMLDivElement>(null)
   const editDialogRef = useRef<HTMLDivElement>(null)
+
+  // Create invite state
+  const [isInviteOpen, setIsInviteOpen] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState("")
+  const [inviteRole, setInviteRole] = useState("user")
+  const [inviteExpiresInDays, setInviteExpiresInDays] = useState(7)
+  const [inviteMessage, setInviteMessage] = useState("")
+  const [isCreatingInvite, setIsCreatingInvite] = useState(false)
+  const [inviteError, setInviteError] = useState("")
+  const [createdInvite, setCreatedInvite] = useState<any>(null)
 
   // Edit user state
   const [editUser, setEditUser] = useState<UserAccount | null>(null)
@@ -181,6 +191,46 @@ export default function UsersPage() {
     }
   }
 
+  const handleCreateInvite = async () => {
+    if (!token) return
+
+    setIsCreatingInvite(true)
+    setInviteError("")
+    try {
+      const result = await adminApi.createInvite(token, {
+        email: inviteEmail.trim() || undefined,
+        role: inviteRole,
+        expires_in_days: inviteExpiresInDays,
+        message: inviteMessage.trim() || undefined,
+      })
+
+      if (result.status === "success" && result.response) {
+        toast.success("Invite link created successfully")
+        setCreatedInvite(result.response)
+        setIsInviteOpen(false)
+        setInviteEmail("")
+        setInviteRole("user")
+        setInviteExpiresInDays(7)
+        setInviteMessage("")
+        setInviteError("")
+      } else {
+        setInviteError(result.message || "Failed to create invite")
+        toast.error(result.message || "Failed to create invite")
+      }
+    } catch (error) {
+      console.error("Create invite error:", error)
+      setInviteError("Network error occurred")
+      toast.error("Failed to create invite")
+    } finally {
+      setIsCreatingInvite(false)
+    }
+  }
+
+  const handleCopyLink = (link: string) => {
+    navigator.clipboard.writeText(link)
+    toast.success("Invite link copied to clipboard")
+  }
+
   const handleEditUser = (user: UserAccount) => {
     setEditUser(user)
     setEditRole(user.role)
@@ -287,10 +337,16 @@ export default function UsersPage() {
             <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
             <p className="text-muted-foreground">Manage user accounts and permissions</p>
           </div>
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add User
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setIsCreateOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add User
+            </Button>
+            <Button variant="outline" onClick={() => setIsInviteOpen(true)}>
+              <Mail className="w-4 h-4 mr-2" />
+              Create Invite
+            </Button>
+          </div>
         </div>
 
         {/* Create User Modal */}
@@ -641,6 +697,192 @@ export default function UsersPage() {
                     )}
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create Invite Modal */}
+        {isInviteOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-background rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Create Invite Link</h2>
+                    <p className="text-sm text-muted-foreground">Generate an invitation link for new users</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setIsInviteOpen(false)}>
+                    ×
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-email">Email (Optional)</Label>
+                    <Input
+                      id="invite-email"
+                      type="email"
+                      placeholder="user@example.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      disabled={isCreatingInvite}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-role">Role</Label>
+                    <div className="relative">
+                      <select
+                        id="invite-role"
+                        value={inviteRole}
+                        onChange={(e) => setInviteRole(e.target.value)}
+                        disabled={isCreatingInvite}
+                        className="w-full h-11 px-4 pr-10 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
+                      >
+                        <option value="user">👤 User</option>
+                        <option value="admin">🛡️ Admin</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                      {inviteRole === "admin" ? (
+                        <>
+                          <Shield className="w-3 h-3" />
+                          Full system access and user management
+                        </>
+                      ) : (
+                        <>
+                          <User className="w-3 h-3" />
+                          Standard user with assigned file permissions
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-expires">Expires In</Label>
+                    <div className="relative">
+                      <select
+                        id="invite-expires"
+                        value={inviteExpiresInDays}
+                        onChange={(e) => setInviteExpiresInDays(Number(e.target.value))}
+                        disabled={isCreatingInvite}
+                        className="w-full h-11 px-4 pr-10 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
+                      >
+                        <option value={1}>🕐 1 Day</option>
+                        <option value={3}>🕐 3 Days</option>
+                        <option value={7}>🕐 1 Week</option>
+                        <option value={14}>🕐 2 Weeks</option>
+                        <option value={30}>🕐 1 Month</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-message">Message (Optional)</Label>
+                    <textarea
+                      id="invite-message"
+                      placeholder="Welcome to our platform! We're excited to have you join us."
+                      value={inviteMessage}
+                      onChange={(e) => setInviteMessage(e.target.value)}
+                      disabled={isCreatingInvite}
+                      className="w-full h-20 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                    />
+                  </div>
+                  
+                  {inviteError && (
+                    <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                      {inviteError}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex gap-2 mt-6">
+                  <Button variant="outline" onClick={() => setIsInviteOpen(false)} disabled={isCreatingInvite} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateInvite} disabled={isCreatingInvite} className="flex-1">
+                    {isCreatingInvite ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      "Create Invite"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Created Invite Success Modal */}
+        {createdInvite && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-background rounded-lg shadow-lg max-w-md w-full">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-green-600">Invite Created!</h2>
+                    <p className="text-sm text-muted-foreground">Share this link with your invitee</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setCreatedInvite(null)}>
+                    ×
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-muted/50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Link className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Invite Link</span>
+                    </div>
+                    <div className="bg-background p-2 rounded border">
+                      <code className="text-xs break-all">{createdInvite.link}</code>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCopyLink(createdInvite.link)}
+                      className="w-full"
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy Link
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Role:</span>
+                      <div className="font-medium capitalize">{createdInvite.role}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Expires:</span>
+                      <div className="font-medium">{new Date(createdInvite.expires_at).toLocaleDateString()}</div>
+                    </div>
+                    {createdInvite.email && (
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Email:</span>
+                        <div className="font-medium">{createdInvite.email}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <Button onClick={() => setCreatedInvite(null)} className="w-full">
+                  Done
+                </Button>
               </div>
             </div>
           </div>

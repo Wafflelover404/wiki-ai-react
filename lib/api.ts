@@ -621,6 +621,85 @@ export const adminApi = {
       token,
       params: { username },
     }),
+
+  // Invite management endpoints
+  createInvite: (
+    token: string,
+    inviteData: { email?: string; role: string; allowed_files?: string[]; expires_in_days?: number; message?: string }
+  ) =>
+    apiRequest<{
+      invite_id: string
+      token: string
+      link: string
+      email?: string
+      role: string
+      expires_at: string
+      created_by: string
+      organization_id?: string
+    }>({
+      url: "/invites/create",
+      method: "POST",
+      token,
+      data: inviteData,
+    }),
+
+  listInvites: (token: string) =>
+    apiRequest<{
+      invites: Array<{
+        id: string
+        token: string
+        link: string
+        email?: string
+        role: string
+        expires_at: string
+        created_at: string
+        created_by: string
+        is_used: boolean
+      }>
+      count: number
+      listed_by: string
+    }>({
+      url: "/invites",
+      token,
+    }),
+
+  getInviteInfo: (token: string) =>
+    apiRequest<{
+      valid: boolean
+      email?: string
+      role: string
+      allowed_files: string[]
+      expires_at: string
+      created_by: string
+      message?: string
+    }>({
+      url: `/invite/${token}`,
+    }),
+
+  acceptInvite: (
+    token: string,
+    userData: { username: string; password: string }
+  ) =>
+    apiRequest<{
+      username: string
+      role: string
+      allowed_files: string[]
+      organization_id?: string
+    }>({
+      url: "/invites/accept",
+      method: "POST",
+      data: { ...userData, token },
+    }),
+
+  revokeInvite: (token: string, inviteId: string) =>
+    apiRequest<{
+      invite_id: string
+      revoked_by: string
+    }>({
+      url: `/invites/${inviteId}`,
+      method: "DELETE",
+      token,
+    }),
 }
 
 // Catalogs endpoints
@@ -1032,6 +1111,83 @@ export const dashboardApi = {
       url: `/admin/quizzes/${quizId}/submissions`,
       token,
       params: { limit: limit.toString() },
+    })
+  },
+
+  // Invite management methods
+  createInvite: async (token: string, data: {
+    email?: string
+    role: string
+    allowed_files?: string[]
+    expires_in_days?: number
+    message?: string
+  }) => {
+    return apiRequest<{
+      invite_id: string
+      token: string
+      link: string
+      email?: string
+      role: string
+      expires_at: string
+      created_by: string
+    }>({
+      url: "/invites/create",
+      method: "POST",
+      token,
+      data,
+    })
+  },
+
+  listInvites: async (token: string) => {
+    return apiRequest<{
+      invites: any[]
+      count: number
+      listed_by: string
+    }>({
+      url: "/invites",
+      token,
+    })
+  },
+
+  getInviteInfo: async (token: string) => {
+    return apiRequest<{
+      valid: boolean
+      email?: string
+      role: string
+      allowed_files: string[]
+      expires_at: string
+      created_by: string
+      message?: string
+    }>({
+      url: `/invite/${token}`,
+    })
+  },
+
+  acceptInvite: async (data: {
+    token: string
+    username: string
+    password: string
+  }) => {
+    return apiRequest<{
+      username: string
+      role: string
+      allowed_files: string[]
+      organization_id?: string
+    }>({
+      url: "/invites/accept",
+      method: "POST",
+      data,
+    })
+  },
+
+  revokeInvite: async (token: string, inviteId: string) => {
+    return apiRequest<{
+      invite_id: string
+      revoked_by: string
+    }>({
+      url: `/invites/${inviteId}`,
+      method: "DELETE",
+      token,
     })
   },
 }

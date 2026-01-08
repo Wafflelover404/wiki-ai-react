@@ -57,25 +57,18 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
-    if (!token) return
+    if (!token || !isAdmin) return
 
     try {
-      const [metricsRes, autoRes, manualRes, filesRes, usersRes] = await Promise.all([
+      // Fetch basic admin data
+      const [metricsRes, filesRes, usersRes] = await Promise.all([
         metricsApi.summary(token, "24h", "global"),
-        reportsApi.getAuto(token),
-        reportsApi.getManual(token),
         filesApi.list(token),
         adminApi.listAccounts(token),
       ])
-
+      
       if (metricsRes.status === "success" && metricsRes.response) {
         setMetrics(metricsRes.response)
-      }
-      if (autoRes.status === "success" && autoRes.response) {
-        setAutoReports((autoRes.response as any).reports || [])
-      }
-      if (manualRes.status === "success" && manualRes.response) {
-        setManualReports((manualRes.response as any).reports || [])
       }
       if (filesRes.status === "success" && filesRes.response) {
         setFileCount(filesRes.response.documents?.length || 0)
@@ -83,12 +76,27 @@ export default function AdminDashboardPage() {
       if (usersRes.status === "success" && usersRes.response) {
         setUserCount(usersRes.response.accounts?.length || 0)
       }
+      
+      // Only fetch reports if user is admin
+      if (isAdmin) {
+        const [autoRes, manualRes] = await Promise.all([
+          reportsApi.getAuto(token),
+          reportsApi.getManual(token),
+        ])
+        
+        if (autoRes.status === "success" && autoRes.response) {
+          setAutoReports((autoRes.response as any).reports || [])
+        }
+        if (manualRes.status === "success" && manualRes.response) {
+          setManualReports((manualRes.response as any).reports || [])
+        }
+      }
     } catch (error) {
       console.error("Failed to fetch admin data:", error)
     } finally {
       setIsLoading(false)
     }
-  }, [token])
+  }, [token, isAdmin])
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
