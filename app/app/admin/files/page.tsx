@@ -69,17 +69,20 @@ interface FileItem {
 
 interface FileViewerProps {
   file: FileItem
+  token: string | null
   onClose: () => void
 }
 
-const FileViewer: React.FC<FileViewerProps> = ({ file, onClose }) => {
+const FileViewer: React.FC<FileViewerProps> = ({ file, token, onClose }) => {
   const [content, setContent] = useState<string>("")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadContent = async () => {
+      if (!token) return
+      
       try {
-        const response = await filesApi.getContent(file.filename)
+        const response = await filesApi.getContent(token, file.filename)
         if (response.status === "success") {
           setContent(response.response.content || "")
         }
@@ -90,10 +93,10 @@ const FileViewer: React.FC<FileViewerProps> = ({ file, onClose }) => {
       }
     }
 
-    if (file.filename) {
+    if (file.filename && token) {
       loadContent()
     }
-  }, [file.filename])
+  }, [file.filename, token])
 
   const getFileIcon = (contentType: string) => {
     if (contentType.startsWith("image/")) return <Image className="h-4 w-4" />
@@ -159,8 +162,17 @@ export default function AdminFilesPage() {
     try {
       setLoading(true)
       const response = await filesApi.list(token)
-      if (response.status === "success") {
-        setFiles(response.response.documents || [])
+      if (response.status === "success" && response.response?.documents) {
+        // Map API response to FileItem interface
+        const mappedFiles = response.response.documents.map((doc: any) => ({
+          filename: doc.filename,
+          size: doc.size || 0,
+          upload_date: doc.uploaded_at || new Date().toISOString(),
+          content_type: doc.content_type || "application/octet-stream",
+          metadata: doc.metadata,
+          indexed: doc.indexed || false
+        }))
+        setFiles(mappedFiles)
       }
     } catch (error) {
       toast.error("Failed to fetch files")
@@ -174,7 +186,7 @@ export default function AdminFilesPage() {
   }, [fetchFiles])
 
   const handleFileUpload = async () => {
-    if (!uploadedFiles.length) return
+    if (!uploadedFiles.length || !token) return
 
     setUploading(true)
     const uploadPromises = uploadedFiles.map(async (file) => {
@@ -501,6 +513,7 @@ export default function AdminFilesPage() {
         {selectedFile && (
           <FileViewer
             file={selectedFile}
+            token={token}
             onClose={() => setSelectedFile(null)}
           />
         )}
