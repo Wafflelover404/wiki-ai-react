@@ -55,6 +55,7 @@ import {
   Calendar,
   User,
   HardDrive,
+  X,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -153,6 +154,7 @@ export default function AdminFilesPage() {
   const [fileToDelete, setFileToDelete] = useState<string | null>(null)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editingFile, setEditingFile] = useState<FileItem | null>(null)
   const [editMetadata, setEditMetadata] = useState("")
@@ -216,6 +218,24 @@ export default function AdminFilesPage() {
     setUploadedFiles([])
     setUploading(false)
     fetchFiles()
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    const droppedFiles = Array.from(e.dataTransfer.files)
+    setUploadedFiles(prev => [...prev, ...droppedFiles])
   }
 
   const handleDeleteFile = async (filename: string) => {
@@ -364,36 +384,57 @@ export default function AdminFilesPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  onChange={(e) => setUploadedFiles(Array.from(e.target.files || []))}
-                  className="hidden"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Select Files
-                </Button>
-                {uploadedFiles.length > 0 && (
-                  <Button onClick={handleFileUpload} disabled={uploading}>
-                    {uploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload {uploadedFiles.length} file(s)
-                      </>
-                    )}
+              {/* Drag and Drop Area */}
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragging
+                    ? "border-primary bg-primary/10"
+                    : "border-muted-foreground/25 hover:border-primary/50"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">
+                    {isDragging ? "Drop files here" : "Drag and drop files here"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    or click the button below to select files
+                  </p>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    onChange={(e) => setUploadedFiles(Array.from(e.target.files || []))}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Select Files
                   </Button>
-                )}
+                  {uploadedFiles.length > 0 && (
+                    <Button onClick={handleFileUpload} disabled={uploading}>
+                      {uploading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload {uploadedFiles.length} file(s)
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {uploadedFiles.length > 0 && (
@@ -405,6 +446,13 @@ export default function AdminFilesPage() {
                         <File className="h-4 w-4" />
                         <span>{file.name}</span>
                         <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
                     ))}
                   </div>
