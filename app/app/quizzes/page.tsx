@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { adminApi } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Separator } from "@/components/ui/separator"
+import { QuizCard, QuizQuestion, QuizProgress, QuizResults, Quiz, Question, QuizResult } from "@/components/quiz-components"
 import {
   Brain,
   Clock,
@@ -28,40 +28,6 @@ import {
   Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
-
-interface Quiz {
-  id: string
-  title: string
-  description: string
-  category: string
-  difficulty: "easy" | "medium" | "hard"
-  time_limit: number
-  passing_score: number
-  questions: Question[]
-  created_at: string
-  updated_at: string
-  organization_id: string
-}
-
-interface Question {
-  id: string
-  type: "multiple-choice" | "true-false" | "text"
-  question: string
-  options?: string[]
-  correct_answer: string | number
-  explanation?: string
-  points: number
-}
-
-interface QuizResult {
-  quizId: string
-  score: number
-  totalPoints: number
-  passed: boolean
-  timeSpent: number
-  answers: Record<string, string | number>
-  completedAt: string
-}
 
 export default function QuizzesPage() {
   const { token, user } = useAuth()
@@ -104,7 +70,7 @@ export default function QuizzesPage() {
         const data = await response.json()
         console.log("Response data:", data)
         
-        if (data.success) {
+        if (data.status === "success") {
           console.log("Setting quizzes:", data.response.quizzes)
           setQuizzes(data.response.quizzes)
         } else {
@@ -184,12 +150,17 @@ export default function QuizzesPage() {
   }, [quizStarted, quizCompleted, timeRemaining])
 
   const startQuiz = (quiz: Quiz) => {
+    if (!quiz.questions) {
+      toast.error("Quiz has no questions")
+      return
+    }
+    
     setSelectedQuiz(quiz)
     setQuizStarted(true)
-    setQuizCompleted(false)
     setCurrentQuestionIndex(0)
     setAnswers({})
     setTimeRemaining(quiz.time_limit * 60)
+    setQuizCompleted(false)
     setQuizResults(null)
   }
 
@@ -201,7 +172,7 @@ export default function QuizzesPage() {
   }
 
   const nextQuestion = () => {
-    if (selectedQuiz && currentQuestionIndex < selectedQuiz.questions.length - 1) {
+    if (selectedQuiz && selectedQuiz.questions && currentQuestionIndex < selectedQuiz.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
     }
   }
@@ -213,7 +184,7 @@ export default function QuizzesPage() {
   }
 
   const calculateScore = () => {
-    if (!selectedQuiz) return { score: 0, totalPoints: 0, passed: false }
+    if (!selectedQuiz || !selectedQuiz.questions) return { score: 0, totalPoints: 0, passed: false }
     
     let score = 0
     let totalPoints = 0
@@ -231,7 +202,7 @@ export default function QuizzesPage() {
   }
 
   const handleQuizSubmit = () => {
-    if (!selectedQuiz) return
+    if (!selectedQuiz || !selectedQuiz.questions) return
     
     const { score, totalPoints, passed } = calculateScore()
     const timeSpent = selectedQuiz.time_limit * 60 - timeRemaining
@@ -504,7 +475,7 @@ export default function QuizzesPage() {
                       <p className="text-sm text-muted-foreground">Time Spent</p>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{selectedQuiz.questions.length}</div>
+                      <div className="text-2xl font-bold">{selectedQuiz.questions?.length || 0}</div>
                       <p className="text-sm text-muted-foreground">Questions</p>
                     </div>
                     <div>
@@ -522,7 +493,7 @@ export default function QuizzesPage() {
                 <CardDescription>Review your answers and explanations</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {selectedQuiz.questions.map((question, index) => {
+                {selectedQuiz.questions?.map((question, index) => {
                   const userAnswer = answers[question.id]
                   const isCorrect = userAnswer === question.correct_answer
 
@@ -553,7 +524,7 @@ export default function QuizzesPage() {
                           </div>
                         </div>
                       </div>
-                      {index < selectedQuiz.questions.length - 1 && <Separator />}
+                      {index < (selectedQuiz.questions?.length || 0) - 1 && <Separator />}
                     </div>
                   )
                 })}
@@ -564,7 +535,7 @@ export default function QuizzesPage() {
               <Button onClick={resetQuiz} variant="outline" className="flex-1">
                 Back to Quizzes
               </Button>
-              <Button onClick={() => startQuiz(selectedQuiz)} className="flex-1">
+              <Button onClick={() => startQuiz(selectedQuiz!)} className="flex-1">
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Retake Quiz
               </Button>
