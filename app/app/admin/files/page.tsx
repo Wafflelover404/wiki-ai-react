@@ -161,6 +161,8 @@ export default function AdminFilesPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchFiles = useCallback(async () => {
+    if (!token) return
+    
     try {
       setLoading(true)
       const response = await filesApi.list(token)
