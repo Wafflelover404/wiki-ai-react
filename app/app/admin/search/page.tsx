@@ -51,19 +51,22 @@ import ReactMarkdown from "react-markdown"
 // Enhanced File Viewer Component (reused from files page with search highlighting)
 interface FileViewerProps {
   file: any
+  token: string | null
   searchQuery?: string
   onClose: () => void
 }
 
-const FileViewer: React.FC<FileViewerProps> = ({ file, searchQuery, onClose }) => {
+const FileViewer: React.FC<FileViewerProps> = ({ file, token, searchQuery, onClose }) => {
   const [content, setContent] = useState<string>("")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadContent = async () => {
+      if (!token) return
+      
       try {
-        const response = await filesApi.getContent(file.filename)
-        if (response.success) {
+        const response = await filesApi.getContent(token, file.filename)
+        if (response.status === "success") {
           setContent(response.response.content || "")
         }
       } catch (error) {
@@ -73,10 +76,10 @@ const FileViewer: React.FC<FileViewerProps> = ({ file, searchQuery, onClose }) =
       }
     }
 
-    if (file.filename) {
+    if (file.filename && token) {
       loadContent()
     }
-  }, [file.filename])
+  }, [file.filename, token])
 
   const highlightText = (text: string, query: string) => {
     if (!query) return text
@@ -496,6 +499,7 @@ export default function AdminSearchPage() {
         {selectedFile && (
           <FileViewer
             file={selectedFile}
+            token={token}
             searchQuery={query}
             onClose={() => setSelectedFile(null)}
           />
