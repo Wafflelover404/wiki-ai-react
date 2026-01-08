@@ -944,7 +944,10 @@ export const dashboardApi = {
       points: number
     }>
   }, token: string) => {
-    return apiRequest<{
+    console.log("Creating quiz with data:", quizData)
+    console.log("Using token:", token ? "present" : "missing")
+    
+    const result = await apiRequest<{
       id: string
       message: string
     }>({
@@ -953,6 +956,9 @@ export const dashboardApi = {
       token,
       data: quizData,
     })
+    
+    console.log("Quiz creation result:", result)
+    return result
   },
 
   updateQuiz: async (quizId: string, quizData: {
