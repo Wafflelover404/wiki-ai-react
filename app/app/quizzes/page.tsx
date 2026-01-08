@@ -83,9 +83,19 @@ export default function QuizzesPage() {
   const fetchQuizzes = async () => {
     try {
       setLoading(true)
-      const response = await adminApi.getQuizzes(token)
-      if (response.success) {
-        setQuizzes(response.response.quizzes)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
+      const response = await fetch(`${apiUrl}/quizzes`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setQuizzes(data.response.quizzes)
+        }
       }
     } catch (error) {
       toast.error("Failed to fetch quizzes")
@@ -159,7 +169,7 @@ export default function QuizzesPage() {
     setQuizCompleted(false)
     setCurrentQuestionIndex(0)
     setAnswers({})
-    setTimeRemaining(quiz.timeLimit * 60)
+    setTimeRemaining(quiz.time_limit * 60)
     setQuizResults(null)
   }
 
@@ -190,12 +200,12 @@ export default function QuizzesPage() {
     
     selectedQuiz.questions.forEach(question => {
       totalPoints += question.points
-      if (answers[question.id] === question.correctAnswer) {
+      if (answers[question.id] === question.correct_answer) {
         score += question.points
       }
     })
     
-    const passed = (score / totalPoints) * 100 >= selectedQuiz.passingScore
+    const passed = (score / totalPoints) * 100 >= selectedQuiz.passing_score
     
     return { score, totalPoints, passed }
   }
@@ -204,7 +214,7 @@ export default function QuizzesPage() {
     if (!selectedQuiz) return
     
     const { score, totalPoints, passed } = calculateScore()
-    const timeSpent = selectedQuiz.timeLimit * 60 - timeRemaining
+    const timeSpent = selectedQuiz.time_limit * 60 - timeRemaining
     
     const result: QuizResult = {
       quizId: selectedQuiz.id,
@@ -394,11 +404,11 @@ export default function QuizzesPage() {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        {quiz.timeLimit} min
+                        {quiz.time_limit} min
                       </div>
                       <div className="flex items-center gap-1">
                         <Target className="w-4 h-4" />
-                        {quiz.passingScore}% to pass
+                        {quiz.passing_score}% to pass
                       </div>
                     </div>
 
@@ -478,7 +488,7 @@ export default function QuizzesPage() {
                       <p className="text-sm text-muted-foreground">Questions</p>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{selectedQuiz.passingScore}%</div>
+                      <div className="text-2xl font-bold">{selectedQuiz.passing_score}%</div>
                       <p className="text-sm text-muted-foreground">Passing Score</p>
                     </div>
                   </div>
@@ -494,7 +504,7 @@ export default function QuizzesPage() {
               <CardContent className="space-y-4">
                 {selectedQuiz.questions.map((question, index) => {
                   const userAnswer = answers[question.id]
-                  const isCorrect = userAnswer === question.correctAnswer
+                  const isCorrect = userAnswer === question.correct_answer
 
                   return (
                     <div key={question.id} className="space-y-2">
@@ -513,7 +523,7 @@ export default function QuizzesPage() {
                           <div className="text-sm space-y-1">
                             <p className="text-muted-foreground">Your answer: {userAnswer}</p>
                             {!isCorrect && (
-                              <p className="text-green-600">Correct answer: {question.correctAnswer}</p>
+                              <p className="text-green-600">Correct answer: {question.correct_answer}</p>
                             )}
                             {question.explanation && (
                               <Alert>
