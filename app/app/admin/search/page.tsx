@@ -154,9 +154,10 @@ export default function AdminSearchPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // WebSocket connection for real-time streaming
-  const { lastMessage, sendMessage } = useWebSocket(
-    token ? `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:9001'}/ws/${token}` : null
-  )
+  const { lastMessage, sendMessage } = useWebSocket({
+    url: token ? `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:9001'}/ws/${token}` : undefined,
+    token: token || undefined
+  })
 
   useEffect(() => {
     if (lastMessage) {
@@ -182,9 +183,19 @@ export default function AdminSearchPage() {
 
   const fetchCatalogs = async () => {
     try {
-      const response = await catalogsApi.getCatalogs(token)
-      if (response.success) {
-        setCatalogs(response.response.catalogs || [])
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
+      const response = await fetch(`${apiUrl}/catalogs`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setCatalogs(data.response.catalogs || [])
+        }
       }
     } catch (error) {
       console.error("Failed to fetch catalogs:", error)
@@ -209,13 +220,25 @@ export default function AdminSearchPage() {
         catalog_id: selectedCatalog !== "all" ? selectedCatalog : undefined,
       }
 
-      const response = await queryApi.search(searchParams, token)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
+      const response = await fetch(`${apiUrl}/query/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify(searchParams),
+      })
       
-      if (response.success) {
-        setResults(response.response.results || [])
-        if (response.response.response) {
-          setStreamingResponse(response.response.response)
-          setIsStreaming(false)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setResults(data.response.results || [])
+          if (data.response.response) {
+            setStreamingResponse(data.response.response)
+            setIsStreaming(false)
+          }
         }
       }
     } catch (error) {
@@ -260,8 +283,25 @@ export default function AdminSearchPage() {
     setFeedback(prev => ({ ...prev, [resultId]: type }))
     
     try {
-      await queryApi.sendFeedback(resultId, type, token)
-      toast.success("Feedback sent")
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
+      const response = await fetch(`${apiUrl}/query/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({
+          result_id: resultId,
+          feedback: type
+        }),
+      })
+
+      if (response.ok) {
+        toast.success("Feedback sent")
+      } else {
+        toast.error("Failed to send feedback")
+      }
     } catch (error) {
       toast.error("Failed to send feedback")
     }
