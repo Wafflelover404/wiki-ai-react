@@ -498,7 +498,7 @@ interface FileViewerContentProps {
 }
 
 // Main File Content Viewer
-const FileContentViewer: React.FC<FileViewerContentProps> = async ({ file, token }) => {
+const FileContentViewer: React.FC<FileViewerContentProps> = ({ file, token }) => {
   const [content, setContent] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>("")
