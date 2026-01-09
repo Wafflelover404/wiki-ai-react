@@ -124,15 +124,26 @@ const PDFViewer: React.FC<{ filename: string; content: string }> = ({ filename, 
     if (!viewerRef.current) return
     
     if (!isFullscreen) {
-      if (viewerRef.current.requestFullscreen) {
-        viewerRef.current.requestFullscreen()
+      try {
+        if (viewerRef.current.requestFullscreen) {
+          viewerRef.current.requestFullscreen()
+        }
+        setIsFullscreen(true)
+      } catch (error) {
+        console.warn('Failed to enter fullscreen:', error)
       }
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen()
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen()
+        }
+        setIsFullscreen(false)
+      } catch (error) {
+        console.warn('Failed to exit fullscreen:', error)
+        // Update state even if exitFullscreen fails
+        setIsFullscreen(false)
       }
     }
-    setIsFullscreen(!isFullscreen)
   }
 
   if (isLoading) {
@@ -224,15 +235,26 @@ const WordViewer: React.FC<{ filename: string; content: string }> = ({ filename,
     if (!viewerRef.current) return
     
     if (!isFullscreen) {
-      if (viewerRef.current.requestFullscreen) {
-        viewerRef.current.requestFullscreen()
+      try {
+        if (viewerRef.current.requestFullscreen) {
+          viewerRef.current.requestFullscreen()
+        }
+        setIsFullscreen(true)
+      } catch (error) {
+        console.warn('Failed to enter fullscreen:', error)
       }
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen()
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen()
+        }
+        setIsFullscreen(false)
+      } catch (error) {
+        console.warn('Failed to exit fullscreen:', error)
+        // Update state even if exitFullscreen fails
+        setIsFullscreen(false)
       }
     }
-    setIsFullscreen(!isFullscreen)
   }
 
   if (isLoading) {
@@ -324,15 +346,26 @@ const ExcelViewer: React.FC<{ filename: string; content: string }> = ({ filename
     if (!viewerRef.current) return
     
     if (!isFullscreen) {
-      if (viewerRef.current.requestFullscreen) {
-        viewerRef.current.requestFullscreen()
+      try {
+        if (viewerRef.current.requestFullscreen) {
+          viewerRef.current.requestFullscreen()
+        }
+        setIsFullscreen(true)
+      } catch (error) {
+        console.warn('Failed to enter fullscreen:', error)
       }
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen()
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen()
+        }
+        setIsFullscreen(false)
+      } catch (error) {
+        console.warn('Failed to exit fullscreen:', error)
+        // Update state even if exitFullscreen fails
+        setIsFullscreen(false)
       }
     }
-    setIsFullscreen(!isFullscreen)
   }
 
   if (isLoading) {
@@ -429,15 +462,26 @@ const ImageViewer: React.FC<{ filename: string; content: string }> = ({ filename
     if (!viewerRef.current) return
     
     if (!isFullscreen) {
-      if (viewerRef.current.requestFullscreen) {
-        viewerRef.current.requestFullscreen()
+      try {
+        if (viewerRef.current.requestFullscreen) {
+          viewerRef.current.requestFullscreen()
+        }
+        setIsFullscreen(true)
+      } catch (error) {
+        console.warn('Failed to enter fullscreen:', error)
       }
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen()
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen()
+        }
+        setIsFullscreen(false)
+      } catch (error) {
+        console.warn('Failed to exit fullscreen:', error)
+        // Update state even if exitFullscreen fails
+        setIsFullscreen(false)
       }
     }
-    setIsFullscreen(!isFullscreen)
   }
 
   if (isLoading) {
