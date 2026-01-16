@@ -915,75 +915,7 @@ export default function AdminSearchPage() {
               </div>
             </div>
           </div>
-        {/* 
-        </ResizablePanel>
-          
-          <ResizableHandle withHandle />
-
-          <AI Response Sidebar - 30% initially />
-          <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-            <div className="h-full border-l bg-muted/20">
-              <div className="p-4 h-full flex flex-col">
-                <AI Response Header />
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b">
-                  <Brain className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold">AI Response</h3>
-                  {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
-                </div>
-
-                <AI Response Content />
-                <ScrollArea className="flex-1 pr-2">
-                  {messages.length > 0 && (messages[messages.length - 1]?.role === "assistant" || messages[messages.length - 1]?.role === "overview") ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
-                      {messages[messages.length - 1]?.content === "Generating AI overview..." ? (
-                        <span className="animate-pulse">{messages[messages.length - 1]?.content}</span>
-                      ) : (
-                        <ReactMarkdown>{messages[messages.length - 1]?.content}</ReactMarkdown>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center text-muted-foreground py-8">
-                      <Brain className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">AI responses will appear here</p>
-                      <p className="text-xs mt-1">Ask a question to get started</p>
-                    </div>
-                  )}
-                </ScrollArea>
-
-                <AI Response Actions />
-                {messages.length > 0 && (messages[messages.length - 1]?.role === "assistant" || messages[messages.length - 1]?.role === "overview") && (
-                  <div className="flex gap-2 mt-4 pt-3 border-t">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        const lastAssistantMessage = messages[messages.length - 1]
-                        if (lastAssistantMessage?.content) {
-                          navigator.clipboard.writeText(lastAssistantMessage.content)
-                          toast.success("Response copied to clipboard")
-                        }
-                      }}
-                    >
-                      <Copy className="w-3 h-3 mr-1" />
-                      Copy
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setMessages([])
-                      }}
-                    >
-                      <X className="w-3 h-3 mr-1" />
-                      Clear
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-        */}
+      </main>
       </main>
       
       {/* Settings Modal */}
