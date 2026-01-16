@@ -915,7 +915,8 @@ export default function AdminSearchPage() {
               </div>
             </div>
           </div>
-        {/* </ResizablePanel>
+        {/* 
+        </ResizablePanel>
           
           <ResizableHandle withHandle />
 
@@ -980,8 +981,9 @@ export default function AdminSearchPage() {
                 )}
               </div>
             </div>
-          </ResizablePanel> */}
+          </ResizablePanel>
         </ResizablePanelGroup>
+        */}
       </main>
       
       {/* Settings Modal */}
