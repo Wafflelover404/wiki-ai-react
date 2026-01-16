@@ -916,7 +916,6 @@ export default function AdminSearchPage() {
             </div>
           </div>
       </main>
-      </main>
       
       {/* Settings Modal */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
