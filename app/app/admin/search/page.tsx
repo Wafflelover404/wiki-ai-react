@@ -24,7 +24,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
-// import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { 
   Search, 
   Settings,
@@ -220,6 +219,7 @@ export default function AdminSearchPage() {
   const [loadingCatalogs, setLoadingCatalogs] = useState(false)
   const [selectedCatalogs, setSelectedCatalogs] = useState<string[]>([])
   const [showAiOverview, setShowAiOverview] = useState(true)
+  const [copilotMode, setCopilotMode] = useState(false)
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -629,10 +629,9 @@ export default function AdminSearchPage() {
     <>
       <AppHeader breadcrumbs={[{ label: "Admin" }, { label: "Search" }]} />
       <main className="flex-1 p-4 md:p-6">
-        {/* <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-100px)]">
-          <ResizablePanel defaultSize={70} minSize={40}> */}
-            <div className="max-w-6xl mx-auto">
-              <div className="h-full flex flex-col">
+        <div className="max-w-7xl mx-auto h-full">
+          <div className="p-2 h-full overflow-hidden">
+            <div className="h-full flex flex-col">
                 <ScrollArea className="flex-1 p-6" ref={scrollRef}>
                   {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto text-center">
@@ -773,7 +772,7 @@ export default function AdminSearchPage() {
                               </div>
                             )}
 
-                            {/* Overview Message Moved to AI Response Sidebar */}
+                            {/* AI Overview - Uncomment to enable */}
                             {/* {message.role === "overview" && (
                               <div className="max-w-2xl mx-auto">
                                 <div className="flex items-center gap-2 mb-3">
@@ -786,7 +785,7 @@ export default function AdminSearchPage() {
                               </div>
                             )} */}
 
-                            {/* Regular Assistant Message */}
+                            {/* Regular Assistant Message - Uncomment to enable */}
                             {/* {message.role === "assistant" && (
                               <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
                                 {message.content === "Generating AI overview..." ? (
@@ -869,14 +868,29 @@ export default function AdminSearchPage() {
                 {/* Search Input Area */}
                 <div className="border-t bg-background p-4">
                   <div className="flex items-center gap-2 mb-4">
-                    <Button
+                    {/* Settings Button - Temporarily Commented Out */}
+                    {/* <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setSettingsOpen(true)}
                     >
                       <Settings className="w-4 h-4" />
                       Settings
-                    </Button>
+                    </Button> */}
+                    
+                    {/* Copilot AI Search Mode Toggle */}
+                    <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-lg">
+                      <Bot className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">AI-agent Search</span>
+                      <Switch
+                        checked={copilotMode}
+                        onCheckedChange={() => {
+                          toast.info("Copilot AI Search Mode coming soon!")
+                        }}
+                        disabled
+                      />
+                      <span className="text-xs text-muted-foreground">Coming Soon</span>
+                    </div>
                     
                     {/* WebSocket Connection Status (hidden if not available) */}
                     {false && ( // Temporarily hide WebSocket status indicator
@@ -916,170 +930,6 @@ export default function AdminSearchPage() {
             </div>
           </div>
       </main>
-      
-      {/* Settings Modal */}
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Search Settings</DialogTitle>
-            <DialogDescription>
-              Configure your search preferences and scope
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-6">
-            {/* Search Scope */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Search Scope</h3>
-              
-              {loadingPlugins ? (
-                <div className="text-muted-foreground">Loading available search options...</div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4" />
-                        <span className="font-medium">All (Documents & Products)</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Search both knowledge base documents and OpenCart products</p>
-                    </div>
-                    <input
-                      type="radio"
-                      name="searchType"
-                      value="all"
-                      checked={searchType === 'all'}
-                      onChange={(e) => {
-                        setSearchType(e.target.value as any)
-                        saveSettings()
-                      }}
-                      disabled={!enabledPlugins.documents || !enabledPlugins.opencart}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        <span className="font-medium">Documents Only</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Search only knowledge base documents</p>
-                      {!enabledPlugins.documents && (
-                        <p className="text-sm text-red-600">Documents plugin is not enabled</p>
-                      )}
-                    </div>
-                    <input
-                      type="radio"
-                      name="searchType"
-                      value="documents"
-                      checked={searchType === 'documents'}
-                      onChange={(e) => {
-                        setSearchType(e.target.value as any)
-                        saveSettings()
-                      }}
-                      disabled={!enabledPlugins.documents}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <ShoppingCart className="w-4 h-4" />
-                        <span className="font-medium">Products Only</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Search only OpenCart products</p>
-                      {!enabledPlugins.opencart && (
-                        <p className="text-sm text-red-600">OpenCart plugin is not enabled</p>
-                      )}
-                    </div>
-                    <input
-                      type="radio"
-                      name="searchType"
-                      value="opencart"
-                      checked={searchType === 'opencart'}
-                      onChange={(e) => {
-                        setSearchType(e.target.value as any)
-                        saveSettings()
-                      }}
-                      disabled={!enabledPlugins.opencart}
-                    />
-                  </div>
-                  
-                  {/* Catalog Selection */}
-                  {enabledPlugins.opencart && (searchType === 'opencart' || searchType === 'all') && (
-                    <div className="mt-6">
-                      <h4 className="font-medium mb-3">Select Catalogs to Search</h4>
-                      
-                      {loadingCatalogs ? (
-                        <div className="text-muted-foreground">Loading catalogs...</div>
-                      ) : catalogs.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">
-                          No catalogs available. Create one in the OpenCart plugin.
-                        </div>
-                      ) : (
-                        <div className="space-y-2 max-h-40 overflow-y-auto">
-                          {catalogs.map((catalog: Catalog) => (
-                            <div key={catalog.catalog_id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={catalog.catalog_id}
-                                checked={selectedCatalogs.includes(catalog.catalog_id)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedCatalogs([...selectedCatalogs, catalog.catalog_id])
-                                  } else {
-                                    setSelectedCatalogs(selectedCatalogs.filter(id => id !== catalog.catalog_id))
-                                  }
-                                  saveSettings()
-                                }}
-                              />
-                              <label 
-                                htmlFor={catalog.catalog_id}
-                                className="text-sm font-medium cursor-pointer flex-1"
-                              >
-                                <div>
-                                  <span>{catalog.shop_name}</span>
-                                  <span className="text-muted-foreground ml-2">({catalog.total_products} products)</span>
-                                </div>
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {/* Display Options */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Display Options</h3>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    <span className="font-medium">Show AI Overview</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Display AI-generated summary of search results</p>
-                </div>
-                <Switch
-                  checked={showAiOverview}
-                  onCheckedChange={(checked) => {
-                    setShowAiOverview(checked)
-                    saveSettings()
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button onClick={() => setSettingsOpen(false)}>
-              Done
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       
       {/* Enhanced File Viewer Modal */}
       <FileViewerModal
