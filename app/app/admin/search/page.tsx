@@ -689,86 +689,89 @@ export default function AdminSearchPage() {
                                 </div>
                                 
                                 {message.searchResults && message.searchResults.length > 0 && (
-                                  <div className="space-y-3">
-                                    {message.searchResults.map((result: any, resultIndex: number) => (
-                                      <div 
-                                        key={result.id} 
-                                        className="border rounded-lg p-3 bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                                        onClick={() => handleDocumentClick(result)}
-                                      >
-                                        <div className="flex items-start justify-between mb-2">
-                                          <h4 className="font-medium text-sm flex items-center gap-2">
-                                            {result.type === 'document' && <FileText className="w-4 h-4 text-blue-500" />}
-                                            {result.type === 'product' && <ShoppingCart className="w-4 h-4 text-green-500" />}
-                                            {result.url ? (
-                                              <a 
-                                                href={result.url} 
-                                                target="_blank" 
-                                                rel="noopener"
-                                                className="text-blue-600 hover:underline flex items-center gap-1"
-                                                onClick={(e) => e.stopPropagation()}
-                                              >
-                                                {result.title}
-                                                <ExternalLink className="w-3 h-3" />
-                                              </a>
-                                            ) : (
-                                              <span className="flex items-center gap-2">
-                                                {result.title}
-                                                <Badge variant="secondary" className="text-xs">
-                                                  {result.type}
-                                                </Badge>
-                                              </span>
+                                  <ScrollArea className="h-64 w-full border rounded-md p-2">
+                                    <div className="space-y-3 pr-2">
+                                      {message.searchResults.map((result: any, resultIndex: number) => (
+                                        <div 
+                                          key={result.id} 
+                                          className="border rounded-lg p-3 bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                                          onClick={() => handleDocumentClick(result)}
+                                        >
+                                          <div className="flex items-start justify-between mb-2">
+                                            <h4 className="font-medium text-sm flex items-center gap-2">
+                                              {result.type === 'document' && <FileText className="w-4 h-4 text-blue-500" />}
+                                              {result.type === 'product' && <ShoppingCart className="w-4 h-4 text-green-500" />}
+                                              {result.url ? (
+                                                <a 
+                                                  href={result.url} 
+                                                  target="_blank" 
+                                                  rel="noopener"
+                                                  className="text-blue-600 hover:underline flex items-center gap-1"
+                                                  onClick={(e) => e.stopPropagation()}
+                                                >
+                                                  {result.title}
+                                                  <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                              ) : (
+                                                <span className="flex items-center gap-2">
+                                                  {result.title}
+                                                  <Badge variant="secondary" className="text-xs">
+                                                    {result.type}
+                                                  </Badge>
+                                                </span>
+                                              )}
+                                            </h4>
+                                            {result.type === 'document' && (
+                                              <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                                             )}
-                                          </h4>
-                                          {result.type === 'document' && (
-                                            <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                                          </div>
+                                          
+                                          <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
+                                            {result.content}
+                                          </p>
+                                          
+                                          {result.score && (
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                              <span>Relevance:</span>
+                                              <div className="flex-1 bg-secondary rounded-full h-2">
+                                                <div 
+                                                  className="bg-primary h-2 rounded-full" 
+                                                  style={{ width: `${Math.min(result.score * 100, 100)}%` }}
+                                                />
+                                              </div>
+                                              <span>{Math.round(result.score * 100)}%</span>
+                                            </div>
+                                          )}
+                                          
+                                          {result.metadata && Object.keys(result.metadata).length > 0 && (
+                                            <div className="mt-2 text-xs text-muted-foreground">
+                                              <div className="flex flex-wrap gap-1">
+                                                {Object.entries(result.metadata).map(([key, value]) => (
+                                                  <Badge key={key} variant="outline" className="text-xs">
+                                                    {key}: {String(value)}
+                                                  </Badge>
+                                                ))}
+                                              </div>
+                                            </div>
                                           )}
                                         </div>
-                                        
-                                        <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
-                                          {result.content}
-                                        </p>
-                                        
-                                        {result.price && (
-                                          <div className="flex items-center gap-2 mb-2">
-                                            {result.special_price ? (
-                                              <>
-                                                <span className="text-sm font-semibold text-green-600">
-                                                  {formatPrice(result.special_price)}
-                                                </span>
-                                                <span className="text-xs text-muted-foreground line-through">
-                                                  {formatPrice(result.price)}
-                                                </span>
-                                              </>
-                                            ) : (
-                                              <span className="text-sm font-semibold">
-                                                {formatPrice(result.price)}
-                                              </span>
-                                            )}
-                                          </div>
-                                        )}
-                                        
-                                        {result.shop_name && (
-                                          <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                            <Globe className="w-3 h-3" />
-                                            Shop: {result.shop_name}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
+                                      ))}
+                                    </div>
+                                  </ScrollArea>
                                 )}
                                 
                                 {message.sources && message.sources.length > 0 && (
                                   <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
                                     <p className="text-xs font-medium mb-2 text-blue-700 dark:text-blue-300">All Sources:</p>
-                                    <div className="flex flex-wrap gap-1">
-                                      {message.sources.map((source: string, sourceIndex: number) => (
-                                        <Badge key={sourceIndex} variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                                          {source}
-                                        </Badge>
-                                      ))}
-                                    </div>
+                                    <ScrollArea className="h-16 w-full">
+                                      <div className="flex flex-wrap gap-1 pb-2">
+                                        {message.sources.map((source: string, sourceIndex: number) => (
+                                          <Badge key={sourceIndex} variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                                            {source}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </ScrollArea>
                                   </div>
                                 )}
                               </div>
@@ -949,7 +952,9 @@ export default function AdminSearchPage() {
                       {messages[messages.length - 1]?.content === "Generating AI overview..." ? (
                         <span className="animate-pulse">{messages[messages.length - 1]?.content}</span>
                       ) : (
-                        <ReactMarkdown>{messages[messages.length - 1]?.content}</ReactMarkdown>
+                        <div className="max-h-[60vh] overflow-y-auto">
+                          <ReactMarkdown>{messages[messages.length - 1]?.content}</ReactMarkdown>
+                        </div>
                       )}
                     </div>
                   ) : (
