@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { UnifiedFileReader } from "@/components/ui/file-reader"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -82,6 +83,7 @@ function normalizePdfBase64Content(content: string): string {
 }
 
 interface FileItem {
+  id?: number
   filename: string
   size: number
   upload_date: string
@@ -98,7 +100,7 @@ export default function AdminFilesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [fileToDelete, setFileToDelete] = useState<string | null>(null)
+  const [fileToDelete, setFileToDelete] = useState<{filename: string, id?: number} | null>(null)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -106,6 +108,10 @@ export default function AdminFilesPage() {
   const [editingFile, setEditingFile] = useState<FileItem | null>(null)
   const [editMetadata, setEditMetadata] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Multi-select state
+  const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
 
   const fetchFiles = useCallback(async () => {
     if (!token) return
@@ -116,12 +122,13 @@ export default function AdminFilesPage() {
       if (response.status === "success" && response.response?.documents) {
         // Map API response to FileItem interface
         const mappedFiles = response.response.documents.map((doc: any) => ({
+          id: doc.id,
           filename: doc.filename,
-          size: doc.size || 0,
-          upload_date: doc.uploaded_at || new Date().toISOString(),
-          content_type: doc.content_type || "application/octet-stream",
-          metadata: doc.metadata,
-          indexed: doc.indexed || false
+          size: doc.file_size || 0,
+          upload_date: doc.upload_timestamp || new Date().toISOString(),
+          content_type: "application/octet-stream",
+          metadata: null,
+          indexed: true
         }))
         setFiles(mappedFiles)
       }
@@ -135,6 +142,11 @@ export default function AdminFilesPage() {
   useEffect(() => {
     fetchFiles()
   }, [fetchFiles])
+
+  // Filter files based on search query
+  const filteredFiles = files.filter(file =>
+    file.filename.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   const handleFileUpload = async () => {
     if (!uploadedFiles.length || !token) return
@@ -187,26 +199,76 @@ export default function AdminFilesPage() {
     setUploadedFiles(prev => [...prev, ...droppedFiles])
   }
 
-  const handleDeleteFile = async (filename: string) => {
+  const handleDeleteFile = async () => {
+    if (!fileToDelete || !token) return
+    
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'}/files/${filename}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      })
-
-      if (response.ok) {
+      let result
+      if (fileToDelete.id) {
+        // Use delete by ID for better performance
+        result = await filesApi.deleteById(token, fileToDelete.id.toString())
+      } else {
+        // Fallback to delete by filename
+        result = await filesApi.deleteByFilename(token, fileToDelete.filename)
+      }
+      
+      if (result.status === "success") {
         toast.success("File deleted successfully")
         fetchFiles()
       } else {
-        toast.error("Failed to delete file")
+        toast.error(result.message || "Failed to delete file")
       }
     } catch (error) {
+      console.error("Failed to delete file:", error)
       toast.error("Failed to delete file")
     }
-    setDeleteDialogOpen(false)
     setFileToDelete(null)
+  }
+
+  // Multi-select functions
+  const handleFileSelect = (fileId: number, event: React.MouseEvent) => {
+    event.stopPropagation()
+    const newSelected = new Set(selectedFiles)
+    if (newSelected.has(fileId)) {
+      newSelected.delete(fileId)
+    } else {
+      newSelected.add(fileId)
+    }
+    setSelectedFiles(newSelected)
+  }
+
+  const handleSelectAll = () => {
+    if (selectedFiles.size === filteredFiles.length) {
+      setSelectedFiles(new Set())
+    } else {
+      setSelectedFiles(new Set(filteredFiles.map(f => f.id!).filter(id => id !== undefined)))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedFiles.size === 0 || !token) return
+    
+    try {
+      const deletePromises = Array.from(selectedFiles).map(fileId => 
+        filesApi.deleteById(token, fileId.toString())
+      )
+      
+      const results = await Promise.all(deletePromises)
+      const successCount = results.filter(r => r.status === "success").length
+      
+      if (successCount === selectedFiles.size) {
+        toast.success(`Successfully deleted ${successCount} files`)
+      } else {
+        toast.success(`Deleted ${successCount} out of ${selectedFiles.size} files`)
+      }
+      
+      setSelectedFiles(new Set())
+      setBulkDeleteDialogOpen(false)
+      fetchFiles()
+    } catch (error) {
+      console.error("Failed to delete files:", error)
+      toast.error("Failed to delete some files")
+    }
   }
 
   const handleEditMetadata = async () => {
@@ -257,10 +319,6 @@ export default function AdminFilesPage() {
     if (contentType.includes("zip") || contentType.includes("archive")) return <FileArchive className="h-4 w-4" />
     return <File className="h-4 w-4" />
   }
-
-  const filteredFiles = files.filter(file =>
-    file.filename.toLowerCase().includes(searchQuery.toLowerCase())
-  )
 
   const totalSize = files.reduce((acc, file) => acc + file.size, 0)
   const indexedCount = files.filter(file => file.indexed).length
@@ -421,16 +479,33 @@ export default function AdminFilesPage() {
                   Manage and view all uploaded documents
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="relative flex-shrink-0">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input
                     placeholder="Search files..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-64"
+                    className="pl-10 w-80 h-10 bg-background border-input hover:border-primary/50 focus:border-primary transition-colors"
                   />
                 </div>
+                {filteredFiles.length > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-md border">
+                    <Checkbox
+                      checked={selectedFiles.size === filteredFiles.length && filteredFiles.length > 0}
+                      onCheckedChange={handleSelectAll}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <span className="text-sm font-medium text-foreground">
+                      {selectedFiles.size === filteredFiles.length ? 'Deselect All' : 'Select All'}
+                    </span>
+                    {selectedFiles.size > 0 && (
+                      <span className="text-xs text-muted-foreground bg-background px-2 py-1 rounded-full">
+                        {selectedFiles.size} selected
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -440,23 +515,68 @@ export default function AdminFilesPage() {
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : (
-              <ScrollArea className="h-[500px]">
-                <div className="space-y-2">
-                  {filteredFiles.map((file) => (
-                    <div key={file.filename} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        {getFileIcon(file.content_type)}
-                        <div>
-                          <h4 className="font-medium">{file.filename}</h4>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>{formatFileSize(file.size)}</span>
-                            <span>{formatDate(file.upload_date)}</span>
-                            <Badge variant={file.indexed ? "default" : "secondary"} className="bg-green-100">
-                              Indexed
-                            </Badge>
+              <>
+                {/* Bulk Actions Bar */}
+                {selectedFiles.size > 0 && (
+                  <div className="flex items-center justify-between p-4 bg-muted/50 border-b mb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {selectedFiles.size} file{selectedFiles.size !== 1 ? 's' : ''} selected
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedFiles(new Set())}
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Clear Selection
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setBulkDeleteDialogOpen(true)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Selected
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-2">
+                    {filteredFiles.map((file) => (
+                      <div 
+                        key={file.filename} 
+                        className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
+                          selectedFiles.has(file.id!) ? 'bg-muted/50 border-muted' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={selectedFiles.has(file.id!)}
+                            onCheckedChange={(checked) => {
+                              const newSelected = new Set(selectedFiles)
+                              if (checked) {
+                                newSelected.add(file.id!)
+                              } else {
+                                newSelected.delete(file.id!)
+                              }
+                              setSelectedFiles(newSelected)
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          {getFileIcon(file.content_type)}
+                          <div>
+                            <h4 className="font-medium">{file.filename}</h4>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>{formatFileSize(file.size)}</span>
+                              <span>{formatDate(file.upload_date)}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
@@ -483,7 +603,7 @@ export default function AdminFilesPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => {
-                              setFileToDelete(file.filename)
+                              setFileToDelete({filename: file.filename, id: file.id})
                               setDeleteDialogOpen(true)
                             }}
                             className="text-destructive"
@@ -502,6 +622,7 @@ export default function AdminFilesPage() {
                   )}
                 </div>
               </ScrollArea>
+            </>
             )}
           </CardContent>
         </Card>
@@ -552,13 +673,31 @@ export default function AdminFilesPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Delete File</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete "{fileToDelete}"? This action cannot be undone.
+                Are you sure you want to delete &quot;{fileToDelete?.filename}&quot;? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => fileToDelete && handleDeleteFile(fileToDelete)}>
+              <AlertDialogAction onClick={handleDeleteFile}>
                 Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Bulk Delete Confirmation Dialog */}
+        <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Multiple Files</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete {selectedFiles.size} file{selectedFiles.size !== 1 ? 's' : ''}? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground">
+                Delete {selectedFiles.size} File{selectedFiles.size !== 1 ? 's' : ''}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
