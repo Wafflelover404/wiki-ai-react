@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { 
   Search, 
   Settings,
@@ -628,249 +629,370 @@ export default function SearchPage() {
     <>
       <AppHeader breadcrumbs={[{ label: "Search" }]} />
       <main className="flex-1 p-4 md:p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="h-full flex flex-col">
-            <div className="flex-1 p-6" ref={scrollRef}>
-              {messages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto text-center">
-                  <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-                    <Sparkles className="w-10 h-10 text-primary" />
-                  </div>
-                  <h2 className="text-2xl font-bold mb-2">Search Your Knowledge Base</h2>
-                  <p className="text-muted-foreground mb-8">
-                    Ask questions about your documents and get AI-powered answers with source references.
-                  </p>
+        <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-100px)]">
+          {/* Main Search Area - 70% initially */}
+          <ResizablePanel defaultSize={70} minSize={40}>
+            <div className="p-2 h-full overflow-hidden">
+              <div className="h-full flex flex-col">
+                <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+                  {messages.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto text-center">
+                      <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                        <Sparkles className="w-10 h-10 text-primary" />
+                      </div>
+                      <h2 className="text-2xl font-bold mb-2">Search Your Knowledge Base</h2>
+                      <p className="text-muted-foreground mb-8">
+                        Ask questions about your documents and get AI-powered answers with source references.
+                      </p>
 
-                  <div className="grid gap-3 w-full max-w-lg">
-                    <p className="text-sm font-medium text-muted-foreground">Try asking:</p>
-                    {suggestedQuestions.map((question, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-4 text-left bg-transparent"
-                        onClick={() => setInput(question)}
-                      >
-                        <MessageSquare className="w-4 h-4 mr-3 flex-shrink-0" />
-                        <span className="truncate">{question}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {messages.map((message, index) => (
-                    <div key={message.id} className="flex gap-4">
-                      {message.role === "user" && (
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                          <User className="w-4 h-4" />
-                        </div>
-                      )}
-                      
-                      {(message.role === "assistant" || message.role === "sources" || message.role === "overview") && (
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          {message.role === "sources" && <FileText className="w-4 h-4 text-blue-600" />}
-                          {message.role === "overview" && <Sparkles className="w-4 h-4 text-purple-600" />}
-                          {message.role === "assistant" && <Bot className="w-4 h-4 text-primary" />}
-                        </div>
-                      )}
-                      
-                      <div className="flex-1 space-y-4">
-                        {/* Sources Message */}
-                        {message.role === "sources" && (
-                          <div>
-                            <div className="flex items-center gap-2 mb-3">
-                              <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              <span className="font-medium text-blue-900 dark:text-blue-100">Sources</span>
+                      <div className="grid gap-3 w-full max-w-lg">
+                        <p className="text-sm font-medium text-muted-foreground">Try asking:</p>
+                        {suggestedQuestions.map((question, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            className="justify-start h-auto py-3 px-4 text-left bg-transparent"
+                            onClick={() => setInput(question)}
+                          >
+                            <MessageSquare className="w-4 h-4 mr-3 flex-shrink-0" />
+                            <span className="truncate">{question}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {messages.map((message, index) => (
+                        <div key={message.id} className="flex gap-4">
+                          {message.role === "user" && (
+                            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                              <User className="w-4 h-4" />
                             </div>
-                            
-                            {message.searchResults && message.searchResults.length > 0 && (
-                              <div className="space-y-3">
-                                {message.searchResults.map((result: any, resultIndex: number) => (
-                                  <div 
-                                    key={result.id} 
-                                    className="border rounded-lg p-3 bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                                    onClick={() => handleDocumentClick(result)}
-                                  >
-                                    <div className="flex items-start justify-between mb-2">
-                                      <h4 className="font-medium text-sm flex items-center gap-2">
-                                        {result.type === 'document' && <FileText className="w-4 h-4 text-blue-500" />}
-                                        {result.type === 'product' && <ShoppingCart className="w-4 h-4 text-green-500" />}
-                                        {result.url ? (
-                                          <a 
-                                            href={result.url} 
-                                            target="_blank" 
-                                            rel="noopener"
-                                            className="text-blue-600 hover:underline flex items-center gap-1"
-                                            onClick={(e) => e.stopPropagation()}
-                                          >
-                                            {result.title}
-                                            <ExternalLink className="w-3 h-3" />
-                                          </a>
-                                        ) : (
-                                          <span className="flex items-center gap-2">
-                                            {result.title}
-                                            <Badge variant="secondary" className="text-xs">
-                                              {result.type}
-                                            </Badge>
-                                          </span>
+                          )}
+                          
+                          {(message.role === "assistant" || message.role === "sources" || message.role === "overview") && (
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              {message.role === "sources" && <FileText className="w-4 h-4 text-blue-600" />}
+                              {message.role === "overview" && <Sparkles className="w-4 h-4 text-purple-600" />}
+                              {message.role === "assistant" && <Bot className="w-4 h-4 text-primary" />}
+                            </div>
+                          )}
+                          
+                          <div className="flex-1 space-y-4">
+                            {/* Sources Message */}
+                            {message.role === "sources" && (
+                              <div>
+                                <div className="flex items-center gap-2 mb-3">
+                                  <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                  <span className="font-medium text-blue-900 dark:text-blue-100">Sources</span>
+                                </div>
+                                
+                                {message.searchResults && message.searchResults.length > 0 && (
+                                  <div className="space-y-3">
+                                    {message.searchResults.map((result: any, resultIndex: number) => (
+                                      <div 
+                                        key={result.id} 
+                                        className="border rounded-lg p-3 bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                                        onClick={() => handleDocumentClick(result)}
+                                      >
+                                        <div className="flex items-start justify-between mb-2">
+                                          <h4 className="font-medium text-sm flex items-center gap-2">
+                                            {result.type === 'document' && <FileText className="w-4 h-4 text-blue-500" />}
+                                            {result.type === 'product' && <ShoppingCart className="w-4 h-4 text-green-500" />}
+                                            {result.url ? (
+                                              <a 
+                                                href={result.url} 
+                                                target="_blank" 
+                                                rel="noopener"
+                                                className="text-blue-600 hover:underline flex items-center gap-1"
+                                                onClick={(e) => e.stopPropagation()}
+                                              >
+                                                {result.title}
+                                                <ExternalLink className="w-3 h-3" />
+                                              </a>
+                                            ) : (
+                                              <span className="flex items-center gap-2">
+                                                {result.title}
+                                                <Badge variant="secondary" className="text-xs">
+                                                  {result.type}
+                                                </Badge>
+                                              </span>
+                                            )}
+                                          </h4>
+                                          {result.type === 'document' && (
+                                            <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                                          )}
+                                        </div>
+                                        
+                                        <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
+                                          {result.content}
+                                        </p>
+                                        
+                                        {result.price && (
+                                          <div className="flex items-center gap-2 mb-2">
+                                            {result.special_price ? (
+                                              <>
+                                                <span className="text-sm font-semibold text-green-600">
+                                                  {formatPrice(result.special_price)}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground line-through">
+                                                  {formatPrice(result.price)}
+                                                </span>
+                                              </>
+                                            ) : (
+                                              <span className="text-sm font-semibold">
+                                                {formatPrice(result.price)}
+                                              </span>
+                                            )}
+                                          </div>
                                         )}
-                                      </h4>
-                                      {result.type === 'document' && (
-                                        <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                                      )}
-                                    </div>
-                                    
-                                    <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
-                                      {result.content}
-                                    </p>
-                                    
-                                    {result.metadata?.score && (
-                                      <div className="text-xs text-muted-foreground">
-                                        Relevance: {Math.round(result.metadata.score * 100)}%
+                                        
+                                        {result.shop_name && (
+                                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Globe className="w-3 h-3" />
+                                            Shop: {result.shop_name}
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
+                                    ))}
                                   </div>
-                                ))}
+                                )}
+                                
+                                {message.sources && message.sources.length > 0 && (
+                                  <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+                                    <p className="text-xs font-medium mb-2 text-blue-700 dark:text-blue-300">All Sources:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {message.sources.map((source: string, sourceIndex: number) => (
+                                        <Badge key={sourceIndex} variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                                          {source}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Overview Message Moved to AI Response Sidebar */}
+                            {/* {message.role === "overview" && (
+                              <div className="max-w-2xl mx-auto">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                  <span className="font-medium text-purple-900 dark:text-purple-100">AI Overview</span>
+                                </div>
+                                <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
+                                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                                </div>
+                              </div>
+                            )} */}
+
+                            {/* Regular Assistant Message */}
+                            {/* {message.role === "assistant" && (
+                              <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
+                                {message.content === "Generating AI overview..." ? (
+                                  <span className="animate-pulse">{message.content}</span>
+                                ) : (
+                                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                                )}
+                              </div>
+                            )} */}
+
+                            {/* User Message */}
+                            {message.role === "user" && (
+                              <p>{message.content}</p>
+                            )}
+
+                            {/* Feedback button only for main assistant messages */}
+                            {message.role === "assistant" && (
+                              <div className="mt-3 flex items-center gap-2">
+                                <Dialog
+                                  open={isFeedbackOpen && feedbackMessage?.id === message.id}
+                                  onOpenChange={setIsFeedbackOpen}
+                                >
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 text-xs"
+                                      onClick={() => setFeedbackMessage(message)}
+                                    >
+                                      <ThumbsDown className="w-3 h-3 mr-1" />
+                                      Report Issue
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Report an Issue</DialogTitle>
+                                      <DialogDescription>
+                                        Help us improve by describing what was wrong with this response.
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <Textarea
+                                      placeholder="Describe the issue..."
+                                      value={feedbackText}
+                                      onChange={(e) => setFeedbackText(e.target.value)}
+                                      rows={4}
+                                    />
+                                    <DialogFooter>
+                                      <Button variant="outline" onClick={() => setIsFeedbackOpen(false)}>
+                                        Cancel
+                                      </Button>
+                                      <Button onClick={handleFeedback} disabled={!feedbackText.trim()}>
+                                        Submit Feedback
+                                      </Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
                               </div>
                             )}
                           </div>
-                        )}
+                        </div>
+                      ))}
 
-                        {/* Overview Message */}
-                        {message.role === "overview" && (
-                          <div>
-                            <div className="flex items-center gap-2 mb-3">
-                              <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                              <span className="font-medium text-purple-900 dark:text-purple-100">AI Overview</span>
-                            </div>
-                            <div className="prose prose-sm max-w-none dark:prose-invert">
-                              <ReactMarkdown>{message.content}</ReactMarkdown>
-                            </div>
+                      {isLoading && (
+                        <div className="flex gap-4">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Bot className="w-4 h-4 text-primary" />
                           </div>
-                        )}
-
-                        {/* User Message */}
-                        {message.role === "user" && (
-                          <p>{message.content}</p>
-                        )}
-
-                        {/* Assistant Message */}
-                        {message.role === "assistant" && (
-                          <div>
-                            <div className="prose prose-sm max-w-none dark:prose-invert">
-                              <ReactMarkdown>{message.content}</ReactMarkdown>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Feedback button only for main assistant messages */}
-                        {message.role === "assistant" && (
-                          <div className="mt-3 flex items-center gap-2">
-                            <Dialog
-                              open={isFeedbackOpen && feedbackMessage?.id === message.id}
-                              onOpenChange={setIsFeedbackOpen}
-                            >
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 text-xs"
-                                  onClick={() => setFeedbackMessage(message)}
-                                >
-                                  <ThumbsDown className="w-3 h-3 mr-1" />
-                                  Report Issue
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Report an Issue</DialogTitle>
-                                  <DialogDescription>
-                                    Help us improve by describing what was wrong with this response.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <Textarea
-                                  placeholder="Describe issue..."
-                                  value={feedbackText}
-                                  onChange={(e) => setFeedbackText(e.target.value)}
-                                  rows={4}
-                                />
-                                <DialogFooter>
-                                  <Button variant="outline" onClick={() => setIsFeedbackOpen(false)}>
-                                    Cancel
-                                  </Button>
-                                  <Button onClick={handleFeedback} disabled={!feedbackText.trim()}>
-                                    Submit Feedback
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-
-                  {isLoading && (
-                    <div className="flex gap-4">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Bot className="w-4 h-4 text-primary" />
-                      </div>
-                      <Card className="max-w-[80%] animate-pulse">
-                        <CardContent className="p-4 flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Searching...</span>
-                        </CardContent>
-                      </Card>
+                          <Card className="max-w-[80%] animate-pulse">
+                            <CardContent className="p-4 flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Searching...</span>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
-            </div>
+                </ScrollArea>
 
-            {/* Search Input Area */}
-            <div className="border-t bg-background p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSettingsOpen(true)}
-                >
-                  <Settings className="w-4 h-4" />
-                  Settings
-                </Button>
-                
-                <div className="flex-1" />
-                <div className="text-xs text-muted-foreground">
-                  {searchType === 'all' ? 'All' : searchType === 'documents' ? 'Documents' : 'Products'}
+                {/* Search Input Area */}
+                <div className="border-t bg-background p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSettingsOpen(true)}
+                    >
+                      <Settings className="w-4 h-4" />
+                      Settings
+                    </Button>
+                    
+                    {/* WebSocket Connection Status (hidden if not available) */}
+                    {false && ( // Temporarily hide WebSocket status indicator
+                      <div className="flex items-center gap-1 text-xs">
+                        <Wifi className="w-3 h-3 text-green-500" />
+                        <span className="text-green-600">Real-time Search</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex-1" />
+                    <div className="text-xs text-muted-foreground">
+                      {searchType === 'all' ? 'All' : searchType === 'documents' ? 'Documents' : 'Products'}
+                    </div>
+                  </div>
+                  <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="Ask a question about your knowledge base..."
+                        className="pl-12 pr-12 h-12 text-base"
+                        disabled={isLoading}
+                      />
+                      <Button
+                        type="submit"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                        disabled={!input.trim() || isLoading}
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </form>
                 </div>
               </div>
-              <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask a question about your documents..."
-                    className="pl-12 pr-24 h-12 text-base"
-                    disabled={isLoading}
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={!input.trim() || isLoading}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Send className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-              </form>
             </div>
-          </div>
-        </div>
+          </ResizablePanel>
+          
+          {/* Resizable Handle */}
+          <ResizableHandle withHandle />
+
+          {/* AI Response Sidebar - 30% initially */}
+          <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+            <div className="h-full border-l bg-muted/20">
+              <div className="p-4 h-full flex flex-col">
+                {/* AI Response Header */}
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b">
+                  <Brain className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold">AI Response</h3>
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
+                </div>
+
+                {/* {message.role === "assistant" && (
+                  <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
+                    {message.content === "Generating AI overview..." ? (
+                      <span className="animate-pulse">{message.content}</span>
+                    ) : (
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    )}
+                  </div>
+                )} */} 
+
+
+                {/* AI Response Content */}
+                <ScrollArea className="flex-1 pr-2">
+                  {messages.length > 0 && (messages[messages.length - 1]?.role === "assistant" || messages[messages.length - 1]?.role === "overview") ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
+                      {messages[messages.length - 1]?.content === "Generating AI overview..." ? (
+                        <span className="animate-pulse">{messages[messages.length - 1]?.content}</span>
+                      ) : (
+                        <ReactMarkdown>{messages[messages.length - 1]?.content}</ReactMarkdown>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted-foreground py-8">
+                      <Brain className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">AI responses will appear here</p>
+                      <p className="text-xs mt-1">Ask a question to get started</p>
+                    </div>
+                  )}
+                </ScrollArea>
+
+                {/* AI Response Actions */}
+                {messages.length > 0 && (messages[messages.length - 1]?.role === "assistant" || messages[messages.length - 1]?.role === "overview") && (
+                  <div className="flex gap-2 mt-4 pt-3 border-t">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const lastAssistantMessage = messages[messages.length - 1]
+                        if (lastAssistantMessage?.content) {
+                          navigator.clipboard.writeText(lastAssistantMessage.content)
+                          toast.success("Response copied to clipboard")
+                        }
+                      }}
+                    >
+                      <Copy className="w-3 h-3 mr-1" />
+                      Copy
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setMessages([])
+                      }}
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Clear
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </main>
       
       {/* Settings Modal */}
