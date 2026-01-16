@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   BarChart3,
   Users,
@@ -54,17 +55,30 @@ export default function AdminDashboardPage() {
   const [manualReports, setManualReports] = useState<Report[]>([])
   const [fileCount, setFileCount] = useState(0)
   const [userCount, setUserCount] = useState(0)
+  const [volumeData, setVolumeData] = useState<any[]>([])
+  const [selectedPeriod, setSelectedPeriod] = useState(7)
   const [isLoading, setIsLoading] = useState(true)
+  const [isVolumeLoading, setIsVolumeLoading] = useState(false)
+
+  // Add a separate state to trigger re-fetch when period changes
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handlePeriodChange = (newPeriod: number) => {
+    setSelectedPeriod(newPeriod);
+    setRefreshKey(prev => prev + 1); // Force re-fetch
+    setIsVolumeLoading(true); // Show loading state for volume data
+  }
 
   const fetchData = useCallback(async () => {
     if (!token || !isAdmin) return
 
     try {
-      // Fetch basic admin data
-      const [metricsRes, filesRes, usersRes] = await Promise.all([
+      // Fetch basic admin data and volume data
+      const [metricsRes, filesRes, usersRes, volumeRes] = await Promise.all([
         metricsApi.summary(token, "24h", "global"),
         filesApi.list(token),
         adminApi.listAccounts(token),
+        metricsApi.volume(token, selectedPeriod, "global"),
       ])
       
       if (metricsRes.status === "success" && metricsRes.response) {
@@ -76,6 +90,10 @@ export default function AdminDashboardPage() {
       if (usersRes.status === "success" && usersRes.response) {
         setUserCount(usersRes.response.accounts?.length || 0)
       }
+      if (volumeRes.status === "success" && volumeRes.response) {
+        setVolumeData(volumeRes.response.data || [])
+      }
+      setIsVolumeLoading(false);
       
       // Only fetch reports if user is admin
       if (isAdmin) {
@@ -96,7 +114,7 @@ export default function AdminDashboardPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [token, isAdmin])
+  }, [token, isAdmin, selectedPeriod])
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -108,7 +126,7 @@ export default function AdminDashboardPage() {
     if (isAdmin) {
       fetchData()
     }
-  }, [isAdmin, fetchData])
+  }, [isAdmin, selectedPeriod, refreshKey, fetchData])
 
   // Add 30-second polling for real-time updates
   useEffect(() => {
@@ -144,16 +162,11 @@ export default function AdminDashboardPage() {
     { name: "Failed", value: metrics?.failed_queries || 0, color: "var(--color-destructive)" },
   ]
 
-  // Mock chart data - in production this would come from actual metrics
-  const chartData = [
-    { date: "Mon", queries: 45, success: 42 },
-    { date: "Tue", queries: 52, success: 48 },
-    { date: "Wed", queries: 38, success: 35 },
-    { date: "Thu", queries: 65, success: 60 },
-    { date: "Fri", queries: 48, success: 45 },
-    { date: "Sat", queries: 32, success: 30 },
-    { date: "Sun", queries: 28, success: 26 },
-  ]
+  // Transform volume data for chart - only show total queries
+  const chartData = volumeData.map(day => ({
+    date: day.date,
+    queries: day.queries,
+  }))
 
   return (
     <>
@@ -217,21 +230,40 @@ export default function AdminDashboardPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>Query Volume</CardTitle>
-              <CardDescription>Daily query trends over the past week</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Query Volume</CardTitle>
+                  <CardDescription>Daily query trends over selected period</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* <span className="text-sm text-muted-foreground">{selectedPeriod} days</span> */}
+                  <Select value={selectedPeriod.toString()} onValueChange={(value) => handlePeriodChange(Number(value))}>
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue placeholder="Select period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 days</SelectItem>
+                      <SelectItem value="14">14 days</SelectItem>
+                      <SelectItem value="30">30 days</SelectItem>
+                      <SelectItem value="90">90 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
+              <div className="h-[300px] relative">
+                {isVolumeLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                )}
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="colorQueries" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
                         <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorSuccess" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-success)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="var(--color-success)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -250,13 +282,6 @@ export default function AdminDashboardPage() {
                       stroke="var(--color-primary)"
                       fillOpacity={1}
                       fill="url(#colorQueries)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="success"
-                      stroke="var(--color-success)"
-                      fillOpacity={1}
-                      fill="url(#colorSuccess)"
                     />
                   </AreaChart>
                 </ResponsiveContainer>

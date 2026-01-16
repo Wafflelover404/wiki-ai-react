@@ -111,7 +111,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isAdmin && (
+        {/* {isAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel>Integrations</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -129,7 +129,7 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        )}
+        )} */} {/* Removed on 11.01.2026 (11 Jan) */}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">

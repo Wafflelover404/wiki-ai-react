@@ -96,17 +96,22 @@ export default function UsersPage() {
     if (!token) return
 
     try {
-      const [usersRes, filesRes] = await Promise.all([adminApi.listAccounts(token), filesApi.list(token)])
+      const [usersRes, filesRes] = await Promise.all([
+        adminApi.listAccounts(token), 
+        filesApi.list(token)
+      ])
 
       if (usersRes.status === "success" && usersRes.response) {
         setUsers(usersRes.response.accounts || [])
         setFilteredUsers(usersRes.response.accounts || [])
       }
+      
       if (filesRes.status === "success" && filesRes.response) {
-        setAllFiles((filesRes.response.documents || []).map((d: any) => d.filename).filter(Boolean))
+        setAllFiles(filesRes.response.documents?.map((doc: any) => doc.filename) || [])
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
+      toast.error("Failed to load data")
     } finally {
       setIsLoading(false)
     }
@@ -390,23 +395,25 @@ export default function UsersPage() {
                   
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
-                    <div className="relative">
-                      <select
-                        id="role"
-                        value={newRole}
-                        onChange={(e) => setNewRole(e.target.value)}
-                        disabled={isCreating}
-                        className="w-full h-11 px-4 pr-10 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
-                      >
-                        <option value="user">👤 User</option>
-                        <option value="admin">🛡️ Admin</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
+                    <Select value={newRole} onValueChange={setNewRole} disabled={isCreating}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            User
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="admin">
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-4 h-4" />
+                            Admin
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                       {newRole === "admin" ? (
                         <>
@@ -549,7 +556,7 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{user.organization_id || "N/A"}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{user.allowed_files?.length || 0} files</Badge>
+                      <Badge variant="outline">{(user.role === "admin") ? "all" : (user.allowed_files?.length || 0)} files</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}
@@ -611,23 +618,25 @@ export default function UsersPage() {
                   
                   <div className="space-y-2">
                     <Label htmlFor="edit-role">Role</Label>
-                    <div className="relative">
-                      <select
-                        id="edit-role"
-                        value={editRole}
-                        onChange={(e) => setEditRole(e.target.value)}
-                        disabled={isSaving}
-                        className="w-full h-11 px-4 pr-10 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
-                      >
-                        <option value="user">👤 User</option>
-                        <option value="admin">🛡️ Admin</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
+                    <Select value={editRole} onValueChange={setEditRole} disabled={isSaving}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            User
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="admin">
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-4 h-4" />
+                            Admin
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                       {editRole === "admin" ? (
                         <>
@@ -732,23 +741,25 @@ export default function UsersPage() {
                   
                   <div className="space-y-2">
                     <Label htmlFor="invite-role">Role</Label>
-                    <div className="relative">
-                      <select
-                        id="invite-role"
-                        value={inviteRole}
-                        onChange={(e) => setInviteRole(e.target.value)}
-                        disabled={isCreatingInvite}
-                        className="w-full h-11 px-4 pr-10 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
-                      >
-                        <option value="user">👤 User</option>
-                        <option value="admin">🛡️ Admin</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
+                    <Select value={inviteRole} onValueChange={setInviteRole} disabled={isCreatingInvite}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            User
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="admin">
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-4 h-4" />
+                            Admin
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                       {inviteRole === "admin" ? (
                         <>
@@ -766,26 +777,43 @@ export default function UsersPage() {
                   
                   <div className="space-y-2">
                     <Label htmlFor="invite-expires">Expires In</Label>
-                    <div className="relative">
-                      <select
-                        id="invite-expires"
-                        value={inviteExpiresInDays}
-                        onChange={(e) => setInviteExpiresInDays(Number(e.target.value))}
-                        disabled={isCreatingInvite}
-                        className="w-full h-11 px-4 pr-10 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
-                      >
-                        <option value={1}>🕐 1 Day</option>
-                        <option value={3}>🕐 3 Days</option>
-                        <option value={7}>🕐 1 Week</option>
-                        <option value={14}>🕐 2 Weeks</option>
-                        <option value={30}>🕐 1 Month</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
+                    <Select value={inviteExpiresInDays.toString()} onValueChange={(value) => setInviteExpiresInDays(Number(value))} disabled={isCreatingInvite}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select expiration" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">
+                          <div className="flex items-center gap-2">
+                            <span>🕐</span>
+                            1 Day
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="3">
+                          <div className="flex items-center gap-2">
+                            <span>🕐</span>
+                            3 Days
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="7">
+                          <div className="flex items-center gap-2">
+                            <span>🕐</span>
+                            1 Week
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="14">
+                          <div className="flex items-center gap-2">
+                            <span>🕐</span>
+                            2 Weeks
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="30">
+                          <div className="flex items-center gap-2">
+                            <span>🕐</span>
+                            1 Month
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="space-y-2">

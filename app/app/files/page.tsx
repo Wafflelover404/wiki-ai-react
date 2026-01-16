@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import {
   FileText,
   Upload,
@@ -65,6 +66,7 @@ import {
   ChevronRight,
   Share2,
   Printer,
+  Brain,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -601,16 +603,20 @@ export default function FilesPage() {
   const [deleteFile, setDeleteFile] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // AI Response state
+  const [aiResponse, setAiResponse] = useState("")
+  const [isAiLoading, setIsAiLoading] = useState(false)
+
   const fetchFiles = useCallback(async () => {
     if (!token) return
 
     try {
       const result = await filesApi.list(token)
-      if (result.status === "success" && result.response) {
+      if (result.status === "success" && result.response?.documents) {
         const fileItems: FileItem[] = (result.response.documents || []).map((doc: any) => ({
-          name: doc.filename || doc.original_filename || 'Unknown',
-          type: getFileType(doc.filename || doc.original_filename || 'Unknown'),
-          size: doc.size
+          name: doc.filename || 'Unknown',
+          type: getFileType(doc.filename || 'Unknown'),
+          size: doc.file_size || 0
         }))
         setFiles(fileItems)
         setFilteredFiles(fileItems)
@@ -667,16 +673,15 @@ export default function FilesPage() {
     try {
       const result = await filesApi.list(token)
       if (result.status === "success" && result.response?.documents) {
-        // Find the file in the list to get actual file data
+        // Find file in list to get actual file data
         const fileData = result.response.documents.find((doc: any) => doc.filename === filename)
         if (fileData) {
           const fileItem: FileReaderItem = {
-            filename: fileData.filename || fileData.original_filename || filename,
-            size: fileData.size || 0,
-            upload_date: fileData.uploaded_at || new Date().toISOString(),
-            content_type: 'application/octet-stream', // We'll determine this from file extension
-            indexed: false, // We'll assume false for now
-            metadata: fileData.metadata || {}
+            filename: fileData.filename || filename,
+            size: fileData.file_size || 0,
+            upload_date: fileData.upload_timestamp || new Date().toISOString(),
+            content_type: 'application/octet-stream',
+            indexed: false
           }
           setSelectedFile(fileItem)
           
@@ -712,9 +717,9 @@ export default function FilesPage() {
         const fileData = result.response.documents.find((doc: any) => doc.filename === filename)
         if (fileData) {
           const fileItem: FileReaderItem = {
-            filename: fileData.filename || fileData.original_filename || filename,
-            size: fileData.size || 0,
-            upload_date: fileData.uploaded_at || new Date().toISOString(),
+            filename: fileData.filename || filename,
+            size: fileData.file_size || 0,
+            upload_date: fileData.upload_timestamp || new Date().toISOString(),
             content_type: getContentType(fileData.filename || filename),
             indexed: false
           }
@@ -798,7 +803,7 @@ export default function FilesPage() {
         <div className="space-y-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">File Management</h1>
-            <p className="text-muted-foreground">Upload and manage your knowledge base documents</p>
+            {isAdmin ? <p className="text-muted-foreground">Manage all uploaded documents</p> : <p className="text-muted-foreground">View all the available documents</p>}
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex-1" />
