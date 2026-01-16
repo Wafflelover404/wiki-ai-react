@@ -197,7 +197,7 @@ export const filesApi = {
   // GET /files/list returns { status: 'success', response: { documents: [...] } }
   list: (token: string) =>
     apiRequest<{
-      documents: Array<{ filename: string; original_filename?: string; size?: number; uploaded_at?: string }>
+      documents: Array<{ id: number; filename: string; upload_timestamp: string; organization_id: string; file_size: number }>
     }>({
       url: "/files/list",
       token,
@@ -868,6 +868,35 @@ export const metricsApi = {
         ...(typeof limit === "number" ? { limit: String(limit) } : {}),
         offset: String(offset),
       },
+    }),
+
+  volume: (
+    token: string,
+    days: number = 7,
+    scope: "user" | "org" | "global" = "org",
+  ) =>
+    apiRequest<{
+      data: Array<{
+        date: string
+        fullDate: string
+        queries: number
+        success: number
+        failed: number
+        uniqueUsers: number
+        avgResponseTime: number
+      }>
+      period: string
+      scope: string
+      organization_id?: string | null
+      user_id?: string | null
+      total_queries: number
+      total_successful: number
+      total_failed: number
+      avg_daily_queries: number
+    }>({
+      url: "/metrics/volume",
+      token,
+      params: { days: String(days), scope },
     }),
 }
 
