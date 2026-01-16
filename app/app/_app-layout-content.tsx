@@ -32,14 +32,9 @@ export default function AppLayoutContent({ children }: { children: React.ReactNo
   }
 
   return (
-    <>
-      {/* <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>{children}</SidebarInset>
-      </SidebarProvider> */}
-      <div className="min-h-screen">
-        {children}
-      </div>
-    </>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>{children}</SidebarInset>
+    </SidebarProvider>
   )
 }
