@@ -14,7 +14,7 @@ import { Brain, Eye, EyeOff, Loader2, Building, UserPlus, Search, Bot, Code, Fil
 import { toast } from "sonner"
 import { authApi, aiAgentApi } from "@/lib/api"
 
-export function LoginForm() {
+export function EnhancedLoginForm() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -254,14 +254,14 @@ export function LoginForm() {
         style={{ opacity: 0.6 }}
       />
 
-      <Card className="w-full max-w-md relative z-10 border-border/50 bg-card/80 backdrop-blur-sm">
+      <Card className="w-full max-w-4xl relative z-10 border-border/50 bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Brain className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">WikiAi</CardTitle>
-            <CardDescription className="mt-2">Manage your knowledge base</CardDescription>
+            <CardTitle className="text-2xl font-bold">WikiAi Enhanced</CardTitle>
+            <CardDescription className="mt-2">Manage your knowledge base with AI Agent</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -414,6 +414,116 @@ export function LoginForm() {
                   )}
                 </Button>
               </form>
+            </TabsContent>
+            
+            <TabsContent value="ai-agent" className="mt-6 space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">AI Agent Commands</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCommandHelp(!showCommandHelp)}
+                    className="flex items-center gap-2"
+                  >
+                    <Code className="w-4 h-4" />
+                    {showCommandHelp ? "Hide Help" : "Show Help"}
+                  </Button>
+                </div>
+                
+                {showCommandHelp && (
+                  <div className="bg-muted/50 p-4 rounded-lg space-y-2 text-sm">
+                    <h4 className="font-semibold mb-2">Available Commands:</h4>
+                    <div className="space-y-1">
+                      <p><code className="bg-background px-2 py-1 rounded">&lt;file-content&gt;filename.md&lt;/file-content&gt;</code> - Get file content</p>
+                      <p><code className="bg-background px-2 py-1 rounded">&lt;file-id&gt;123&lt;/file-id&gt;</code> - Get file by ID</p>
+                      <p><code className="bg-background px-2 py-1 rounded">&lt;fuzzy-search&gt;query&lt;/fuzzy-search&gt;</code> - Search filenames</p>
+                      <p><code className="bg-background px-2 py-1 rounded">&lt;kb-search&gt;query&lt;/kb-search&gt;</code> - Search knowledge base</p>
+                      <p><code className="bg-background px-2 py-1 rounded">&lt;semantic-search&gt;query&lt;/semantic-search&gt;</code> - AI-powered search</p>
+                    </div>
+                    <p className="text-muted-foreground">You can use multiple commands in one request!</p>
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="ai-agent-input">AI Agent Command</Label>
+                  <div className="relative">
+                    <textarea
+                      id="ai-agent-input"
+                      placeholder="Enter your AI agent command..."
+                      value={aiAgentInput}
+                      onChange={(e) => setAiAgentInput(e.target.value)}
+                      disabled={isAiAgentLoading}
+                      className="w-full min-h-[100px] bg-background/50 p-3 font-mono text-sm resize-none"
+                      rows={4}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    onClick={handleAiAgentCommand} 
+                    disabled={isAiAgentLoading || !aiAgentInput.trim()}
+                    className="flex-1"
+                  >
+                    {isAiAgentLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Bot className="mr-2 h-4 w-4" />
+                        Execute Command
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={loadAvailableFiles}
+                    disabled={isAiAgentLoading}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Load Files
+                  </Button>
+                </div>
+                
+                {aiAgentOutput && (
+                  <div className="bg-muted/30 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-2 flex items-center gap-2">
+                      <Bot className="w-4 h-4" />
+                      AI Agent Response
+                    </h4>
+                    <div className="bg-background p-3 rounded border text-sm font-mono whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+                      {aiAgentOutput}
+                    </div>
+                  </div>
+                )}
+                
+                {availableFiles.length > 0 && (
+                  <div className="bg-muted/30 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-2 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Available Files ({availableFiles.length})
+                    </h4>
+                    <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                      {availableFiles.slice(0, 10).map((file) => (
+                        <div key={file.id} className="flex items-center justify-between bg-background p-2 rounded text-sm">
+                          <span className="font-mono">{file.filename}</span>
+                          <span className="text-muted-foreground text-xs">ID: {file.id}</span>
+                        </div>
+                      ))}
+                      {availableFiles.length > 10 && (
+                        <p className="text-muted-foreground text-xs text-center pt-2">
+                          ... and {availableFiles.length - 10} more files
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
