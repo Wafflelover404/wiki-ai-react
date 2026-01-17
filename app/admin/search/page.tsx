@@ -99,10 +99,10 @@ export default function AdminSearchPage() {
         setAiAgentOutput(result.response || "Command executed successfully!")
         toast.success("AI Agent command executed successfully!")
         
+        let searchResults: SearchResult[] = []; // Move searchResults declaration here
+        
         // Handle both response structures
         if (result.response && (result.response.snippets || result.response.results)) {
-          const searchResults: SearchResult[] = []
-          
           // Handle original API structure (snippets)
           if (result.response.snippets) {
             result.response.snippets.forEach((snippet: any, index: number) => {
