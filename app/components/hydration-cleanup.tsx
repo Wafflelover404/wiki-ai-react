@@ -13,6 +13,14 @@ export default function HydrationCleanup() {
       body.removeAttribute('bis_register')
     }
     
+    // Remove bis_skin_checked attributes from all elements
+    const elementsWithBisAttr = document.querySelectorAll('[bis_skin_checked]')
+    elementsWithBisAttr.forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.removeAttribute('bis_skin_checked')
+      }
+    })
+    
     // Also check for any other data-* attributes that might be added by extensions
     const attributes = body.attributes
     for (let i = attributes.length - 1; i >= 0; i--) {
@@ -24,6 +32,42 @@ export default function HydrationCleanup() {
       )) {
         body.removeAttribute(attr.name)
       }
+    }
+
+    // Set up a mutation observer to catch any dynamically added attributes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes') {
+          const target = mutation.target as HTMLElement
+          if (target.hasAttribute('bis_skin_checked')) {
+            target.removeAttribute('bis_skin_checked')
+          }
+        }
+        if (mutation.type === 'childList') {
+          const addedNodes = Array.from(mutation.addedNodes)
+          addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const element = node as HTMLElement
+              if (element.hasAttribute && element.hasAttribute('bis_skin_checked')) {
+                element.removeAttribute('bis_skin_checked')
+              }
+            }
+          })
+        }
+      })
+    })
+
+    // Start observing the entire document for changes
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['bis_skin_checked']
+    })
+
+    // Cleanup observer on unmount
+    return () => {
+      observer.disconnect()
     }
   }, [])
 
