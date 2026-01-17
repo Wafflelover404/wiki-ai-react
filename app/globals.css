@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Hide browser extension attributes that cause hydration issues */
+/* Aggressively hide browser extension attributes that cause hydration issues */
 [bis_skin_checked] {
   display: none !important;
 }
@@ -24,6 +24,28 @@
 }
 
 [data*="extension"] {
+  display: none !important;
+}
+
+/* More aggressive hiding of any attribute containing bis or skin */
+*[bis] {
+  display: none !important;
+}
+
+*[skin_checked] {
+  display: none !important;
+}
+
+*[processed_] {
+  display: none !important;
+}
+
+/* Hide all elements with these attributes during development */
+html body [bis_skin_checked] {
+  display: none !important;
+}
+
+html body [bis] {
   display: none !important;
 }
 

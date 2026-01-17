@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import HydrationCleanup from "./components/hydration-cleanup"
+import Script from "next/script"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -24,6 +25,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          src="/pre-hydration.js"
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className={`${_geist.className} ${_geistMono.className} font-sans antialiased`} suppressHydrationWarning>
         <HydrationCleanup />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>

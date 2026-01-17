@@ -2,10 +2,10 @@
 
 export const API_CONFIG = {
   // Base URL for all API connections
-  BASE_URL: "http://localhost:9001",
+  BASE_URL: "https://api.wikiai.by",
   
   // WebSocket URL (derived from base URL)
-  WS_URL: "ws://localhost:9001/ws",
+  WS_URL: "wss://api.wikiai.by/ws",
   
   // API endpoints
   ENDPOINTS: {
