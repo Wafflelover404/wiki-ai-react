@@ -35,8 +35,12 @@ import { redirect } from "next/navigation"
 interface ApiKey {
   id: string
   name: string
+  description?: string
+  permissions: string[]
   created_at: string
   last_used: string
+  is_active: boolean
+  expires_at?: string
 }
 
 export default function ApiKeysPage() {
@@ -44,6 +48,9 @@ export default function ApiKeysPage() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [newKeyName, setNewKeyName] = useState("")
+  const [newKeyDescription, setNewKeyDescription] = useState("")
+  const [newKeyPermissions, setNewKeyPermissions] = useState<string[]>(["search"])
+  const [newKeyExpiresInDays, setNewKeyExpiresInDays] = useState("")
   const [newKey, setNewKey] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [deleteKeyId, setDeleteKeyId] = useState<string | null>(null)
@@ -56,7 +63,18 @@ export default function ApiKeysPage() {
     try {
       const result = await apiKeysApi.list(token)
       if (result.status === "success" && result.response) {
-        setApiKeys(result.response.keys || [])
+        // Map backend response to frontend interface
+        const mappedKeys = (result.response.keys || []).map((key: any) => ({
+          id: key.id,
+          name: key.name,
+          description: key.description,
+          permissions: key.permissions || [],
+          created_at: key.created_at,
+          last_used: key.last_used || "",
+          is_active: key.is_active !== false,
+          expires_at: key.expires_at
+        }))
+        setApiKeys(mappedKeys)
       }
     } catch (error) {
       console.error("Failed to fetch API keys:", error)
@@ -82,10 +100,23 @@ export default function ApiKeysPage() {
 
     setIsCreating(true)
     try {
-      const result = await apiKeysApi.create(token, newKeyName.trim())
+      const requestData: any = {
+        name: newKeyName.trim(),
+        permissions: newKeyPermissions.length > 0 ? newKeyPermissions : ["search"]
+      }
+
+      if (newKeyDescription.trim()) {
+        requestData.description = newKeyDescription.trim()
+      }
+
+      if (newKeyExpiresInDays.trim() && !isNaN(Number(newKeyExpiresInDays))) {
+        requestData.expires_in_days = Number(newKeyExpiresInDays)
+      }
+
+      const result = await apiKeysApi.create(token, requestData)
 
       if (result.status === "success" && result.response) {
-        setNewKey(result.response.key)
+        setNewKey(result.response.key || result.response.full_key)
         toast.success("API key created successfully")
         fetchKeys()
       } else {
@@ -129,6 +160,9 @@ export default function ApiKeysPage() {
   const closeDialog = () => {
     setIsDialogOpen(false)
     setNewKeyName("")
+    setNewKeyDescription("")
+    setNewKeyPermissions(["search"])
+    setNewKeyExpiresInDays("")
     setNewKey(null)
   }
 
@@ -189,7 +223,7 @@ export default function ApiKeysPage() {
                 </div>
               ) : (
                 <>
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="keyName">Key Name</Label>
                       <Input
@@ -200,6 +234,58 @@ export default function ApiKeysPage() {
                       />
                       <p className="text-xs text-muted-foreground">
                         Give your API key a descriptive name to identify it later
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="keyDescription">Description (Optional)</Label>
+                      <textarea
+                        id="keyDescription"
+                        className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Describe the purpose of this API key"
+                        value={newKeyDescription}
+                        onChange={(e) => setNewKeyDescription(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Permissions</Label>
+                      <div className="space-y-2">
+                        {["search", "upload", "download", "delete_documents", "view_reports"].map((permission) => (
+                          <div key={permission} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={permission}
+                              checked={newKeyPermissions.includes(permission)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setNewKeyPermissions([...newKeyPermissions, permission])
+                                } else {
+                                  setNewKeyPermissions(newKeyPermissions.filter(p => p !== permission))
+                                }
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                            <Label htmlFor={permission} className="text-sm font-normal">
+                              {permission.replace("_", " ").charAt(0).toUpperCase() + permission.replace("_", " ").slice(1)}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="expiresInDays">Expires In Days (Optional)</Label>
+                      <Input
+                        id="expiresInDays"
+                        type="number"
+                        placeholder="e.g., 30"
+                        value={newKeyExpiresInDays}
+                        onChange={(e) => setNewKeyExpiresInDays(e.target.value)}
+                        min="1"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Leave blank for no expiration
                       </p>
                     </div>
                   </div>
@@ -242,8 +328,10 @@ export default function ApiKeysPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Permissions</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Last Used</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -251,9 +339,26 @@ export default function ApiKeysPage() {
                   {apiKeys.map((key) => (
                     <TableRow key={key.id}>
                       <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <Key className="w-4 h-4 text-muted-foreground" />
-                          {key.name}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Key className="w-4 h-4 text-muted-foreground" />
+                            {key.name}
+                          </div>
+                          {key.description && (
+                            <p className="text-xs text-muted-foreground mt-1">{key.description}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {key.permissions.map((permission) => (
+                            <span
+                              key={permission}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            >
+                              {permission.replace("_", " ")}
+                            </span>
+                          ))}
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
@@ -264,6 +369,14 @@ export default function ApiKeysPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {key.last_used ? new Date(key.last_used).toLocaleDateString() : "Never"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${key.is_active ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className="text-sm">
+                            {key.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Button
