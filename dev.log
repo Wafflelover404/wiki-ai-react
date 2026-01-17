@@ -1,0 +1,48 @@
+
+> my-v0-project@0.1.0 dev
+> next dev
+
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Local:         http://localhost:3000
+   - Network:       http://192.168.100.136:3000
+
+ ✓ Starting...
+ ✓ Ready in 474ms
+ GET /app/search 200 in 1961ms (compile: 1844ms, render: 117ms)
+ ⨯ Error: useSidebar must be used within a SidebarProvider.
+    at useSidebar (components/ui/sidebar.tsx:50:11)
+    at SidebarTrigger (components/ui/sidebar.tsx:261:29)
+  48 |   const context = React.useContext(SidebarContext)
+  49 |   if (!context) {
+> 50 |     throw new Error('useSidebar must be used within a SidebarProvider.')
+     |           ^
+  51 |   }
+  52 |
+  53 |   return context {
+  digest: '1954161505'
+}
+ GET /admin/search 500 in 553ms (compile: 491ms, render: 63ms)
+ GET /admin/search 200 in 167ms (compile: 100ms, render: 67ms)
+ GET /app/admin/search 200 in 360ms (compile: 332ms, render: 28ms)
+ GET / 307 in 415ms (compile: 384ms, render: 30ms)
+ GET /landing 200 in 198ms (compile: 151ms, render: 48ms)
+ GET / 307 in 68ms (compile: 30ms, render: 39ms)
+ GET /landing 200 in 58ms (compile: 8ms, render: 50ms)
+ GET /app/admin/search 200 in 156ms (compile: 73ms, render: 83ms)
+ GET /app/admin/files 200 in 510ms (compile: 496ms, render: 15ms)
+ GET /app/admin/search 200 in 40ms (compile: 14ms, render: 26ms)
+ GET /app/admin/users 200 in 540ms (compile: 508ms, render: 32ms)
+ GET /app 200 in 358ms (compile: 340ms, render: 18ms)
+ GET /app/admin 200 in 764ms (compile: 742ms, render: 22ms)
+ GET /app/admin 200 in 765ms (compile: 749ms, render: 15ms)
+ GET /app/admin/files 200 in 26ms (compile: 10ms, render: 16ms)
+ GET /app/admin/search 200 in 32ms (compile: 14ms, render: 18ms)
+ GET /app/admin/users 200 in 60ms (compile: 32ms, render: 28ms)
+ GET /app/admin 200 in 130ms (compile: 9ms, render: 121ms)
+ GET / 307 in 30ms (compile: 9ms, render: 22ms)
+ GET /landing 200 in 33ms (compile: 3ms, render: 30ms)
+ GET /login 200 in 364ms (compile: 346ms, render: 17ms)
+ GET /landing 200 in 97ms (compile: 18ms, render: 79ms)
+ GET /landing 200 in 55ms (compile: 6ms, render: 49ms)
+ GET /login 200 in 36ms (compile: 15ms, render: 21ms)
+[?25h

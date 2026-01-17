@@ -10,9 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Brain, Eye, EyeOff, Loader2, Building, UserPlus, Search, Bot, Code, FileText } from "lucide-react"
+import { Brain, Eye, EyeOff, Loader2, Building, UserPlus } from "lucide-react"
 import { toast } from "sonner"
-import { authApi, aiAgentApi } from "@/lib/api"
+import { authApi } from "@/lib/api"
 
 export function LoginForm() {
   const [username, setUsername] = useState("")
@@ -29,13 +29,6 @@ export function LoginForm() {
   const [adminPassword, setAdminPassword] = useState("")
   const [showAdminPassword, setShowAdminPassword] = useState(false)
   const [isCreatingOrg, setIsCreatingOrg] = useState(false)
-
-  // AI Agent states
-  const [aiAgentInput, setAiAgentInput] = useState("")
-  const [aiAgentOutput, setAiAgentOutput] = useState("")
-  const [isAiAgentLoading, setIsAiAgentLoading] = useState(false)
-  const [availableFiles, setAvailableFiles] = useState<Array<{id: number, filename: string}>>([])
-  const [showCommandHelp, setShowCommandHelp] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,55 +81,6 @@ export function LoginForm() {
       toast.error(error instanceof Error ? error.message : "Failed to create organization")
     } finally {
       setIsCreatingOrg(false)
-    }
-  }
-
-  const handleAiAgentCommand = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!aiAgentInput.trim()) {
-      toast.error("Please enter a command")
-      return
-    }
-
-    setIsAiAgentLoading(true)
-    setAiAgentOutput("Processing your command...")
-    
-    try {
-      // For demo purposes, we'll use a temporary token
-      // In production, this would come from auth context
-      const tempToken = "temp-demo-token"
-      
-      const result = await aiAgentApi.executeCommands(tempToken, aiAgentInput)
-      
-      if (result.status === "success") {
-        setAiAgentOutput(result.response || "Command executed successfully!")
-        toast.success("Command executed successfully!")
-      } else {
-        setAiAgentOutput(`Error: ${result.message || "Failed to execute command"}`)
-        toast.error(result.message || "Failed to execute command")
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Network error"
-      setAiAgentOutput(`Error: ${errorMessage}`)
-      toast.error(errorMessage)
-    } finally {
-      setIsAiAgentLoading(false)
-    }
-  }
-
-  const loadAvailableFiles = async () => {
-    try {
-      const tempToken = "temp-demo-token"
-      const result = await aiAgentApi.getAvailableFiles(tempToken)
-      
-      if (result.status === "success") {
-        setAvailableFiles(result.response?.files || [])
-        toast.success("Files loaded successfully!")
-      } else {
-        toast.error(result.message || "Failed to load files")
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to load files")
     }
   }
 
@@ -266,7 +210,7 @@ export function LoginForm() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login" className="flex items-center gap-2">
                 <Brain className="w-4 h-4" />
                 Sign In
@@ -274,10 +218,6 @@ export function LoginForm() {
               <TabsTrigger value="create-org" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 Create Org
-              </TabsTrigger>
-              <TabsTrigger value="ai-agent" className="flex items-center gap-2">
-                <Bot className="w-4 h-4" />
-                AI Agent
               </TabsTrigger>
             </TabsList>
             

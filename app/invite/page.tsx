@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { adminApi } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,7 @@ interface InviteInfo {
   message?: string
 }
 
-export default function InvitePage() {
+function InvitePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
@@ -351,5 +351,17 @@ export default function InvitePage() {
         </div>
       </main>
     </>
+  )
+}
+
+export default function InvitePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <InvitePageContent />
+    </Suspense>
   )
 }

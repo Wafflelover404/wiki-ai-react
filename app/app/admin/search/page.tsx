@@ -179,12 +179,29 @@ function FileViewerModal({ isOpen, onClose, document, searchChunk }: { isOpen: b
   )
 }
 
+interface SearchResult {
+  id: string
+  type: 'document' | 'product'
+  title: string
+  content: string
+  source: string
+  url?: string
+  price?: number | string
+  special_price?: number
+  shop_name?: string
+  score?: number
+  // AI Agent specific metadata
+  ai_ranked?: boolean
+  relevance?: 'high' | 'medium' | 'low'
+  enhanced_context?: boolean
+}
+
 interface Message {
   id: string
   role: "user" | "assistant" | "sources" | "overview"
   content: string
   sources?: string[]
-  searchResults?: any[]
+  searchResults?: SearchResult[]
   timestamp: Date
 }
 
@@ -433,7 +450,8 @@ export default function AdminSearchPage() {
             question: query,
             session_id: sessionId,
             model: null,
-            humanize: true
+            humanize: true,
+            ai_agent_mode: copilotMode
           }))
         }
         
@@ -446,6 +464,17 @@ export default function AdminSearchPage() {
               case 'status':
                 // Processing status update (same as Vue)
                 console.log('Status:', message.message)
+                
+                // Show AI agent specific status
+                if (copilotMode && message.message) {
+                  const statusMessage: Message = {
+                    id: crypto.randomUUID(),
+                    role: "assistant",
+                    content: `🤖 AI Agent: ${message.message}`,
+                    timestamp: new Date(Date.now())
+                  }
+                  setMessages(prev => [...prev, statusMessage])
+                }
                 break
                 
               case 'immediate':
@@ -453,19 +482,55 @@ export default function AdminSearchPage() {
                 immediateReceived = true
                 setIsLoading(false) // Stop showing the loading indicator
                 
-                if (message.data && message.data.snippets) {
+                if (message.data && (message.data.snippets || message.data.results)) {
+                  let searchResults: any[] = []
+                  let sources: string[] = []
+                  
+                  // Handle original API structure (snippets)
+                  if (message.data.snippets) {
+                    message.data.snippets.forEach((snippet: any, index: number) => {
+                      searchResults.push({
+                        id: `doc-${index}`,
+                        type: 'document',
+                        title: snippet.source || `Document ${index + 1}`,
+                        content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
+                        source: snippet.source || 'Unknown',
+                        score: snippet.score || 0
+                      })
+                    })
+                    sources = message.data.files || []
+                  }
+                  
+                  // Handle AI Agent API structure (results)
+                  if (message.data.results) {
+                    message.data.results.forEach((result: any, index: number) => {
+                      const isAiRanked = result.ai_ranked || false
+                      const relevance = result.relevance || 'medium'
+                      const enhancedContext = result.enhanced_context || false
+                      
+                      searchResults.push({
+                        id: `ai-${index}`,
+                        type: 'document',
+                        title: result.title || result.source || `AI Result ${index + 1}`,
+                        content: result.content || result.snippet || 'No content available',
+                        source: result.source || 'Unknown',
+                        score: result.score || 0,
+                        ai_ranked: isAiRanked,
+                        relevance: relevance,
+                        enhanced_context: enhancedContext
+                      })
+                    })
+                    sources = message.data.results.map((r: any) => r.source)
+                  }
+                  
                   const sourcesMessage: Message = {
                     id: crypto.randomUUID(),
                     role: "sources",
-                    content: `Found ${message.data.snippets.length} relevant sources:`,
-                    sources: message.data.files || [],
-                    searchResults: message.data.snippets.map((snippet: any, index: number) => ({
-                      id: `doc-${index}`,
-                      type: 'document',
-                      title: snippet.source || `Document ${index + 1}`,
-                      content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
-                      source: 'document'
-                    })),
+                    content: copilotMode 
+                      ? `🤖 AI Agent found ${searchResults.length} enhanced sources:`
+                      : `Found ${searchResults.length} relevant sources:`,
+                    sources: sources,
+                    searchResults: searchResults,
                     timestamp: new Date(Date.now()),
                   }
                   setMessages(prev => [...prev, sourcesMessage])
@@ -475,7 +540,7 @@ export default function AdminSearchPage() {
                     const overviewLoadingMessage: Message = {
                       id: crypto.randomUUID(),
                       role: "assistant",
-                      content: "Generating AI overview...",
+                      content: copilotMode ? "🤖 AI Agent generating enhanced analysis..." : "Generating AI overview...",
                       timestamp: new Date(Date.now()),
                     }
                     setMessages(prev => [...prev, overviewLoadingMessage])
@@ -487,12 +552,20 @@ export default function AdminSearchPage() {
                 // Replace "Generating..." with actual overview (same as Vue)
                 overviewReceived = true
                 setIsLoading(false) // Ensure loading is stopped
+                
+                const overviewContent = copilotMode 
+                  ? `🤖 **AI-Agent Analysis:** ${message.data || ""}`
+                  : message.data || ""
+                  
                 setMessages(prev => {
-                  const filtered = prev.filter(msg => msg.content !== "Generating AI overview...")
+                  const filtered = prev.filter(msg => 
+                    msg.content !== "Generating AI overview..." && 
+                    msg.content !== "🤖 AI Agent generating enhanced analysis..."
+                  )
                   return [...filtered, {
                     id: crypto.randomUUID(),
                     role: "overview",
-                    content: message.data || "",
+                    content: overviewContent,
                     timestamp: new Date(Date.now()),
                   }]
                 })
@@ -554,6 +627,7 @@ export default function AdminSearchPage() {
     // Fallback HTTP implementation
     const result = await queryApi.query(token, query, {
       humanize: true,
+      ai_agent_mode: copilotMode,
     })
     
     // Process and display results (existing logic)
@@ -718,9 +792,25 @@ export default function AdminSearchPage() {
                                               </span>
                                             )}
                                           </h4>
-                                          {result.type === 'document' && (
-                                            <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                                          )}
+                                          <div className="flex gap-1 flex-shrink-0 items-center">
+                                            {result.ai_ranked && (
+                                              <Badge variant="secondary" className="text-xs">
+                                                <Brain className="w-3 h-3 mr-1" />
+                                                AI-Ranked
+                                              </Badge>
+                                            )}
+                                            {result.relevance && (
+                                              <Badge 
+                                                variant={result.relevance === 'high' ? 'default' : result.relevance === 'medium' ? 'secondary' : 'outline'} 
+                                                className="text-xs"
+                                              >
+                                                {result.relevance === 'high' ? 'High' : result.relevance === 'medium' ? 'Medium' : 'Low'} Relevance
+                                              </Badge>
+                                            )}
+                                            {result.type === 'document' && (
+                                              <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                                            )}
+                                          </div>
                                         </div>
                                         
                                         <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
@@ -883,13 +973,11 @@ export default function AdminSearchPage() {
                       <Bot className="w-4 h-4 text-primary" />
                       <span className="text-sm font-medium">AI-agent Search</span>
                       <Switch
-                        checked={copilotMode}
-                        onCheckedChange={() => {
-                          toast.info("Copilot AI Search Mode coming soon!")
-                        }}
+                        checked={false}
+                        onCheckedChange={() => {}}
                         disabled
                       />
-                      <span className="text-xs text-muted-foreground">Coming Soon</span>
+                      <span className="text-xs text-muted-foreground">(Coming Soon)</span>
                     </div>
                     
                     {/* WebSocket Connection Status (hidden if not available) */}
