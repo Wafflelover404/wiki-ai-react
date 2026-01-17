@@ -8,7 +8,7 @@ import { useWebSocket } from "@/lib/use-websocket"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -33,15 +33,6 @@ import {
 import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
 
-interface Message {
-  id: string
-  role: "user" | "assistant" | "sources" | "overview"
-  content: string
-  sources?: string[]
-  searchResults?: any[]
-  timestamp: Date
-}
-
 interface SearchResult {
   id: string
   type: 'document' | 'product'
@@ -53,6 +44,15 @@ interface SearchResult {
   special_price?: number
   shop_name?: string
   score?: number
+}
+
+interface Message {
+  id: string
+  role: "user" | "assistant" | "sources" | "overview"
+  content: string
+  sources?: string[]
+  searchResults?: SearchResult[]
+  timestamp?: Date
 }
 
 export default function AdminSearchPage() {
@@ -99,27 +99,54 @@ export default function AdminSearchPage() {
         setAiAgentOutput(result.response || "Command executed successfully!")
         toast.success("AI Agent command executed successfully!")
         
-        // If command returned search results, add them to messages
-        if (result.response && typeof result.response === 'object' && result.response.results) {
-          const searchResults: SearchResult[] = result.response.results.map((item: any) => ({
-            id: `search-${Date.now()}-${Math.random()}`,
-            type: 'document',
-            title: item.title || item.source || 'Unknown',
-            content: item.content || item.snippet || 'No content',
-            source: item.source || 'Unknown',
-            url: item.url,
-            score: item.score
-          }))
+        // Handle both response structures
+        if (result.response && (result.response.snippets || result.response.results)) {
+          const searchResults: SearchResult[] = []
           
+          // Handle original API structure (snippets)
+          if (result.response.snippets) {
+            result.response.snippets.forEach((snippet: any, index: number) => {
+              searchResults.push({
+                id: `doc-${index}`,
+                type: 'document',
+                title: snippet.source || `Document ${index + 1}`,
+                content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
+                source: snippet.source || 'Unknown',
+                score: snippet.score || 0
+              })
+            })
+          }
+          
+          // Handle AI Agent API structure (results)
+          if (result.response.results) {
+            result.response.results.forEach((result: any, index: number) => {
+              searchResults.push({
+                id: `ai-${index}`,
+                type: 'document',
+                title: result.title || result.source || `AI Result ${index + 1}`,
+                content: result.content || result.snippet || 'No content available',
+                source: result.source || 'Unknown',
+                score: result.score || 0
+              })
+            })
+          }
+        }
+        
+        // Create appropriate message
+        if (result.response && (result.response.snippets || result.response.results)) {
           const searchMessage: Message = {
             id: crypto.randomUUID(),
             role: "sources",
             content: `Found ${searchResults.length} relevant sources`,
             sources: searchResults.map(r => r.source),
-            searchResults: searchResults
+            searchResults: searchResults,
+            timestamp: new Date(Date.now())
           }
           
           setMessages(prev => [...prev, searchMessage])
+        } else {
+          setAiAgentOutput(`Error: ${result.message || "Failed to execute command"}`)
+          toast.error(result.message || "Failed to execute AI Agent command")
         }
       } else {
         setAiAgentOutput(`Error: ${result.message || "Failed to execute command"}`)
@@ -160,6 +187,15 @@ export default function AdminSearchPage() {
     
     setIsLoading(true)
     setMessages([]) // Clear previous messages for new search
+    if (true) {
+      const overviewLoadingMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "Generating AI overview...",
+        timestamp: new Date(Date.now()),
+      }
+      setMessages(prev => [...prev, overviewLoadingMessage])
+    }
     
     try {
       // Use WebSocket for real-time search (like the Vue implementation)
@@ -174,19 +210,37 @@ export default function AdminSearchPage() {
             console.log('Search status:', message.message)
           } else if (message.type === 'immediate') {
             // Show search results
-            const searchResults: SearchResult[] = []
+            let searchResults: SearchResult[] = []
             
-            if (message.data && message.data.snippets) {
-              message.data.snippets.forEach((snippet: any, index: number) => {
-                searchResults.push({
-                  id: `doc-${index}`,
-                  type: 'document',
-                  title: snippet.source || `Document ${index + 1}`,
-                  content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
-                  source: snippet.source || 'Unknown',
-                  score: snippet.score || 0
+            // Handle both response structures
+            if (message.data && (message.data.snippets || message.data.results)) {
+              // Handle original API structure (snippets)
+              if (message.data.snippets) {
+                message.data.snippets.forEach((snippet: any, index: number) => {
+                  searchResults.push({
+                    id: `doc-${index}`,
+                    type: 'document',
+                    title: snippet.source || `Document ${index + 1}`,
+                    content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
+                    source: snippet.source || 'Unknown',
+                    score: snippet.score || 0
+                  })
                 })
-              })
+              }
+              
+              // Handle AI Agent API structure (results)
+              if (message.data.results) {
+                message.data.results.forEach((result: any, index: number) => {
+                  searchResults.push({
+                    id: `ai-${index}`,
+                    type: 'document',
+                    title: result.title || result.source || `AI Result ${index + 1}`,
+                    content: result.content || result.snippet || 'No content available',
+                    source: result.source || 'Unknown',
+                    score: result.score || 0
+                  })
+                })
+              }
             }
             
             const searchMessage: Message = {
@@ -194,7 +248,8 @@ export default function AdminSearchPage() {
               role: "sources",
               content: `Found ${searchResults.length} relevant sources`,
               sources: searchResults.map(r => r.source),
-              searchResults: searchResults
+              searchResults: searchResults,
+              timestamp: new Date(Date.now())
             }
             
             setMessages(prev => [...prev, searchMessage])
@@ -203,7 +258,8 @@ export default function AdminSearchPage() {
             const overviewMessage: Message = {
               id: crypto.randomUUID(),
               role: "overview",
-              content: message.data || "No overview available"
+              content: message.data || "No overview available",
+              timestamp: new Date(Date.now())
             }
             
             setMessages(prev => [...prev, overviewMessage])
