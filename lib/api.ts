@@ -900,6 +900,89 @@ export const metricsApi = {
     }),
 }
 
+// AI Agent endpoints
+export const aiAgentApi = {
+  // Execute AI agent commands
+  executeCommands: async (token: string, input: string) => {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+      Authorization: `Bearer ${token}`,
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/ai-agent/execute`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ input }),
+      })
+
+      const result = await response.json()
+      return result
+    } catch (error) {
+      return {
+        status: "error",
+        message: error instanceof Error ? error.message : "Network error",
+      }
+    }
+  },
+
+  // Get available files with ID mapping
+  getAvailableFiles: (token: string) =>
+    apiRequest<{
+      files: Array<{ id: number; filename: string; upload_timestamp: string; organization_id: string; file_size: number }>
+      file_id_map: Record<string, string>
+    }>({
+      url: "/ai-agent/files",
+      token,
+    }),
+
+  // Execute specific command types
+  fileContent: (token: string, filename: string) =>
+    apiRequest<{ content: string }>({
+      url: `/ai-agent/file-content/${encodeURIComponent(filename)}`,
+      token,
+    }),
+
+  fileById: (token: string, fileId: string) =>
+    apiRequest<{ content: string }>({
+      url: `/ai-agent/file-id/${encodeURIComponent(fileId)}`,
+      token,
+    }),
+
+  fuzzySearch: (token: string, query: string) =>
+    apiRequest<{
+      matches: Array<{ filename: string; similarity: number; match_type: string }>
+    }>({
+      url: "/ai-agent/fuzzy-search",
+      method: "POST",
+      token,
+      data: { query },
+    }),
+
+  kbSearch: (token: string, query: string) =>
+    apiRequest<{
+      results: Array<{ source: string; content: string }>
+      overview?: string
+    }>({
+      url: "/ai-agent/kb-search",
+      method: "POST",
+      token,
+      data: { query },
+    }),
+
+  semanticSearch: (token: string, query: string) =>
+    apiRequest<{
+      results: Array<{ source: string; content: string }>
+      overview?: string
+    }>({
+      url: "/ai-agent/semantic-search",
+      method: "POST",
+      token,
+      data: { query },
+    }),
+}
+
 // Enhanced dashboard endpoints
 export const dashboardApi = {
   getEmployeeData: (token: string, since: string = "24h") =>

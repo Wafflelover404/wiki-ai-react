@@ -615,6 +615,128 @@ const ImageViewer: React.FC<{ filename: string; content: string }> = ({ filename
   )
 }
 
+// Markdown Viewer Component with optimization for large files
+const MarkdownViewer: React.FC<{ content: string }> = ({ content }) => {
+  const [visibleContent, setVisibleContent] = useState<string>("")
+  const [isLoading, setIsLoading] = useState(true)
+  const [showMore, setShowMore] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
+  
+  const CHUNK_SIZE = 5000 // characters per chunk
+  const INITIAL_CHUNK_SIZE = 2000 // initial load size
+  
+  useEffect(() => {
+    const loadContent = () => {
+      if (!content) {
+        setVisibleContent("")
+        setIsLoading(false)
+        return
+      }
+      
+      // For small files, load everything at once
+      if (content.length <= INITIAL_CHUNK_SIZE) {
+        setVisibleContent(content)
+        setIsLoading(false)
+        setShowMore(false)
+        return
+      }
+      
+      // For large files, load in chunks
+      const initialChunk = content.substring(0, INITIAL_CHUNK_SIZE)
+      setVisibleContent(initialChunk)
+      setIsLoading(false)
+      setShowMore(true)
+    }
+    
+    // Use requestAnimationFrame to prevent blocking
+    requestAnimationFrame(loadContent)
+  }, [content])
+  
+  const loadMore = () => {
+    if (!content) return
+    
+    const currentLength = visibleContent.length
+    const nextChunk = content.substring(currentLength, currentLength + CHUNK_SIZE)
+    
+    if (nextChunk) {
+      setVisibleContent(prev => prev + nextChunk)
+      
+      // Check if there's more content to load
+      if (currentLength + CHUNK_SIZE >= content.length) {
+        setShowMore(false)
+      }
+    }
+  }
+  
+  const loadAll = () => {
+    if (!content) return
+    setVisibleContent(content)
+    setShowMore(false)
+  }
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+  
+  return (
+    <div className="h-full flex flex-col">
+      <ScrollArea className="flex-1 rounded-md border p-4">
+        <div 
+          ref={contentRef}
+          className="prose prose-sm max-w-none dark:prose-invert"
+          dangerouslySetInnerHTML={{ 
+            __html: visibleContent
+              .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mb-4">$1</h1>')
+              .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold mb-3">$1</h2>')
+              .replace(/^### (.*$)/gim, '<h3 class="text-lg font-medium mb-2">$1</h3>')
+              .replace(/^\* (.*$)/gim, '<li class="ml-4">• $1</li>')
+              .replace(/^\- (.*$)/gim, '<li class="ml-4">• $1</li>')
+              .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal">$1</li>')
+              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              .replace(/\*(.*?)\*/g, '<em>$1</em>')
+              .replace(/`(.*?)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-sm">$1</code>')
+              .replace(/```([\s\S]*?)```/g, '<pre class="bg-muted p-3 rounded-md overflow-x-auto text-sm"><code>$1</code></pre>')
+              .replace(/\n\n/g, '</p><p class="mb-4">')
+              .replace(/^(.*)$/gm, '<p class="mb-2">$1</p>')
+              .replace(/<p><\/p>/g, '')
+              .replace(/<p class="mb-2"><h/g, '<h')
+              .replace(/<\/h[1-6]><\/p>/g, '</h$1>')
+              .replace(/<p class="mb-2"><li/g, '<li')
+              .replace(/<\/li><\/p>/g, '</li>')
+              .replace(/<p class="mb-2"><pre/g, '<pre')
+              .replace(/<\/pre><\/p>/g, '</pre>')
+          }}
+        />
+      </ScrollArea>
+      
+      {showMore && (
+        <div className="flex gap-2 p-4 border-t bg-muted/50">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={loadMore}
+            className="flex-1"
+          >
+            Load More
+          </Button>
+          <Button 
+            variant="default" 
+            size="sm" 
+            onClick={loadAll}
+            className="flex-1"
+          >
+            Load All ({Math.ceil((content.length - visibleContent.length) / 1000)}k more chars)
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Text/Code Viewer Component
 const TextViewer: React.FC<{ content: string }> = ({ content }) => {
   return (
@@ -692,6 +814,10 @@ const FileContentViewer: React.FC<FileViewerContentProps> = ({ file, token }) =>
     return <ExcelViewer filename={file.filename} content={content} />
   }
   
+  if (filename.endsWith('.md') || filename.endsWith('.markdown')) {
+    return <MarkdownViewer content={content} />
+  }
+  
   if (file.content_type.startsWith('image/')) {
     return <ImageViewer filename={file.filename} content={content} />
   }
@@ -708,13 +834,14 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
   showDownload = true,
   className 
 }) => {
-  const getFileIcon = (contentType: string) => {
+  const getFileIcon = (contentType: string, filename?: string) => {
     if (contentType.startsWith("image/")) return <Image className="h-4 w-4" />
     if (contentType.includes("pdf")) return <FileText className="h-4 w-4" />
     if (contentType.includes("text") || contentType.includes("code")) return <FileCode className="h-4 w-4" />
     if (contentType.includes("sheet") || contentType.includes("excel")) return <FileSpreadsheet className="h-4 w-4" />
     if (contentType.includes("word") || contentType.includes("document")) return <FileText className="h-4 w-4" />
     if (contentType.includes("zip") || contentType.includes("archive")) return <FileArchive className="h-4 w-4" />
+    if (filename?.toLowerCase().endsWith('.md') || filename?.toLowerCase().endsWith('.markdown')) return <FileCode className="h-4 w-4" />
     return <File className="h-4 w-4" />
   }
 
@@ -759,7 +886,7 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
       <DialogContent className={`max-w-[95vw] md:max-w-4xl max-h-[90vh] w-full ${className}`}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {file && getFileIcon(file.content_type)}
+            {file && getFileIcon(file.content_type, file.filename)}
             <span className="truncate">{file?.filename}</span>
           </DialogTitle>
           <DialogDescription>
