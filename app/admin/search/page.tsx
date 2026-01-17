@@ -99,10 +99,10 @@ export default function AdminSearchPage() {
         setAiAgentOutput(result.response || "Command executed successfully!")
         toast.success("AI Agent command executed successfully!")
         
-        let searchResults: SearchResult[] = []; // Move searchResults declaration here
-        
-        // Handle both response structures
+        // If command returned search results, add them to messages
         if (result.response && (result.response.snippets || result.response.results)) {
+          const searchResults: SearchResult[] = []
+          
           // Handle original API structure (snippets)
           if (result.response.snippets) {
             result.response.snippets.forEach((snippet: any, index: number) => {
@@ -118,19 +118,18 @@ export default function AdminSearchPage() {
           }
           
           // Handle AI Agent API structure (results)
-          if (result.response.results) {
-            result.response.results.forEach((result: any, index: number) => {
+          if (Array.isArray(result.response.results)) {
+            result.response.results.forEach((resultItem: any, index: number) => {
               searchResults.push({
                 id: `ai-${index}`,
                 type: 'document',
-                title: result.title || result.source || `AI Result ${index + 1}`,
-                content: result.content || result.snippet || 'No content available',
-                source: result.source || 'Unknown',
-                score: result.score || 0
+                title: resultItem.title || resultItem.source || `AI Result ${index + 1}`,
+                content: resultItem.content || resultItem.snippet || 'No content available',
+                source: resultItem.source || 'Unknown',
+                score: resultItem.score || 0
               })
             })
           }
-        }
         
         // Create appropriate message
         if (result.response && (result.response.snippets || result.response.results)) {
@@ -144,9 +143,6 @@ export default function AdminSearchPage() {
           }
           
           setMessages(prev => [...prev, searchMessage])
-        } else {
-          setAiAgentOutput(`Error: ${result.message || "Failed to execute command"}`)
-          toast.error(result.message || "Failed to execute AI Agent command")
         }
       } else {
         setAiAgentOutput(`Error: ${result.message || "Failed to execute command"}`)
