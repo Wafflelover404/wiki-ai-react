@@ -1,4 +1,6 @@
-const API_BASE_URL = "http://localhost:9001"
+import { API_CONFIG, getApiUrl, getWsUrl } from "./config"
+
+// Unified API configuration - all requests use localhost:9001
 
 interface ApiRequestOptions {
   url: string
@@ -42,7 +44,7 @@ export async function apiRequest<T = unknown>({
   }
 
   // Add query params
-  let fullUrl = `${API_BASE_URL}${url}`
+  let fullUrl = getApiUrl(url)
   if (params && Object.keys(params).length > 0) {
     const query = new URLSearchParams(params).toString()
     fullUrl += (fullUrl.includes("?") ? "&" : "?") + query
@@ -100,7 +102,7 @@ export const authApi = {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/login`, {
         method: "POST",
         headers,
         body: JSON.stringify({ username, password }),
@@ -209,7 +211,7 @@ export const filesApi = {
       "ngrok-skip-browser-warning": "true",
       Authorization: `Bearer ${token}`,
     }
-    const response = await fetch(`${API_BASE_URL}/files/content/${encodeURIComponent(filename)}`, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(filename)}`, {
       method: "GET",
       headers,
     })
@@ -273,7 +275,7 @@ export const filesApi = {
       formData.append(`file`, file)
     })
 
-    const response = await fetch(`${API_BASE_URL}/upload`, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/upload`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -323,8 +325,8 @@ export const filesApi = {
 }
 
 export const queryApi = {
-  // POST /query with { question, session_id, model, humanize }
-  query: (token: string, question: string, options?: { session_id?: string; model?: string; humanize?: boolean }) =>
+  // POST /query with { question, session_id, model, humanize, ai_agent_mode }
+  query: (token: string, question: string, options?: { session_id?: string; model?: string; humanize?: boolean; ai_agent_mode?: boolean }) =>
     apiRequest<{
       immediate?: {
         files: string[]
@@ -357,6 +359,7 @@ export const queryApi = {
         session_id: options?.session_id || null,
         model: options?.model || null,
         humanize: options?.humanize ?? true,
+        ai_agent_mode: options?.ai_agent_mode ?? false,
       },
     }),
 
@@ -368,14 +371,13 @@ export const queryApi = {
       session_id?: string; 
       model?: string; 
       humanize?: boolean;
+      ai_agent_mode?: boolean;
       onMessage?: (message: any) => void;
     }
   ) => {
     return new Promise((resolve, reject) => {
       try {
-        const url = new URL(API_BASE_URL)
-        const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = `${wsProtocol}//${url.host}/ws/query?token=${encodeURIComponent(token)}`
+        const wsUrl = getWsUrl("/ws/query") + `?token=${encodeURIComponent(token)}`
         
         const ws = new WebSocket(wsUrl)
         let hasError = false
@@ -389,7 +391,8 @@ export const queryApi = {
             question,
             session_id: options?.session_id || null,
             model: options?.model || null,
-            humanize: options?.humanize ?? true
+            humanize: options?.humanize ?? true,
+            ai_agent_mode: options?.ai_agent_mode ?? false
           }))
         }
         
@@ -479,7 +482,7 @@ export const reportsApi = {
       Accept: "application/json",
     }
 
-    const res = await fetch(`${API_BASE_URL}/reports/get/auto`, {
+    const res = await fetch(`${API_CONFIG.BASE_URL}/reports/get/auto`, {
       method: "GET",
       headers,
     })
@@ -505,7 +508,7 @@ export const reportsApi = {
       Accept: "application/json",
     }
 
-    const res = await fetch(`${API_BASE_URL}/reports/get/manual`, {
+    const res = await fetch(`${API_CONFIG.BASE_URL}/reports/get/manual`, {
       method: "GET",
       headers,
     })
@@ -544,7 +547,7 @@ export const adminApi = {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/accounts`, {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/accounts`, {
         method: "GET",
         headers,
       })
@@ -810,12 +813,12 @@ export const apiKeysApi = {
       token,
     }),
 
-  create: (token: string, name: string) =>
-    apiRequest<{ key: string; id: string }>({
+  create: (token: string, data: { name: string; description?: string; permissions: string[]; expires_in_days?: number }) =>
+    apiRequest<{ key: string; key_id: string; id: string; full_key: string }>({
       url: "/api-keys/create",
       method: "POST",
       token,
-      data: { name },
+      data,
     }),
 
   delete: (token: string, keyId: string) =>
@@ -911,7 +914,7 @@ export const aiAgentApi = {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/ai-agent/execute`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/ai-agent/execute`, {
         method: "POST",
         headers,
         body: JSON.stringify({ input }),

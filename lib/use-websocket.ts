@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useEffect, useState, useCallback } from 'react'
+import { API_CONFIG, getWsUrl } from './config'
 
 interface WebSocketOptions {
   url?: string
@@ -24,7 +25,7 @@ export function useWebSocket(options: WebSocketOptions) {
       return
     }
 
-    const wsUrl = options.url || 'ws://localhost:9001/ws'
+    const wsUrl = options.url || getWsUrl("/ws")
     const token = options.token || localStorage.getItem('auth_token')
     
     if (!token) {
