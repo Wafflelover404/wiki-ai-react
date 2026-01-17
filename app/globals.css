@@ -1,6 +1,32 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Hide browser extension attributes that cause hydration issues */
+[bis_skin_checked] {
+  display: none !important;
+}
+
+[__processed_e5f10ced-41c6-44a1-872f-d8ea8b373b81__] {
+  display: none !important;
+}
+
+[bis_register] {
+  display: none !important;
+}
+
+/* Hide any data-* attributes from browser extensions */
+[data*="processed"] {
+  display: none !important;
+}
+
+[data*="bis_"] {
+  display: none !important;
+}
+
+[data*="extension"] {
+  display: none !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* Highlight styling for search chunks */
