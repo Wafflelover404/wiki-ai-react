@@ -102,6 +102,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
+export const PERMISSIONS = {
+  VIEW_FILES: 'view_files',
+  MANAGE_USERS: 'manage_users',
+  MANAGE_ORGANIZATIONS: 'manage_organizations',
+  VIEW_ANALYTICS: 'view_analytics',
+  MANAGE_PLUGINS: 'manage_plugins',
+  ADMIN_ACCESS: 'admin_access'
+} as const
+
 export function useAuth() {
   const context = useContext(AuthContext)
   if (!context) {

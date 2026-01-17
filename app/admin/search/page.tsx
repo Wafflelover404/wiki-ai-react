@@ -5,7 +5,6 @@ import { useState, useRef, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { filesApi, queryApi, aiAgentApi } from "@/lib/api"
 import { useWebSocket } from "@/lib/use-websocket"
-import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -44,6 +43,10 @@ interface SearchResult {
   special_price?: number
   shop_name?: string
   score?: number
+  // AI Agent specific metadata
+  ai_ranked?: boolean
+  relevance?: 'high' | 'medium' | 'low'
+  enhanced_context?: boolean
 }
 
 interface Message {
@@ -61,6 +64,7 @@ export default function AdminSearchPage() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [searchType, setSearchType] = useState<'all' | 'documents' | 'opencart'>('all')
+  const [aiAgentMode, setAiAgentMode] = useState(false)
   const [sessionId] = useState(() => crypto.randomUUID())
   const scrollRef = useRef<HTMLDivElement>(null)
   
@@ -144,10 +148,11 @@ export default function AdminSearchPage() {
           
           setMessages(prev => [...prev, searchMessage])
         }
-      } else {
-        setAiAgentOutput(`Error: ${result.message || "Failed to execute command"}`)
-        toast.error(result.message || "Failed to execute AI Agent command")
       }
+    } else {
+      setAiAgentOutput(`Error: ${result.message || "Failed to execute command"}`)
+      toast.error(result.message || "Failed to execute AI Agent command")
+    }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Network error"
       setAiAgentOutput(`Error: ${errorMessage}`)
@@ -187,16 +192,16 @@ export default function AdminSearchPage() {
       const overviewLoadingMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: "Generating AI overview...",
+        content: aiAgentMode ? "🤖 AI Agent search processing..." : "Generating AI overview...",
         timestamp: new Date(Date.now()),
       }
       setMessages(prev => [...prev, overviewLoadingMessage])
     }
     
     try {
-      // Use WebSocket for real-time search (like the Vue implementation)
       const result = await queryApi.queryWebSocket(token, input, {
         session_id: sessionId,
+        ai_agent_mode: aiAgentMode,
         onMessage: (message) => {
           console.log('Search message received:', message)
           
@@ -204,6 +209,17 @@ export default function AdminSearchPage() {
           if (message.type === 'status') {
             // Optional: Show status updates
             console.log('Search status:', message.message)
+            
+            // Show AI agent specific status
+            if (aiAgentMode && message.message) {
+              const statusMessage: Message = {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: `🤖 AI Agent: ${message.message}`,
+                timestamp: new Date(Date.now())
+              }
+              setMessages(prev => [...prev, statusMessage])
+            }
           } else if (message.type === 'immediate') {
             // Show search results
             let searchResults: SearchResult[] = []
@@ -227,13 +243,21 @@ export default function AdminSearchPage() {
               // Handle AI Agent API structure (results)
               if (message.data.results) {
                 message.data.results.forEach((result: any, index: number) => {
+                  // Check for AI-specific metadata
+                  const isAiRanked = result.ai_ranked || false
+                  const relevance = result.relevance || 'medium'
+                  const enhancedContext = result.enhanced_context || false
+                  
                   searchResults.push({
                     id: `ai-${index}`,
                     type: 'document',
                     title: result.title || result.source || `AI Result ${index + 1}`,
                     content: result.content || result.snippet || 'No content available',
                     source: result.source || 'Unknown',
-                    score: result.score || 0
+                    score: result.score || 0,
+                    ai_ranked: isAiRanked,
+                    relevance: relevance,
+                    enhanced_context: enhancedContext
                   })
                 })
               }
@@ -242,7 +266,9 @@ export default function AdminSearchPage() {
             const searchMessage: Message = {
               id: crypto.randomUUID(),
               role: "sources",
-              content: `Found ${searchResults.length} relevant sources`,
+              content: aiAgentMode 
+                ? `🤖 AI Agent found ${searchResults.length} enhanced sources`
+                : `Found ${searchResults.length} relevant sources`,
               sources: searchResults.map(r => r.source),
               searchResults: searchResults,
               timestamp: new Date(Date.now())
@@ -251,10 +277,14 @@ export default function AdminSearchPage() {
             setMessages(prev => [...prev, searchMessage])
           } else if (message.type === 'overview') {
             // Show AI overview
+            const overviewContent = aiAgentMode 
+              ? `🤖 **AI-Agent Analysis:** ${message.data || "No overview available"}`
+              : message.data || "No overview available"
+              
             const overviewMessage: Message = {
               id: crypto.randomUUID(),
               role: "overview",
-              content: message.data || "No overview available",
+              content: overviewContent,
               timestamp: new Date(Date.now())
             }
             
@@ -266,10 +296,10 @@ export default function AdminSearchPage() {
         }
       })
       
-      if (result.status === 'success') {
-        toast.success("Search completed successfully!")
+      if (result && (result as any).status === 'success') {
+        toast.success(aiAgentMode ? "AI Agent search completed successfully!" : "Search completed successfully!")
       } else {
-        toast.error(result.message || "Search failed")
+        toast.error((result as any)?.message || "Search failed")
       }
     } catch (error) {
       console.error('Search error:', error)
@@ -281,7 +311,11 @@ export default function AdminSearchPage() {
 
   return (
     <>
-      <AppHeader breadcrumbs={[{ label: "Admin", href: "/admin" }]} />
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-semibold">Admin Search</span>
+        </div>
+      </header>
       
       <main className="flex-1 p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
@@ -301,26 +335,52 @@ export default function AdminSearchPage() {
                 <div className="space-y-4">
                   <h2 className="text-lg font-semibold mb-4">Knowledge Base Search</h2>
                   <form onSubmit={handleSearch} className="space-y-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={aiAgentMode}
+                          onChange={(e) => setAiAgentMode(e.target.checked)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium">AI Agent Mode</span>
+                      </label>
+                      {aiAgentMode && (
+                        <Badge variant="secondary" className="text-xs">
+                          <Brain className="w-3 h-3 mr-1" />
+                          Active
+                        </Badge>
+                      )}
+                    </div>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder="Search documents, products, or ask questions..."
+                        placeholder={aiAgentMode ? "AI-powered search - ask anything..." : "Search documents, products, or ask questions..."}
                         className="pl-10 pr-4 h-12"
                         disabled={isLoading}
                       />
                     </div>
-                    <Button type="submit" disabled={isLoading} className="w-full">
+                    <Button type="submit" disabled={isLoading} className={`w-full ${aiAgentMode ? 'bg-purple-600 hover:bg-purple-700' : ''}`}>
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Searching...
+                          {aiAgentMode ? 'AI Processing...' : 'Searching...'}
                         </>
                       ) : (
                         <>
-                          <Send className="mr-2 h-4 w-4" />
-                          Search
+                          {aiAgentMode ? (
+                            <>
+                              <Brain className="mr-2 h-4 w-4" />
+                              AI Search
+                            </>
+                          ) : (
+                            <>
+                              <Send className="mr-2 h-4 w-4" />
+                              Search
+                            </>
+                          )}
                         </>
                       )}
                     </Button>
@@ -435,10 +495,46 @@ export default function AdminSearchPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium text-muted-foreground mb-1">
-                            {new Date(message.timestamp).toLocaleString()}
+                            {message.timestamp ? new Date(message.timestamp).toLocaleString() : 'No timestamp'}
                           </div>
                           <div className="prose prose-sm dark:prose-invert max-w-none">
                             {message.content}
+                            
+                            {/* Display detailed search results for sources */}
+                            {message.role === 'sources' && message.searchResults && message.searchResults.length > 0 && (
+                              <div className="mt-4 space-y-3">
+                                {message.searchResults.map((result, resultIndex) => (
+                                  <div key={result.id} className="border rounded-lg p-3 bg-background">
+                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                      <h4 className="font-medium text-sm flex-1">{result.title}</h4>
+                                      <div className="flex gap-1 flex-shrink-0">
+                                        {result.ai_ranked && (
+                                          <Badge variant="secondary" className="text-xs">
+                                            <Brain className="w-3 h-3 mr-1" />
+                                            AI-Ranked
+                                          </Badge>
+                                        )}
+                                        {result.relevance && (
+                                          <Badge 
+                                            variant={result.relevance === 'high' ? 'default' : result.relevance === 'medium' ? 'secondary' : 'outline'} 
+                                            className="text-xs"
+                                          >
+                                            {result.relevance === 'high' ? 'High' : result.relevance === 'medium' ? 'Medium' : 'Low'} Relevance
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mb-2">{result.content}</p>
+                                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                      <span>Source: {result.source}</span>
+                                      {result.score && (
+                                        <span>Score: {result.score.toFixed(2)}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

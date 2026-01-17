@@ -156,3 +156,4 @@ export function useAdminFiles(token?: string, skip?: boolean, options?: Partial<
  */
 export function useAdminReports(token?: string, skip?: boolean, options?: Partial<UseAdminDataOptions>) {
   return useAdminData('reports', { token, skip, ...options })
+}
