@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { adminApi } from "@/lib/api"
+import { adminApi, filesApi, dashboardApi } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -94,6 +94,9 @@ export default function AdminQuizzesPage() {
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showStatsDialog, setShowStatsDialog] = useState(false)
   const [generatingQuiz, setGeneratingQuiz] = useState(false)
+  const [showFileSelectDialog, setShowFileSelectDialog] = useState(false)
+  const [availableFiles, setAvailableFiles] = useState<any[]>([])
+  const [selectedFile, setSelectedFile] = useState<string>("")
   const [formData, setFormData] = useState<QuizFormData>({
     title: "",
     description: "",
@@ -111,8 +114,9 @@ export default function AdminQuizzesPage() {
   const fetchQuizzes = async () => {
     try {
       setLoading(true)
-      const response = await adminApi.getQuizzes(token)
-      if (response.success) {
+      if (!token) return
+      const response = await dashboardApi.getQuizzes(token)
+      if (response.status === "success" && response.response) {
         setQuizzes(response.response.quizzes)
       }
     } catch (error) {
@@ -124,22 +128,70 @@ export default function AdminQuizzesPage() {
 
   const fetchQuizStats = async (quizId: string) => {
     try {
-      const response = await adminApi.getQuizStats(quizId, token)
-      if (response.success) {
+      if (!token) return
+      setLoading(true)
+      const response = await dashboardApi.getQuizStats(quizId, token)
+      if (response.status === "success" && response.response) {
         setQuizStats(prev => ({
           ...prev,
-          [quizId]: response.response
+          [quizId]: response.response as QuizStats
         }))
       }
     } catch (error) {
       toast.error("Failed to fetch quiz statistics")
+    } finally {
+      setLoading(false)
     }
   }
 
   const createQuiz = async () => {
     try {
-      const response = await adminApi.createQuiz(formData, token)
-      if (response.success) {
+      if (!token) return
+      
+      // Validate form data before submission
+      if (!formData.title.trim()) {
+        toast.error("Quiz title is required")
+        return
+      }
+      
+      if (!formData.questions || formData.questions.length === 0) {
+        toast.error("Quiz must have at least one question")
+        return
+      }
+      
+      // Validate each question
+      for (let i = 0; i < formData.questions.length; i++) {
+        const question = formData.questions[i]
+        if (!question.question.trim()) {
+          toast.error(`Question ${i + 1} text is required`)
+          return
+        }
+        
+        if (question.type === "multiple-choice") {
+          if (!question.options || question.options.length < 2) {
+            toast.error(`Question ${i + 1} must have at least 2 options`)
+            return
+          }
+          
+          const hasCorrectAnswer = question.options.some((_, index) => 
+            question.correct_answer === index
+          )
+          if (!hasCorrectAnswer) {
+            toast.error(`Question ${i + 1} must have a correct answer selected`)
+            return
+          }
+        }
+        
+        if (question.type === "true-false") {
+          if (!question.options || question.options.length !== 2) {
+            toast.error(`Question ${i + 1} must have exactly 2 options (True/False)`)
+            return
+          }
+        }
+      }
+      
+      const response = await dashboardApi.createQuiz(formData, token)
+      if (response.status === "success") {
         toast.success("Quiz created successfully")
         setShowCreateDialog(false)
         setFormData({
@@ -159,11 +211,53 @@ export default function AdminQuizzesPage() {
   }
 
   const updateQuiz = async () => {
-    if (!selectedQuiz) return
+    if (!selectedQuiz || !token) return
     
     try {
-      const response = await adminApi.updateQuiz(selectedQuiz.id, formData, token)
-      if (response.success) {
+      // Validate form data before submission
+      if (!formData.title.trim()) {
+        toast.error("Quiz title is required")
+        return
+      }
+      
+      if (!formData.questions || formData.questions.length === 0) {
+        toast.error("Quiz must have at least one question")
+        return
+      }
+      
+      // Validate each question
+      for (let i = 0; i <formData.questions.length; i++) {
+        const question = formData.questions[i]
+        if (!question.question.trim()) {
+          toast.error(`Question ${i + 1} text is required`)
+          return
+        }
+        
+        if (question.type === "multiple-choice") {
+          if (!question.options || question.options.length < 2) {
+            toast.error(`Question ${i + 1} must have at least 2 options`)
+            return
+          }
+          
+          const hasCorrectAnswer = question.options.some((_, index) => 
+            question.correct_answer === index
+          )
+          if (!hasCorrectAnswer) {
+            toast.error(`Question ${i + 1} must have a correct answer selected`)
+            return
+          }
+        }
+        
+        if (question.type === "true-false") {
+          if (!question.options || question.options.length !== 2) {
+            toast.error(`Question ${i + 1} must have exactly 2 options (True/False)`)
+            return
+          }
+        }
+      }
+      
+      const response = await dashboardApi.updateQuiz(selectedQuiz.id, formData, token)
+      if (response.status === "success") {
         toast.success("Quiz updated successfully")
         setShowEditDialog(false)
         fetchQuizzes()
@@ -174,11 +268,11 @@ export default function AdminQuizzesPage() {
   }
 
   const deleteQuiz = async (quizId: string) => {
-    if (!confirm("Are you sure you want to delete this quiz?")) return
+    if (!confirm("Are you sure you want to delete this quiz?") || !token) return
     
     try {
-      const response = await adminApi.deleteQuiz(quizId, token)
-      if (response.success) {
+      const response = await dashboardApi.deleteQuiz(quizId, token)
+      if (response.status === "success") {
         toast.success("Quiz deleted successfully")
         fetchQuizzes()
       }
@@ -188,46 +282,122 @@ export default function AdminQuizzesPage() {
   }
 
   const generateQuizFromAI = async () => {
+    // First fetch available files and show selection dialog
+    await fetchFiles()
+    setShowFileSelectDialog(true)
+  }
+
+  const fetchFiles = async () => {
+    try {
+      if (!token) return
+      const response = await filesApi.list(token)
+      if (response.status === "success" && response.response) {
+        setAvailableFiles(response.response.documents)
+      }
+    } catch (error) {
+      toast.error("Failed to fetch files")
+    }
+  }
+
+  const generateQuizFromSelectedFile = async () => {
+    if (!selectedFile || !token) {
+      toast.error("Please select a file first")
+      return
+    }
+    
     setGeneratingQuiz(true)
     try {
-      // This would integrate with the existing quiz generation API
-      // For now, we'll create a sample quiz
-      const sampleQuiz: QuizFormData = {
-        title: "AI Generated Knowledge Test",
-        description: "Automatically generated quiz about your knowledge base",
-        category: "General Knowledge",
-        difficulty: "medium",
-        time_limit: 10,
-        passing_score: 75,
-        questions: [
-          {
-            id: "1",
-            type: "multiple-choice",
-            question: "What is the primary purpose of a knowledge management system?",
-            options: [
-              "To store documents only",
-              "To organize and retrieve information efficiently",
-              "To replace human employees",
-              "To create backups"
-            ],
-            correct_answer: 1,
-            explanation: "Knowledge management systems organize information for efficient access and retrieval.",
-            points: 10
-          },
-          {
-            id: "2",
-            type: "true-false",
-            question: "Modern knowledge bases can only contain text documents.",
-            correct_answer: "false",
-            explanation: "Modern knowledge bases support various media types including images, videos, and structured data.",
-            points: 10
-          }
-        ]
-      }
+      // Use the proper API function
+      const response = await dashboardApi.generateQuizFromDocument(selectedFile, token, true)
+      console.log('Full API response:', response)
       
-      setFormData(sampleQuiz)
-      toast.success("Quiz generated successfully! Review and save to create.")
+      if (response && response.status === "success") {
+        const quizData = response.response?.quiz
+        console.log('Extracted quiz data:', quizData)
+        let parsedQuiz = null
+        
+        try {
+          // Try to parse the quiz JSON if it exists
+          if (quizData?.quiz_json) {
+            parsedQuiz = JSON.parse(quizData.quiz_json)
+            console.log('Successfully parsed AI quiz:', parsedQuiz)
+          } else if (quizData && typeof quizData === 'object') {
+            // Use the quiz data directly if it's already an object
+            parsedQuiz = quizData
+            console.log('Using quiz data directly as parsed object')
+          }
+        } catch (parseError) {
+          console.error('JSON parsing error:', parseError)
+          parsedQuiz = null
+        }
+        
+        // Convert to form format
+        const convertedQuestions = parsedQuiz?.questions?.map((q: any, index: number) => ({
+          id: (index + 1).toString(),
+          type: q.options?.length > 2 ? "multiple-choice" : "true-false",
+          question: q.question,
+          options: q.options || [],
+          correct_answer: q.options?.indexOf(q.answer) >= 0 ? q.options?.indexOf(q.answer) : q.answer,
+          explanation: q.explanation || "",
+          points: 10
+        })) || []
+        
+        const aiGeneratedQuiz: QuizFormData = {
+          title: `AI Quiz: ${selectedFile}`,
+          description: `Automatically generated quiz from document: ${selectedFile}`,
+          category: "AI Generated",
+          difficulty: "medium",
+          time_limit: 15,
+          passing_score: 70,
+          questions: convertedQuestions
+        }
+        
+        setFormData(aiGeneratedQuiz)
+        setShowFileSelectDialog(false)
+        setShowCreateDialog(true)
+        
+        if (parsedQuiz && convertedQuestions.length > 0) {
+          toast.success("Quiz generated successfully! Review and save to create.")
+        } else {
+          toast.info("AI generation unavailable. Created a sample quiz for you to customize.")
+          
+          // Fallback to sample quiz if AI generation fails
+          const fallbackQuiz: QuizFormData = {
+            title: "AI Generated Knowledge Test",
+            description: "Automatically generated quiz about your knowledge base",
+            category: "General Knowledge",
+            difficulty: "medium",
+            time_limit: 10,
+            passing_score: 75,
+            questions: [
+              {
+                id: "1",
+                type: "multiple-choice",
+                question: "What is the primary purpose of a knowledge management system?",
+                options: [
+                  "To store documents only",
+                  "To organize and retrieve information efficiently",
+                  "To replace human employees",
+                  "To create backups"
+                ],
+                correct_answer: 1,
+                explanation: "Knowledge management systems organize information for efficient access and retrieval.",
+                points: 10
+              }
+            ]
+          }
+          
+          setFormData(fallbackQuiz)
+          setShowFileSelectDialog(false)
+          setShowCreateDialog(true)
+        }
+      } else {
+        console.error('API response not successful:', response)
+        const errorMessage = response?.message || "Failed to generate quiz from document"
+        toast.error(errorMessage)
+      }
     } catch (error) {
+      console.error('Quiz generation error:', error)
       toast.error("Failed to generate quiz")
     } finally {
       setGeneratingQuiz(false)
@@ -841,6 +1011,63 @@ export default function AdminQuizzesPage() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* File Selection Dialog for AI Quiz Generation */}
+        <Dialog open={showFileSelectDialog} onOpenChange={setShowFileSelectDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Generate Quiz from Document</DialogTitle>
+              <DialogDescription>
+                Select a document to generate a quiz from using AI
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Select Document</Label>
+                <ScrollArea className="h-64 w-full border rounded-md p-2">
+                  <div className="space-y-2">
+                    {availableFiles.length === 0 ? (
+                      <p className="text-muted-foreground">No documents available</p>
+                    ) : (
+                      availableFiles.map((file) => (
+                        <div
+                          key={file.id}
+                          className={`p-3 border rounded cursor-pointer transition-colors ${
+                            selectedFile === file.filename
+                              ? 'bg-primary text-primary-foreground'
+                              : 'hover:bg-muted'
+                          }`}
+                          onClick={() => setSelectedFile(file.filename)}
+                        >
+                          <div className="font-medium">{file.filename}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(file.upload_timestamp).toLocaleDateString()} • {(file.file_size / 1024).toFixed(1)} KB
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowFileSelectDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={generateQuizFromSelectedFile} 
+                disabled={!selectedFile || generatingQuiz}
+              >
+                {generatingQuiz ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Brain className="w-4 h-4 mr-2" />
+                )}
+                Generate Quiz
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </main>

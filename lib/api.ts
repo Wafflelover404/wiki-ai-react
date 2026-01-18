@@ -1141,6 +1141,22 @@ export const dashboardApi = {
     console.log("Creating quiz with data:", quizData)
     console.log("Using token:", token ? "present" : "missing")
     
+    // Transform frontend data to backend format
+    const backendQuizData = {
+      ...quizData,
+      questions: quizData.questions.map(q => ({
+        question: q.question,
+        options: q.options || [],
+        answer: typeof q.correct_answer === 'number' && q.options ? 
+          q.options[q.correct_answer] : 
+          q.correct_answer.toString(),
+        explanation: q.explanation,
+        points: q.points
+      }))
+    }
+    
+    console.log("Transformed quiz data for backend:", backendQuizData)
+    
     const result = await apiRequest<{
       id: string
       message: string
@@ -1148,7 +1164,7 @@ export const dashboardApi = {
       url: "/admin/quizzes",
       method: "POST",
       token,
-      data: quizData,
+      data: backendQuizData,
     })
     
     console.log("Quiz creation result:", result)
@@ -1172,13 +1188,28 @@ export const dashboardApi = {
       points: number
     }>
   }, token: string) => {
+    // Transform frontend data to backend format
+    const backendQuizData: any = { ...quizData }
+    
+    if (quizData.questions) {
+      backendQuizData.questions = quizData.questions.map(q => ({
+        question: q.question,
+        options: q.options || [],
+        answer: typeof q.correct_answer === 'number' && q.options ? 
+          q.options[q.correct_answer] : 
+          q.correct_answer.toString(),
+        explanation: q.explanation,
+        points: q.points
+      }))
+    }
+    
     return apiRequest<{
       message: string
     }>({
       url: `/admin/quizzes/${quizId}`,
       method: "PUT",
       token,
-      data: quizData,
+      data: backendQuizData,
     })
   },
 
@@ -1302,6 +1333,22 @@ export const dashboardApi = {
     }>({
       url: `/invites/${inviteId}`,
       method: "DELETE",
+      token,
+    })
+  },
+
+  // Quiz generation from documents
+  generateQuizFromDocument: async (filename: string, token: string, regenerate: boolean = false) => {
+    return apiRequest<{
+      quiz: {
+        id: string
+        source_filename: string
+        timestamp: string
+        quiz_json: string
+        logs?: string
+      }
+    }>({
+      url: `/quiz/${encodeURIComponent(filename)}?regenerate=${regenerate}`,
       token,
     })
   },
