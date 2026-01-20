@@ -43,6 +43,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Users, Plus, Search, MoreVertical, Edit, Trash2, Loader2, Shield, User, Mail, Link, Copy } from "lucide-react"
 import { toast } from "sonner"
 import { redirect } from "next/navigation"
+import { useTranslation } from "@/src/i18n"
 
 interface UserAccount {
   id?: number
@@ -55,6 +56,7 @@ interface UserAccount {
 
 export default function UsersPage() {
   const { token, isAdmin, isLoading: authLoading, user: currentUser } = useAuth()
+  const { t } = useTranslation()
   const [users, setUsers] = useState<UserAccount[]>([])
   const [filteredUsers, setFilteredUsers] = useState<UserAccount[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -111,7 +113,7 @@ export default function UsersPage() {
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
-      toast.error("Failed to load data")
+      toast.error(t('users.failedToLoadData'))
     } finally {
       setIsLoading(false)
     }
@@ -155,7 +157,7 @@ export default function UsersPage() {
 
   const handleCreateUser = async () => {
     if (!token || !newUsername.trim() || !newPassword.trim()) {
-      setCreateError("Username and password are required")
+      setCreateError(t('users.usernameAndPasswordAreRequired'))
       return
     }
 
@@ -175,7 +177,7 @@ export default function UsersPage() {
       })
 
       if (result.status === "success") {
-        toast.success("User created successfully")
+        toast.success(t('users.userCreatedSuccessfully'))
         setIsCreateOpen(false)
         setNewUsername("")
         setNewPassword("")
@@ -184,12 +186,12 @@ export default function UsersPage() {
         setCreateError("")
         fetchData()
       } else {
-        setCreateError(result.message || "Failed to create user")
+        setCreateError(result.message || t('users.failedToCreateUser'))
         toast.error(result.message || "Failed to create user")
       }
     } catch (error) {
       console.error("Create user error:", error)
-      setCreateError("Network error occurred")
+      setCreateError(t('users.networkErrorOccurred'))
       toast.error("Failed to create user")
     } finally {
       setIsCreating(false)
@@ -210,7 +212,7 @@ export default function UsersPage() {
       })
 
       if (result.status === "success" && result.response) {
-        toast.success("Invite link created successfully")
+        toast.success(t('users.inviteLinkCreatedSuccessfully'))
         setCreatedInvite(result.response)
         setIsInviteOpen(false)
         setInviteEmail("")
@@ -219,7 +221,7 @@ export default function UsersPage() {
         setInviteMessage("")
         setInviteError("")
       } else {
-        setInviteError(result.message || "Failed to create invite")
+        setInviteError(result.message || t('users.failedToCreateInvite'))
         toast.error(result.message || "Failed to create invite")
       }
     } catch (error) {

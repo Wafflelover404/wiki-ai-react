@@ -31,6 +31,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { useTranslation } from "@/src/i18n"
 
 interface FileItem {
   name: string
@@ -50,6 +51,7 @@ interface QuickStats {
 
 export default function UserDashboard() {
   const { token, user } = useAuth()
+  const { t } = useTranslation()
   const [files, setFiles] = useState<FileItem[]>([])
   const [filteredFiles, setFilteredFiles] = useState<FileItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -95,7 +97,7 @@ export default function UserDashboard() {
       }
     } catch (error) {
       console.error("Failed to fetch files:", error)
-      toast.error("Failed to load files")
+      toast.error(t('dashboard.failedToLoadFiles'))
     } finally {
       setIsLoading(false)
     }
@@ -176,20 +178,20 @@ export default function UserDashboard() {
   }
 
   const formatFileSize = (bytes?: number) => {
-    if (!bytes) return "Unknown size"
+    if (!bytes) return t('dashboard.unknownSize')
     const sizes = ["B", "KB", "MB", "GB"]
     const i = Math.floor(Math.log(bytes) / Math.log(1024))
     return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
   }
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return "Unknown"
+    if (!dateString) return t('dashboard.unknownDate')
     return new Date(dateString).toLocaleDateString()
   }
 
   return (
     <>
-      <AppHeader breadcrumbs={[{ label: "Dashboard" }]} />
+      <AppHeader breadcrumbs={[{ label: t('dashboard.title') }]} />
       <main className="flex-1 p-4 md:p-6 space-y-6">
         {/* Welcome Section */}
         <div className="space-y-4">
@@ -364,7 +366,7 @@ export default function UserDashboard() {
                 <FileText className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No documents found</h3>
                 <p className="text-muted-foreground mb-4">
-                  {searchQuery ? "No documents match your search" : "No documents uploaded yet"}
+                  {searchQuery ? t('dashboard.noDocumentsMatchYourSearch') : t('dashboard.noDocumentsUploadedYet')}
                 </p>
                 <Button asChild>
                   <Link href="/app/files">

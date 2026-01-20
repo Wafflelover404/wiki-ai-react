@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Key, Plus, Copy, Trash2, Loader2, Clock } from "lucide-react"
+import { toast } from "sonner"
+import { redirect } from "next/navigation"
+import { useTranslation } from "@/src/i18n"
 import {
   Dialog,
   DialogContent,
@@ -27,10 +32,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Key, Plus, Copy, Trash2, Loader2, Clock } from "lucide-react"
-import { toast } from "sonner"
-import { redirect } from "next/navigation"
 
 interface ApiKey {
   id: string
@@ -45,6 +46,7 @@ interface ApiKey {
 
 export default function ApiKeysPage() {
   const { token, isAdmin, isLoading: authLoading } = useAuth()
+  const { t } = useTranslation()
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [newKeyName, setNewKeyName] = useState("")
@@ -225,31 +227,31 @@ export default function ApiKeysPage() {
                 <>
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="keyName">Key Name</Label>
+                      <Label htmlFor="keyName">{t('apiKeys.keyName')}</Label>
                       <Input
                         id="keyName"
-                        placeholder="e.g., Production API"
+                        placeholder={t('apiKeys.keyNamePlaceholder')}
                         value={newKeyName}
                         onChange={(e) => setNewKeyName(e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Give your API key a descriptive name to identify it later
+                        {t('apiKeys.giveApiKeyDescriptiveName')}
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="keyDescription">Description (Optional)</Label>
+                      <Label htmlFor="keyDescription">{t('apiKeys.description')}</Label>
                       <textarea
                         id="keyDescription"
                         className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Describe the purpose of this API key"
+                        placeholder={t('apiKeys.descriptionPlaceholder')}
                         value={newKeyDescription}
                         onChange={(e) => setNewKeyDescription(e.target.value)}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Permissions</Label>
+                      <Label>{t('apiKeys.permissions')}</Label>
                       <div className="space-y-2">
                         {["search", "upload", "download", "delete_documents", "view_reports"].map((permission) => (
                           <div key={permission} className="flex items-center space-x-2">
@@ -275,32 +277,33 @@ export default function ApiKeysPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="expiresInDays">Expires In Days (Optional)</Label>
+                      <Label htmlFor="expiresInDays">{t('apiKeys.expires')}</Label>
                       <Input
                         id="expiresInDays"
                         type="number"
-                        placeholder="e.g., 30"
+                        placeholder={t('apiKeys.expiresPlaceholder')}
                         value={newKeyExpiresInDays}
                         onChange={(e) => setNewKeyExpiresInDays(e.target.value)}
                         min="1"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Leave blank for no expiration
+                        {t('apiKeys.leaveBlankForNoExpiration')}
                       </p>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={closeDialog}>
-                      Cancel
-                    </Button>
+                    <Button variant="outline" onClick={closeDialog}>{t('apiKeys.cancel')}</Button>
                     <Button onClick={handleCreateKey} disabled={!newKeyName.trim() || isCreating}>
                       {isCreating ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creating...
+                          {t('apiKeys.creating')}
                         </>
                       ) : (
-                        "Create Key"
+                        <>
+                          <Plus className="w-4 h-4" />
+                          {t('apiKeys.createApiKey')}
+                        </>
                       )}
                     </Button>
                   </DialogFooter>
@@ -317,8 +320,8 @@ export default function ApiKeysPage() {
                 <Key className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <CardTitle>API Keys</CardTitle>
-                <CardDescription>Keys for authenticating API requests</CardDescription>
+                <CardTitle>{t('apiKeys.apiKeys')}</CardTitle>
+                <CardDescription>{t('apiKeys.keysForAuthenticatingApiRequests')}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -327,12 +330,12 @@ export default function ApiKeysPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Permissions</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Last Used</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[80px]">Actions</TableHead>
+                    <TableHead>{t('apiKeys.keyName')}</TableHead>
+                    <TableHead>{t('apiKeys.permissions')}</TableHead>
+                    <TableHead>{t('apiKeys.created')}</TableHead>
+                    <TableHead>{t('apiKeys.lastUsed')}</TableHead>
+                    <TableHead>{t('apiKeys.status')}</TableHead>
+                    <TableHead className="w-[80px]">{t('apiKeys.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -368,13 +371,13 @@ export default function ApiKeysPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {key.last_used ? new Date(key.last_used).toLocaleDateString() : "Never"}
+                        {key.last_used ? new Date(key.last_used).toLocaleDateString() : t('apiKeys.never')}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className={`w-2 h-2 rounded-full ${key.is_active ? 'bg-green-500' : 'bg-red-500'}`} />
                           <span className="text-sm">
-                            {key.is_active ? 'Active' : 'Inactive'}
+                            {key.is_active ? t('apiKeys.active') : t('apiKeys.inactive')}
                           </span>
                         </div>
                       </TableCell>
@@ -395,11 +398,11 @@ export default function ApiKeysPage() {
             ) : (
               <div className="text-center py-12">
                 <Key className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-                <h3 className="text-lg font-semibold mb-2">No API keys yet</h3>
-                <p className="text-muted-foreground mb-4">Create an API key to enable programmatic access</p>
+                <h3 className="text-lg font-semibold mb-2">{t('apiKeys.noApiKeysYet')}</h3>
+                <p className="text-muted-foreground mb-4">{t('apiKeys.createApiKeyToEnableProgrammaticAccess')}</p>
                 <Button onClick={() => setIsDialogOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Key
+                  <Plus className="w-4 h-4" />
+                  {t('apiKeys.createApiKey')}
                 </Button>
               </div>
             )}

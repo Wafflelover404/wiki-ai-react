@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { useTranslation } from "@/src/i18n"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +16,7 @@ import { toast } from "sonner"
 import { authApi } from "@/lib/api"
 
 export function LoginForm() {
+  const { t } = useTranslation()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -33,7 +35,7 @@ export function LoginForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!username || !password) {
-      toast.error("Please enter username and password")
+      toast.error(t('login.pleaseEnterUsernameAndPassword'))
       return
     }
 
@@ -42,17 +44,17 @@ export function LoginForm() {
     setIsLoading(false)
 
     if (result.success) {
-      toast.success("Login successful")
+      toast.success(t('login.loginSuccessful'))
       router.push("/app")
     } else {
-      toast.error(result.error || "Login failed")
+      toast.error(result.error || t('login.loginFailed'))
     }
   }
 
   const handleCreateOrganization = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!orgName || !orgSlug || !adminUsername || !adminPassword) {
-      toast.error("Please fill in all fields")
+      toast.error(t('login.pleaseFillInAllFields'))
       return
     }
 
@@ -65,7 +67,7 @@ export function LoginForm() {
       })
 
       if (result.status === "success") {
-        toast.success("Organization created successfully! You can now login.")
+        toast.success(t('login.organizationCreatedSuccessfully'))
         // Switch to login tab and populate username
         setUsername(adminUsername)
         setPassword("")
@@ -75,10 +77,10 @@ export function LoginForm() {
         setAdminUsername("")
         setAdminPassword("")
       } else {
-        toast.error(result.message || "Failed to create organization")
+        toast.error(result.message || t('login.failedToCreateOrganization'))
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create organization")
+      toast.error(error instanceof Error ? error.message : t('login.failedToCreateOrganization'))
     } finally {
       setIsCreatingOrg(false)
     }
@@ -204,8 +206,8 @@ export function LoginForm() {
             <Brain className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">WikiAi</CardTitle>
-            <CardDescription className="mt-2">Manage your knowledge base</CardDescription>
+            <CardTitle className="text-2xl font-bold">{t('login.title')}</CardTitle>
+            <CardDescription className="mt-2">{t('login.subtitle')}</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -213,22 +215,22 @@ export function LoginForm() {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login" className="flex items-center gap-2">
                 <Brain className="w-4 h-4" />
-                Sign In
+                {t('login.signIn')}
               </TabsTrigger>
               <TabsTrigger value="create-org" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
-                Create Org
+                {t('login.createOrg')}
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="login" className="mt-6">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">{t('login.username')}</Label>
                   <Input
                     id="username"
                     type="text"
-                    placeholder="Enter your username"
+                    placeholder={t('login.enterYourUsername')}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     disabled={isLoading}
@@ -236,12 +238,12 @@ export function LoginForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('login.password')}</Label>
                   <div className="relative">
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
+                      placeholder={t('login.enterYourPassword')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={isLoading}
@@ -266,10 +268,10 @@ export function LoginForm() {
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
+                      {t('login.signingIn')}
                     </>
                   ) : (
-                    "Sign in"
+                    t('login.signInButton')
                   )}
                 </Button>
               </form>
@@ -278,11 +280,11 @@ export function LoginForm() {
             <TabsContent value="create-org" className="mt-6">
               <form onSubmit={handleCreateOrganization} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="org-name">Organization Name</Label>
+                  <Label htmlFor="org-name">{t('login.organizationName')}</Label>
                   <Input
                     id="org-name"
                     type="text"
-                    placeholder="Enter organization name"
+                    placeholder={t('login.enterOrganizationName')}
                     value={orgName}
                     onChange={(e) => handleOrgNameChange(e.target.value)}
                     disabled={isCreatingOrg}
@@ -290,11 +292,11 @@ export function LoginForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="org-slug">Organization Slug</Label>
+                  <Label htmlFor="org-slug">{t('login.organizationSlug')}</Label>
                   <Input
                     id="org-slug"
                     type="text"
-                    placeholder="organization-slug"
+                    placeholder={t('login.organizationSlugPlaceholder')}
                     value={orgSlug}
                     onChange={(e) => setOrgSlug(e.target.value)}
                     disabled={isCreatingOrg}
@@ -302,11 +304,11 @@ export function LoginForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="admin-username">Admin Username</Label>
+                  <Label htmlFor="admin-username">{t('login.adminUsername')}</Label>
                   <Input
                     id="admin-username"
                     type="text"
-                    placeholder="Enter admin username"
+                    placeholder={t('login.enterAdminUsername')}
                     value={adminUsername}
                     onChange={(e) => setAdminUsername(e.target.value)}
                     disabled={isCreatingOrg}
@@ -314,12 +316,12 @@ export function LoginForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="admin-password">Admin Password</Label>
+                  <Label htmlFor="admin-password">{t('login.adminPassword')}</Label>
                   <div className="relative">
                     <Input
                       id="admin-password"
                       type={showAdminPassword ? "text" : "password"}
-                      placeholder="Enter admin password"
+                      placeholder={t('login.enterAdminPassword')}
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
                       disabled={isCreatingOrg}
@@ -344,12 +346,12 @@ export function LoginForm() {
                   {isCreatingOrg ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Organization...
+                      {t('login.creatingOrganization')}
                     </>
                   ) : (
                     <>
                       <Building className="mr-2 h-4 w-4" />
-                      Create Organization
+                      {t('login.createOrganization')}
                     </>
                   )}
                 </Button>

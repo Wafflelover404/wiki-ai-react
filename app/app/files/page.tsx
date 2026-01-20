@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { useTranslation } from "@/src/i18n"
 import { filesApi } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
@@ -583,6 +584,7 @@ function WordViewer({ filename, content }: { filename: string; content: string }
 }
 
 export default function FilesPage() {
+  const { t } = useTranslation()
   const { token, isAdmin } = useAuth()
   const [files, setFiles] = useState<FileItem[]>([])
   const [filteredFiles, setFilteredFiles] = useState<FileItem[]>([])

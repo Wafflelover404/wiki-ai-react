@@ -14,6 +14,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Moon, Sun } from "lucide-react"
+import { useTranslation } from "@/src/i18n"
+import { LanguageSwitcher } from "@/src/components/language-switcher"
 
 interface AppHeaderProps {
   breadcrumbs?: Array<{ label: string; href?: string }>
@@ -21,6 +23,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
   const { theme, setTheme } = useTheme()
+  const { t } = useTranslation()
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
@@ -30,7 +33,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/app">Home</BreadcrumbLink>
+            <BreadcrumbLink href="/app">{t('navigation.home')}</BreadcrumbLink>
           </BreadcrumbItem>
           {breadcrumbs.map((crumb, index) => {
             const isLast = index === breadcrumbs.length - 1
@@ -51,10 +54,13 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
       </Breadcrumb>
 
       <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center">
+          <LanguageSwitcher />
+        </div>
         <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
           <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
+          <span className="sr-only">{t('navigation.toggleTheme')}</span>
         </Button>
       </div>
     </header>

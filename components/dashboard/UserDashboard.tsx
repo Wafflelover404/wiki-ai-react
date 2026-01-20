@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { useTranslation } from '@/src/i18n'
 import { useUserFiles } from '@/hooks/useUserData'
 import { useUserStore } from '@/lib/store/user-store'
 import { useDashboardStore } from '@/lib/store/dashboard-store'
@@ -39,6 +40,7 @@ interface UserFile {
  * User dashboard for file management and queries
  */
 export function UserDashboard() {
+  const { t } = useTranslation()
   const { token, user } = useAuth()
   const { addNotification } = useDashboardStore()
   const {
@@ -71,13 +73,13 @@ export function UserDashboard() {
   const fileColumns: Column<UserFile>[] = [
     {
       key: 'filename',
-      label: 'Filename',
+      label: t('dashboard.files'),
       sortable: true,
       width: '50%',
     },
     {
       key: 'size',
-      label: 'Size',
+      label: t('files.size'),
       sortable: true,
       width: '20%',
       render: (value) =>
@@ -85,7 +87,7 @@ export function UserDashboard() {
     },
     {
       key: 'uploaded_at',
-      label: 'Uploaded',
+      label: t('dashboard.uploading'),
       sortable: true,
       width: '30%',
       render: (value) =>
@@ -97,7 +99,7 @@ export function UserDashboard() {
 
   const handleQuery = async () => {
     if (!queryText.trim()) {
-      addNotification('Please enter a question', 'warning')
+      addNotification(t('search.askAQuestionAboutYourKnowledgeBase'), 'warning')
       return
     }
 
@@ -105,11 +107,11 @@ export function UserDashboard() {
     try {
       // TODO: Call query API when ready
       addRecentQuery(queryText)
-      addNotification('Query submitted (backend integration pending)', 'info')
+      addNotification(t('search.generatingAiOverview'), 'info')
       setQueryText('')
     } catch (error) {
       addNotification(
-        `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `${t('status.error')}: ${error instanceof Error ? error.message : t('status.failed')}`,
         'error'
       )
     } finally {
@@ -118,31 +120,31 @@ export function UserDashboard() {
   }
 
   const handleDownload = (filename: string) => {
-    addNotification(`Download for "${filename}" coming soon`, 'info')
+    addNotification(`${t('files.downloadFile')} "${filename}" ${t('status.info')}`, 'info')
   }
 
   return (
     <div className="flex-1 space-y-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t('navigation.dashboard')}</h1>
         <p className="text-muted-foreground mt-2">
-          Welcome back, {user?.username}! Upload files and ask questions.
+          {t('common.welcome')}, {user?.username}! {t('dashboard.uploadDocumentsToBuildYourKnowledgeBase')} {t('search.askQuestionsAboutYourDocuments')}.
         </p>
       </div>
 
       {/* Query Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Ask a Question</CardTitle>
+          <CardTitle>{t('search.askAQuestionAboutYourKnowledgeBase')}</CardTitle>
           <CardDescription>
-            Ask anything about your documents
+            {t('search.askQuestionsAboutYourDocuments')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input
-              placeholder="Ask a question about your documents..."
+              placeholder={t('search.askAQuestionAboutYourKnowledgeBase')}
               value={queryText}
               onChange={(e) => setQueryText(e.target.value)}
               onKeyDown={(e) => {
@@ -169,9 +171,9 @@ export function UserDashboard() {
       {/* Files Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Your Files</CardTitle>
+          <CardTitle>{t('dashboard.files')}</CardTitle>
           <CardDescription>
-            Manage and search through your uploaded documents
+            {t('dashboard.manageAllUploadedDocuments')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -179,7 +181,7 @@ export function UserDashboard() {
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Failed to load files: {filesData.error.message}
+                {t('dashboard.failedToFetchFiles')}: {filesData.error.message}
               </AlertDescription>
             </Alert>
           )}
@@ -189,7 +191,7 @@ export function UserDashboard() {
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search files..."
+                  placeholder={t('dashboard.searchFiles')}
                   className="pl-10"
                 />
               </div>
@@ -208,7 +210,7 @@ export function UserDashboard() {
                     }}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download ({selectedFiles.length})
+                    {t('actions.download')} ({selectedFiles.length})
                   </Button>
 
                   <Button
@@ -216,13 +218,13 @@ export function UserDashboard() {
                     size="sm"
                     onClick={() => {
                       addNotification(
-                        'Delete files functionality coming soon',
+                        t('dashboard.fileDeletedSuccessfully'),
                         'info'
                       )
                     }}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Delete ({selectedFiles.length})
+                    {t('actions.delete')} ({selectedFiles.length})
                   </Button>
                 </>
               )}
@@ -230,11 +232,11 @@ export function UserDashboard() {
               <Button
                 size="sm"
                 onClick={() => {
-                  addNotification('File upload coming soon', 'info')
+                  addNotification(t('dashboard.uploadFiles'), 'info')
                 }}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Upload File
+                {t('dashboard.uploadFiles')}
               </Button>
             </div>
           </div>

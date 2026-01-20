@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import { useTranslation } from '@/src/i18n'
 import { useAdminUsers, useAdminFiles, useAdminReports } from '@/hooks/useAdminData'
 import { useAdminStore } from '@/lib/store/admin-store'
 import { useDashboardStore } from '@/lib/store/dashboard-store'
@@ -47,12 +48,13 @@ interface AdminReport {
  * STRICTLY restricted to admin/owner roles only
  */
 export function AdminDashboard() {
+  const { t } = useTranslation()
   const router = useRouter()
   const { token, user, isLoading: authLoading } = useAuth()
   const { addNotification } = useDashboardStore()
   
   // Strict permission check - must be admin or owner
-  const isAuthorizedAdmin = user && (user.role === 'admin' || user.role === 'owner')
+  const isAuthorizedAdmin = user && ['admin', 'owner'].includes(user.role)
 
   // Redirect unauthorized users
   useEffect(() => {
@@ -70,12 +72,12 @@ export function AdminDashboard() {
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto">
               <Lock className="w-6 h-6 text-red-600" />
             </div>
-            <h2 className="text-lg font-semibold">Access Denied</h2>
+            <h2 className="text-lg font-semibold">{t('status.error')}</h2>
             <p className="text-sm text-muted-foreground">
-              Only administrators can access this panel.
+              {t('admin.systemAnalyticsAndPerformanceMonitoring')}
             </p>
             <Button variant="outline" onClick={() => router.push('/dashboard')}>
-              Return to Dashboard
+              {t('actions.back')}
             </Button>
           </CardContent>
         </Card>
@@ -140,19 +142,19 @@ export function AdminDashboard() {
   const userColumns: Column<AdminUser>[] = [
     {
       key: 'username',
-      label: 'Username',
+      label: t('userManagement.username'),
       sortable: true,
       width: '30%',
     },
     {
       key: 'email',
-      label: 'Email',
+      label: t('login.username'),
       sortable: true,
       width: '35%',
     },
     {
       key: 'role',
-      label: 'Role',
+      label: t('userManagement.role'),
       sortable: true,
       width: '20%',
       render: (value) => (
@@ -163,7 +165,7 @@ export function AdminDashboard() {
     },
     {
       key: 'created_at',
-      label: 'Created',
+      label: t('userManagement.lastLogin'),
       sortable: true,
       width: '15%',
       render: (value) =>
@@ -177,13 +179,13 @@ export function AdminDashboard() {
   const fileColumns: Column<AdminFile>[] = [
     {
       key: 'filename',
-      label: 'Filename',
+      label: t('dashboard.files'),
       sortable: true,
       width: '50%',
     },
     {
       key: 'size',
-      label: 'Size',
+      label: t('files.size'),
       sortable: true,
       width: '20%',
       render: (value) =>
@@ -191,7 +193,7 @@ export function AdminDashboard() {
     },
     {
       key: 'uploaded_at',
-      label: 'Uploaded',
+      label: t('dashboard.uploading'),
       sortable: true,
       width: '30%',
       render: (value) =>
@@ -205,13 +207,13 @@ export function AdminDashboard() {
   const reportColumns: Column<AdminReport>[] = [
     {
       key: 'name',
-      label: 'Report Name',
+      label: t('admin.reports'),
       sortable: true,
       width: '40%',
     },
     {
       key: 'type',
-      label: 'Type',
+      label: t('status.info'),
       sortable: true,
       width: '30%',
       render: (value) => (
@@ -222,7 +224,7 @@ export function AdminDashboard() {
     },
     {
       key: 'created_at',
-      label: 'Created',
+      label: t('userManagement.lastLogin'),
       sortable: true,
       width: '30%',
       render: (value) =>
@@ -237,9 +239,9 @@ export function AdminDashboard() {
       {/* Header with Refresh Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('admin.title')}</h1>
           <p className="text-muted-foreground mt-2">
-            Manage users, files, and system reports
+            {t('admin.systemAnalyticsAndPerformanceMonitoring')}
           </p>
         </div>
         <Button
@@ -254,12 +256,12 @@ export function AdminDashboard() {
           {isLoading ? (
             <>
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Refreshing...
+              {t('actions.loading')}...
             </>
           ) : (
             <>
               <span>↻</span>
-              Refresh
+              {t('actions.view')}
             </>
           )}
         </Button>
@@ -269,34 +271,34 @@ export function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('admin.totalUsers')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{users.length}</div>
-            <p className="text-xs text-muted-foreground">Active accounts</p>
+            <p className="text-xs text-muted-foreground">{t('admin.registeredAccounts')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Files</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('admin.indexedDocuments')}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{files.length}</div>
-            <p className="text-xs text-muted-foreground">Uploaded documents</p>
+            <p className="text-xs text-muted-foreground">{t('dashboard.uploadDocumentsToBuildYourKnowledgeBase')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Reports</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('admin.totalReports')}</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reports.length}</div>
-            <p className="text-xs text-muted-foreground">Generated reports</p>
+            <p className="text-xs text-muted-foreground">{t('admin.autoGeneratedAndManualFeedbackReports')}</p>
           </CardContent>
         </Card>
       </div>
@@ -306,7 +308,7 @@ export function AdminDashboard() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Failed to load users: {usersData.error.message}
+            {t('status.failed')} {t('userManagement.failedToLoadData')}: {usersData.error.message}
           </AlertDescription>
         </Alert>
       )}
@@ -315,7 +317,7 @@ export function AdminDashboard() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Failed to load files: {filesData.error.message}
+            {t('dashboard.failedToFetchFiles')}: {filesData.error.message}
           </AlertDescription>
         </Alert>
       )}
@@ -324,7 +326,7 @@ export function AdminDashboard() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Failed to load reports: {reportsData.error.message}
+            {t('dashboard.failedToFetchFiles')}: {reportsData.error.message}
           </AlertDescription>
         </Alert>
       )}
@@ -332,22 +334,22 @@ export function AdminDashboard() {
       {/* Tabs */}
       <Card>
         <CardHeader>
-          <CardTitle>Management</CardTitle>
+          <CardTitle>{t('userManagement.title')}</CardTitle>
           <CardDescription>
-            View and manage users, files, and reports
+            {t('admin.systemAnalyticsAndPerformanceMonitoring')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="users">
-                Users ({users.length})
+                {t('navigation.admin')} ({users.length})
               </TabsTrigger>
               <TabsTrigger value="files">
-                Files ({files.length})
+                {t('navigation.files')} ({files.length})
               </TabsTrigger>
               <TabsTrigger value="reports">
-                Reports ({reports.length})
+                {t('admin.reports')} ({reports.length})
               </TabsTrigger>
             </TabsList>
 
@@ -357,7 +359,7 @@ export function AdminDashboard() {
                 <p className="text-sm text-muted-foreground">
                   {selectedUsers.length > 0 && (
                     <span>
-                      {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''} selected
+                      {selectedUsers.length} {t('userManagement.title')}{selectedUsers.length !== 1 ? 's' : ''} {t('files.selected')}
                     </span>
                   )}
                 </p>

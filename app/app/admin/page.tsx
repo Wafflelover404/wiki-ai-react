@@ -33,6 +33,7 @@ import {
   Cell,
 } from "recharts"
 import { redirect } from "next/navigation"
+import { useTranslation } from "@/src/i18n"
 
 interface MetricsSummary {
   total_queries: number
@@ -50,6 +51,7 @@ interface Report {
 
 export default function AdminDashboardPage() {
   const { token, isAdmin, isLoading: authLoading } = useAuth()
+  const { t } = useTranslation()
   const [metrics, setMetrics] = useState<MetricsSummary | null>(null)
   const [autoReports, setAutoReports] = useState<Report[]>([])
   const [manualReports, setManualReports] = useState<Report[]>([])
@@ -142,7 +144,7 @@ export default function AdminDashboardPage() {
   if (authLoading || isLoading) {
     return (
       <>
-        <AppHeader breadcrumbs={[{ label: "Admin" }]} />
+        <AppHeader breadcrumbs={[{ label: t('admin.title') }]} />
         <main className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </main>
@@ -158,8 +160,8 @@ export default function AdminDashboardPage() {
   const failureRate = 100 - successRate
 
   const pieData = [
-    { name: "Successful", value: metrics?.successful_queries || 0, color: "var(--color-success)" },
-    { name: "Failed", value: metrics?.failed_queries || 0, color: "var(--color-destructive)" },
+    { name: t('admin.successful'), value: metrics?.successful_queries || 0, color: "var(--color-success)" },
+    { name: t('admin.failed'), value: metrics?.failed_queries || 0, color: "var(--color-destructive)" },
   ]
 
   // Transform volume data for chart - only show total queries
@@ -170,29 +172,29 @@ export default function AdminDashboardPage() {
 
   return (
     <>
-      <AppHeader breadcrumbs={[{ label: "Admin Dashboard" }]} />
+      <AppHeader breadcrumbs={[{ label: t('admin.adminDashboard') }]} />
       <main className="flex-1 p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="text-muted-foreground">System analytics and performance monitoring</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('admin.title')}</h1>
+          <p className="text-muted-foreground">{t('admin.systemAnalyticsAndPerformanceMonitoring')}</p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Queries</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.todaysQueries')}</CardTitle>
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{metrics?.total_queries?.toLocaleString() || 0}</div>
-              <p className="text-xs text-muted-foreground">All time processed</p>
+              <p className="text-xs text-muted-foreground">{t('admin.queriesProcessedToday')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.successRate')}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -205,23 +207,23 @@ export default function AdminDashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Avg Response</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.avgResponse')}</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{metrics?.avg_response_time?.toFixed(2) || 0}s</div>
-              <p className="text-xs text-muted-foreground">Average latency</p>
+              <p className="text-xs text-muted-foreground">{t('admin.averageLatency')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.activeUsers')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{userCount}</div>
-              <p className="text-xs text-muted-foreground">Registered accounts</p>
+              <p className="text-xs text-muted-foreground">{t('admin.registeredAccounts')}</p>
             </CardContent>
           </Card>
         </div>
@@ -232,20 +234,20 @@ export default function AdminDashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Query Volume</CardTitle>
-                  <CardDescription>Daily query trends over selected period</CardDescription>
+                  <CardTitle>{t('admin.queryVolume')}</CardTitle>
+                  <CardDescription>{t('admin.dailyQueryTrendsOverSelectedPeriod')}</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   {/* <span className="text-sm text-muted-foreground">{selectedPeriod} days</span> */}
                   <Select value={selectedPeriod.toString()} onValueChange={(value) => handlePeriodChange(Number(value))}>
                     <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Select period" />
+                      <SelectValue placeholder={t('admin.selectPeriod')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="7">7 days</SelectItem>
-                      <SelectItem value="14">14 days</SelectItem>
-                      <SelectItem value="30">30 days</SelectItem>
-                      <SelectItem value="90">90 days</SelectItem>
+                      <SelectItem value="7">{t('admin.7days')}</SelectItem>
+                      <SelectItem value="14">{t('admin.14days')}</SelectItem>
+                      <SelectItem value="30">{t('admin.30days')}</SelectItem>
+                      <SelectItem value="90">{t('admin.90days')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -291,8 +293,8 @@ export default function AdminDashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Query Distribution</CardTitle>
-              <CardDescription>Success vs failure breakdown</CardDescription>
+              <CardTitle>{t('admin.queryDistribution')}</CardTitle>
+              <CardDescription>{t('admin.successVsFailureBreakdown')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px] flex items-center justify-center">
@@ -340,17 +342,17 @@ export default function AdminDashboardPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Reports</CardTitle>
-                <CardDescription>Auto-generated and manual feedback reports</CardDescription>
+                <CardTitle>{t('admin.reports')}</CardTitle>
+                <CardDescription>{t('admin.autoGeneratedAndManualFeedbackReports')}</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Badge variant="outline">
                   <AlertTriangle className="w-3 h-3 mr-1" />
-                  Auto: {autoReports.length}
+                  {t('admin.auto')}: {autoReports.length}
                 </Badge>
                 <Badge variant="outline">
                   <MessageSquare className="w-3 h-3 mr-1" />
-                  Manual: {manualReports.length}
+                  {t('admin.manual')}: {manualReports.length}
                 </Badge>
               </div>
             </div>
@@ -358,8 +360,8 @@ export default function AdminDashboardPage() {
           <CardContent>
             <Tabs defaultValue="auto">
               <TabsList>
-                <TabsTrigger value="auto">Auto Reports ({autoReports.length})</TabsTrigger>
-                <TabsTrigger value="manual">Manual Reports ({manualReports.length})</TabsTrigger>
+                <TabsTrigger value="auto">{t('admin.autoReports')} ({autoReports.length})</TabsTrigger>
+                <TabsTrigger value="manual">{t('admin.manualReports')} ({manualReports.length})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="auto" className="mt-4">
@@ -372,13 +374,13 @@ export default function AdminDashboardPage() {
                             <div className="flex items-start gap-3 flex-1">
                               <AlertTriangle className="w-5 h-5 text-warning mt-0.5" />
                               <div>
-                                <p className="font-medium">{report.question || "No question recorded"}</p>
+                                <p className="font-medium">{report.question || t('admin.noQuestionRecorded')}</p>
                                 <p className="text-xs text-muted-foreground mt-1">
                                   {new Date(report.timestamp).toLocaleString()}
                                 </p>
                               </div>
                             </div>
-                            <Badge variant="secondary">Auto</Badge>
+                            <Badge variant="secondary">{t('admin.auto')}</Badge>
                           </div>
                         </div>
                       ))}
@@ -386,8 +388,8 @@ export default function AdminDashboardPage() {
                   ) : (
                     <div className="text-center py-8">
                       <CheckCircle className="w-12 h-12 mx-auto mb-4 text-success/50" />
-                      <p className="text-muted-foreground">No auto-generated reports</p>
-                      <p className="text-sm text-muted-foreground mt-1">All queries received answers</p>
+                      <p className="text-muted-foreground">{t('admin.noAutoGeneratedReports')}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t('admin.allQueriesReceivedAnswers')}</p>
                     </div>
                   )}
                 </ScrollArea>
@@ -403,13 +405,13 @@ export default function AdminDashboardPage() {
                             <div className="flex items-start gap-3 flex-1">
                               <MessageSquare className="w-5 h-5 text-primary mt-0.5" />
                               <div>
-                                <p className="font-medium">{report.feedback || "No feedback provided"}</p>
+                                <p className="font-medium">{report.feedback || t('admin.noFeedbackProvided')}</p>
                                 <p className="text-xs text-muted-foreground mt-1">
                                   {new Date(report.timestamp).toLocaleString()}
                                 </p>
                               </div>
                             </div>
-                            <Badge variant="secondary">Manual</Badge>
+                            <Badge variant="secondary">{t('admin.manual')}</Badge>
                           </div>
                         </div>
                       ))}
@@ -417,8 +419,8 @@ export default function AdminDashboardPage() {
                   ) : (
                     <div className="text-center py-8">
                       <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                      <p className="text-muted-foreground">No manual reports</p>
-                      <p className="text-sm text-muted-foreground mt-1">Users have not submitted feedback</p>
+                      <p className="text-muted-foreground">{t('admin.noManualReports')}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t('admin.usersHaveNotSubmittedFeedback')}</p>
                     </div>
                   )}
                 </ScrollArea>
@@ -437,7 +439,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{fileCount}</p>
-                  <p className="text-sm text-muted-foreground">Indexed Documents</p>
+                  <p className="text-sm text-muted-foreground">{t('admin.indexedDocuments')}</p>
                 </div>
               </div>
             </CardContent>
@@ -451,7 +453,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{userCount}</p>
-                  <p className="text-sm text-muted-foreground">Total Users</p>
+                  <p className="text-sm text-muted-foreground">{t('admin.totalUsers')}</p>
                 </div>
               </div>
             </CardContent>
@@ -465,7 +467,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{autoReports.length + manualReports.length}</p>
-                  <p className="text-sm text-muted-foreground">Total Reports</p>
+                  <p className="text-sm text-muted-foreground">{t('admin.totalReports')}</p>
                 </div>
               </div>
             </CardContent>
