@@ -392,6 +392,15 @@ export default function AdminSearchPage() {
     console.log('Starting search for:', input.trim())
     console.log('User:', user?.username, 'Session:', sessionId)
 
+    // Add user message to the conversation
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: input.trim(),
+      timestamp: new Date(Date.now()),
+    }
+    setMessages(prev => [...prev, userMessage])
+
     try {
       // Use WebSocket for real-time search (like Vue implementation)
       if (typeof WebSocket !== 'undefined') {
@@ -419,8 +428,7 @@ export default function AdminSearchPage() {
   const performWebSocketQuery = async (query: string) => {
     return new Promise((resolve, reject) => {
       try {
-        // Convert HTTP(S) URL to WS(S) URL (same as Vue)
-        // Backend runs on port 9001, frontend on 3000
+        // Use the same API base URL from config for WebSocket
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
         const wsUrl = `${wsProtocol}//localhost:9001/ws/query?token=${encodeURIComponent(token || '')}`
         
@@ -702,11 +710,11 @@ export default function AdminSearchPage() {
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "Admin" }, { label: "Search" }]} />
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 p-4 md:p-6 relative">
         <div className="max-w-7xl mx-auto h-full">
           <div className="p-2 h-full overflow-hidden">
             <div className="h-full flex flex-col">
-                <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+                <ScrollArea className="flex-1 p-6 pb-32" ref={scrollRef}>
                   {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto text-center">
                       <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
@@ -862,9 +870,9 @@ export default function AdminSearchPage() {
                               </div>
                             )}
 
-                            {/* AI Overview - Uncomment to enable */}
-                            {/* {message.role === "overview" && (
-                              <div className="max-w-2xl mx-auto">
+                            {/* AI Overview */}
+                            {message.role === "overview" && (
+                              <div className="w-full">
                                 <div className="flex items-center gap-2 mb-3">
                                   <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                                   <span className="font-medium text-purple-900 dark:text-purple-100">AI Overview</span>
@@ -873,18 +881,18 @@ export default function AdminSearchPage() {
                                   <ReactMarkdown>{message.content}</ReactMarkdown>
                                 </div>
                               </div>
-                            )} */}
+                            )}
 
-                            {/* Regular Assistant Message - Uncomment to enable */}
-                            {/* {message.role === "assistant" && (
+                            {/* Regular Assistant Message */}
+                            {message.role === "assistant" && (
                               <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
-                                {message.content === "Generating AI overview..." ? (
+                                {message.content === "Generating AI overview..." || message.content === "🤖 AI Agent generating enhanced analysis..." ? (
                                   <span className="animate-pulse">{message.content}</span>
                                 ) : (
                                   <ReactMarkdown>{message.content}</ReactMarkdown>
                                 )}
                               </div>
-                            )} */}
+                            )}
 
                             {/* User Message */}
                             {message.role === "user" && (
@@ -956,7 +964,7 @@ export default function AdminSearchPage() {
                 </ScrollArea>
 
                 {/* Search Input Area */}
-                <div className="border-t bg-background p-4">
+                <div className="fixed bottom-0 left-0 right-0 border-t bg-background p-4 z-50 shadow-lg">
                   <div className="flex items-center gap-2 mb-4">
                     {/* Settings Button - Temporarily Commented Out */}
                     {/* <Button

@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
+import { useTranslation } from "@/src/i18n"
 import { 
   Search, 
   Settings,
@@ -197,6 +198,7 @@ interface Catalog {
 
 export default function SearchPage() {
   const { token, user } = useAuth()
+  const { t } = useTranslation()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -375,6 +377,15 @@ export default function SearchPage() {
     console.log('Starting search for:', input.trim())
     console.log('User:', user?.username, 'Session:', sessionId)
 
+    // Add user message to the conversation
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: input.trim(),
+      timestamp: new Date(Date.now()),
+    }
+    setMessages(prev => [...prev, userMessage])
+
     try {
       // Use WebSocket for real-time search (like Vue implementation)
       if (typeof WebSocket !== 'undefined') {
@@ -402,8 +413,7 @@ export default function SearchPage() {
   const performWebSocketQuery = async (query: string) => {
     return new Promise((resolve, reject) => {
       try {
-        // Convert HTTP(S) URL to WS(S) URL (same as Vue)
-        // Backend runs on port 9001, frontend on 3000
+        // Use the same API base URL from config for WebSocket
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
         const wsUrl = `${wsProtocol}//localhost:9001/ws/query?token=${encodeURIComponent(token || '')}`
         
@@ -598,13 +608,13 @@ export default function SearchPage() {
 
     try {
       // Note: This would need to be adapted to the new API structure
-      toast.success("Feedback submitted successfully")
+      toast.success(t('search.feedbackSubmittedSuccessfully'))
       setIsFeedbackOpen(false)
       setFeedbackText("")
       setFeedbackMessage(null)
     } catch (error) {
       console.error("Feedback error:", error)
-      toast.error("Failed to submit feedback")
+      toast.error(t('search.failedToSubmitFeedback'))
     }
   }
 
@@ -619,22 +629,22 @@ export default function SearchPage() {
   }
 
   const suggestedQuestions = [
-    "What products do we have in stock?",
-    "How do I configure the system settings?",
-    "What are the main features of the platform?",
-    "Show me recent order statistics",
+    t('search.whatProductsDoWeHaveInStock'),
+    t('search.howDoIConfigureTheSystemSettings'),
+    t('search.whatAreTheMainFeaturesOfThePlatform'),
+    t('search.showMeRecentOrderStatistics'),
   ]
 
   return (
     <>
-      <AppHeader breadcrumbs={[{ label: "Search" }]} />
-      <main className="flex-1 p-4 md:p-6">
+      <AppHeader breadcrumbs={[{ label: t('search.title') }]} />
+      <main className="flex-1 p-4 md:p-6 relative">
         <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-100px)]">
           {/* Main Search Area - 70% initially */}
           <ResizablePanel defaultSize={70} minSize={40}>
             <div className="p-2 h-full overflow-hidden">
               <div className="h-full flex flex-col">
-                <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+                <ScrollArea className="flex-1 p-6 pb-32" ref={scrollRef}>
                   {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto text-center">
                       <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
@@ -867,7 +877,7 @@ export default function SearchPage() {
                 </ScrollArea>
 
                 {/* Search Input Area */}
-                <div className="border-t bg-background p-4">
+                <div className="fixed bottom-0 left-0 right-0 border-t bg-background p-4 z-50 shadow-lg">
                   <div className="flex items-center gap-2 mb-4">
                     <Button
                       variant="outline"
@@ -930,17 +940,6 @@ export default function SearchPage() {
                   {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
                 </div>
 
-                {/* {message.role === "assistant" && (
-                  <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
-                    {message.content === "Generating AI overview..." ? (
-                      <span className="animate-pulse">{message.content}</span>
-                    ) : (
-                      <ReactMarkdown>{message.content}</ReactMarkdown>
-                    )}
-                  </div>
-                )} */} 
-
-
                 {/* AI Response Content */}
                 <ScrollArea className="flex-1 pr-2">
                   {messages.length > 0 && (messages[messages.length - 1]?.role === "assistant" || messages[messages.length - 1]?.role === "overview") ? (
@@ -970,12 +969,12 @@ export default function SearchPage() {
                         const lastAssistantMessage = messages[messages.length - 1]
                         if (lastAssistantMessage?.content) {
                           navigator.clipboard.writeText(lastAssistantMessage.content)
-                          toast.success("Response copied to clipboard")
+                          toast.success(t('search.responseCopiedToClipboard'))
                         }
                       }}
                     >
                       <Copy className="w-3 h-3 mr-1" />
-                      Copy
+                      {t('search.copy')}
                     </Button>
                     <Button 
                       variant="outline" 
@@ -985,7 +984,7 @@ export default function SearchPage() {
                       }}
                     >
                       <X className="w-3 h-3 mr-1" />
-                      Clear
+                      {t('search.clear')}
                     </Button>
                   </div>
                 )}

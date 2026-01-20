@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslation } from "@/src/i18n"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -56,6 +57,8 @@ interface QuizCardProps {
 }
 
 export function QuizCard({ quiz, onStartQuiz, onViewStats, onEdit, onDelete, showActions = true, isAdmin = false }: QuizCardProps) {
+  const { t } = useTranslation()
+  
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "easy": return "bg-green-100 text-green-800"
@@ -83,16 +86,16 @@ export function QuizCard({ quiz, onStartQuiz, onViewStats, onEdit, onDelete, sho
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <Target className="h-4 w-4" />
-              <span>{quiz.passing_score}% to pass</span>
+              <span>{quiz.passing_score}% {t('quizzes.passingScore')}</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
-              <span>{quiz.time_limit} min</span>
+              <span>{quiz.time_limit} {t('quizTaking.minutes')}</span>
             </div>
             {quiz.question_count && (
               <div className="flex items-center gap-1">
                 <Award className="h-4 w-4" />
-                <span>{quiz.question_count} questions</span>
+                <span>{quiz.question_count} {t('quizzes.questions')}</span>
               </div>
             )}
           </div>
@@ -106,7 +109,7 @@ export function QuizCard({ quiz, onStartQuiz, onViewStats, onEdit, onDelete, sho
               {!isAdmin && onStartQuiz && (
                 <Button onClick={() => onStartQuiz(quiz)} className="flex-1">
                   <Play className="h-4 w-4 mr-2" />
-                  Start Quiz
+                  {t('quizzes.startQuiz')}
                 </Button>
               )}
               
@@ -114,12 +117,12 @@ export function QuizCard({ quiz, onStartQuiz, onViewStats, onEdit, onDelete, sho
                 <>
                   {onEdit && (
                     <Button variant="outline" onClick={() => onEdit(quiz)}>
-                      Edit
+                      {t('actions.edit')}
                     </Button>
                   )}
                   {onDelete && (
                     <Button variant="destructive" onClick={() => onDelete(quiz)}>
-                      Delete
+                      {t('actions.delete')}
                     </Button>
                   )}
                 </>
@@ -141,6 +144,7 @@ interface QuizQuestionProps {
 }
 
 export function QuizQuestion({ question, answer, onAnswerChange, showResult = false, disabled = false }: QuizQuestionProps) {
+  const { t } = useTranslation()
   const isCorrect = showResult && answer === question.correct_answer
 
   const renderQuestion = () => {
@@ -172,11 +176,11 @@ export function QuizQuestion({ question, answer, onAnswerChange, showResult = fa
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="true" id="true" />
-              <Label htmlFor="true" className="cursor-pointer">True</Label>
+              <Label htmlFor="true" className="cursor-pointer">{t('quizzes.trueFalse')}</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="false" id="false" />
-              <Label htmlFor="false" className="cursor-pointer">False</Label>
+              <Label htmlFor="false" className="cursor-pointer">{t('quizzes.false')}</Label>
             </div>
           </RadioGroup>
         )
@@ -184,20 +188,20 @@ export function QuizQuestion({ question, answer, onAnswerChange, showResult = fa
       case "text":
         return (
           <div className="space-y-2">
-            <Label>Your Answer:</Label>
+            <Label>{t('quizzes.yourAnswer')}:</Label>
             <textarea
               className="w-full p-3 border rounded-md"
               rows={3}
               value={answer?.toString() || ""}
               onChange={(e) => onAnswerChange?.(question.id, e.target.value)}
               disabled={disabled}
-              placeholder="Type your answer here..."
+              placeholder={t('quizzes.questionText')}
             />
           </div>
         )
       
       default:
-        return <div>Unsupported question type</div>
+        return <div>{t('status.error')}</div>
     }
   }
 
@@ -209,7 +213,7 @@ export function QuizQuestion({ question, answer, onAnswerChange, showResult = fa
           {renderQuestion()}
         </div>
         <div className="text-sm text-muted-foreground">
-          {question.points} point{question.points !== 1 ? 's' : ''}
+          {question.points} {t('quizzes.points')}{question.points !== 1 ? 's' : ''}
         </div>
       </div>
       
@@ -217,9 +221,9 @@ export function QuizQuestion({ question, answer, onAnswerChange, showResult = fa
         <div className={`p-4 rounded-md ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border`}>
           <div className="flex items-center gap-2 mb-2">
             {isCorrect ? (
-              <span className="text-green-700 font-medium">✓ Correct</span>
+              <span className="text-green-700 font-medium">✓ {t('quizzes.passed')}</span>
             ) : (
-              <span className="text-red-700 font-medium">✗ Incorrect</span>
+              <span className="text-red-700 font-medium">✗ {t('quizzes.notPassed')}</span>
             )}
           </div>
           {question.explanation && (
@@ -239,6 +243,7 @@ interface QuizProgressProps {
 }
 
 export function QuizProgress({ current, total, timeRemaining, timeLimit }: QuizProgressProps) {
+  const { t } = useTranslation()
   const progress = ((current + 1) / total) * 100
   const timeProgress = timeLimit && timeRemaining !== undefined 
     ? ((timeLimit - timeRemaining) / timeLimit) * 100 
@@ -247,7 +252,7 @@ export function QuizProgress({ current, total, timeRemaining, timeLimit }: QuizP
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center text-sm text-muted-foreground">
-        <span>Question {current + 1} of {total}</span>
+        <span>{t('quizTaking.questionOf', { current: current + 1, total })}</span>
         {timeRemaining !== undefined && (
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
@@ -263,7 +268,7 @@ export function QuizProgress({ current, total, timeRemaining, timeLimit }: QuizP
       {timeLimit && timeRemaining !== undefined && (
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Time Progress</span>
+            <span>{t('quizTaking.progress')}</span>
             <span>{Math.floor((timeLimit - timeRemaining) / 60)}:{((timeLimit - timeRemaining) % 60).toString().padStart(2, '0')} / {Math.floor(timeLimit / 60)}:{(timeLimit % 60).toString().padStart(2, '0')}</span>
           </div>
           <Progress value={timeProgress} className="w-full" />
@@ -281,13 +286,14 @@ interface QuizResultsProps {
 }
 
 export function QuizResults({ result, quiz, onRetake, onBack }: QuizResultsProps) {
+  const { t } = useTranslation()
   const percentage = Math.round((result.score / result.totalPoints) * 100)
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Quiz Results</CardTitle>
+          <CardTitle className="text-2xl">{t('quizzes.completed')}</CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <div className="text-6xl font-bold">
@@ -295,19 +301,19 @@ export function QuizResults({ result, quiz, onRetake, onBack }: QuizResultsProps
           </div>
           
           <div className={`text-lg font-medium ${result.passed ? 'text-green-600' : 'text-red-600'}`}>
-            {result.passed ? '✓ Passed' : '✗ Failed'}
+            {result.passed ? `✓ ${t('quizzes.passed')}` : `✗ ${t('quizzes.notPassed')}`}
           </div>
           
           <div className="text-lg">
-            Score: {percentage}%
+            {t('quizzes.scoreOutOf', { score: result.score, totalPoints: result.totalPoints, percentage })}
           </div>
           
           <div className="text-sm text-muted-foreground">
-            Required: {quiz.passing_score}% to pass
+            {t('quizzes.passingScore')}: {quiz.passing_score}% to pass
           </div>
           
           <div className="text-sm text-muted-foreground">
-            Time: {Math.floor(result.timeSpent / 60)}:{(result.timeSpent % 60).toString().padStart(2, '0')}
+            {t('quizzes.timeSpent')}: {Math.floor(result.timeSpent / 60)}:{(result.timeSpent % 60).toString().padStart(2, '0')}
           </div>
         </CardContent>
       </Card>
@@ -315,12 +321,12 @@ export function QuizResults({ result, quiz, onRetake, onBack }: QuizResultsProps
       <div className="flex gap-4 justify-center">
         {onRetake && (
           <Button onClick={onRetake} variant="outline">
-            Retake Quiz
+            {t('quizzes.retakeQuiz')}
           </Button>
         )}
         {onBack && (
           <Button onClick={onBack}>
-            Back to Quizzes
+            {t('quizzes.backToQuizzes')}
           </Button>
         )}
       </div>

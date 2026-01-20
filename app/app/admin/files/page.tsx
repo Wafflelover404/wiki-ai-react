@@ -62,6 +62,7 @@ import {
   Minimize2,
 } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslation } from "@/src/i18n"
 
 // Helper function to normalize PDF base64 content
 function normalizePdfBase64Content(content: string): string {
@@ -95,6 +96,7 @@ interface FileItem {
 
 export default function AdminFilesPage() {
   const { token, user } = useAuth()
+  const { t } = useTranslation()
   const [files, setFiles] = useState<FileItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -133,7 +135,7 @@ export default function AdminFilesPage() {
         setFiles(mappedFiles)
       }
     } catch (error) {
-      toast.error("Failed to fetch files")
+      toast.error(t('files.failedToFetchFiles'))
     } finally {
       setLoading(false)
     }
@@ -213,14 +215,14 @@ export default function AdminFilesPage() {
       }
       
       if (result.status === "success") {
-        toast.success("File deleted successfully")
+        toast.success(t('files.fileDeletedSuccessfully'))
         fetchFiles()
       } else {
-        toast.error(result.message || "Failed to delete file")
+        toast.error(result.message || t('files.failedToDeleteFile'))
       }
     } catch (error) {
       console.error("Failed to delete file:", error)
-      toast.error("Failed to delete file")
+      toast.error(t('files.failedToDeleteFile'))
     }
     setFileToDelete(null)
   }
@@ -267,7 +269,7 @@ export default function AdminFilesPage() {
       fetchFiles()
     } catch (error) {
       console.error("Failed to delete files:", error)
-      toast.error("Failed to delete some files")
+      toast.error(t('files.failedToDeleteSomeFiles'))
     }
   }
 
@@ -287,7 +289,7 @@ export default function AdminFilesPage() {
       })
 
       if (response.ok) {
-        toast.success("File metadata updated")
+        toast.success(t('files.fileMetadataUpdated'))
         fetchFiles()
         setEditDialogOpen(false)
         setEditingFile(null)

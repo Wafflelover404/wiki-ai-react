@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { useTranslation } from "@/src/i18n"
 import {
   Sidebar,
   SidebarContent,
@@ -44,31 +45,32 @@ interface NavItem {
   icon: any
 }
 
-const userNavItems: NavItem[] = [
-  { title: "Dashboard", url: "/app", icon: Home },
-  { title: "Search", url: "/app/search", icon: Search },
-  { title: "Files", url: "/app/files", icon: FileText },
-  { title: "Quizzes", url: "/app/quizzes", icon: Brain },
-]
-
-const adminNavItems: NavItem[] = [
-  { title: "Dashboard", url: "/app/admin", icon: BarChart3 },
-  { title: "User Management", url: "/app/admin/users", icon: Users },
-  { title: "API Keys", url: "/app/admin/api-keys", icon: Key },
-  { title: "File Management", url: "/app/admin/files", icon: FileText },
-  { title: "Search", url: "/app/admin/search", icon: Search },
-  { title: "Quiz Management", url: "/app/admin/quizzes", icon: Brain },
-  { title: "Quizzes", url: "/app/quizzes", icon: Brain },
-]
-
-const integrationItems: NavItem[] = [
-  { title: "OpenCart Plugins", url: "/app/plugins", icon: ShoppingCart },
-  { title: "Catalogs", url: "/app/catalogs", icon: LayoutDashboard },
-]
-
 export function AppSidebar() {
+  const { t } = useTranslation()
   const pathname = usePathname()
   const { user, isAdmin, logout } = useAuth()
+
+  const userNavItems: NavItem[] = [
+    { title: t('navigation.dashboard'), url: "/app", icon: Home },
+    { title: t('navigation.search'), url: "/app/search", icon: Search },
+    { title: t('navigation.files'), url: "/app/files", icon: FileText },
+    { title: t('navigation.quizzes'), url: "/app/quizzes", icon: Brain },
+  ]
+
+  const adminNavItems: NavItem[] = [
+    { title: t('navigation.dashboard'), url: "/app/admin", icon: BarChart3 },
+    { title: t('navigation.userManagement'), url: "/app/admin/users", icon: Users },
+    { title: t('navigation.apiKeys'), url: "/app/admin/api-keys", icon: Key },
+    { title: t('navigation.fileManagement'), url: "/app/admin/files", icon: FileText },
+    { title: t('navigation.search'), url: "/app/admin/search", icon: Search },
+    { title: t('navigation.quizManagement'), url: "/app/admin/quizzes", icon: Brain },
+    { title: t('navigation.quizzes'), url: "/app/quizzes", icon: Brain },
+  ]
+
+  const integrationItems: NavItem[] = [
+    { title: t('navigation.openCartPlugins'), url: "/app/plugins", icon: ShoppingCart },
+    { title: t('navigation.catalogs'), url: "/app/catalogs", icon: LayoutDashboard },
+  ]
 
   return (
     <Sidebar>
@@ -82,7 +84,7 @@ export function AppSidebar() {
                     <Brain className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-semibold text-sm">WikiAi</span>
+                    <span className="font-semibold text-sm">{t('common.wikiAi')}</span>
                     <span className="text-xs text-muted-foreground">{user?.organization}</span>
                   </div>
                 </div>
@@ -94,7 +96,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{isAdmin ? "Admin" : "Main"}</SidebarGroupLabel>
+          <SidebarGroupLabel>{isAdmin ? t('navigation.admin') : t('navigation.main')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {(isAdmin ? adminNavItems : userNavItems).map((item) => (
@@ -154,13 +156,13 @@ export function AppSidebar() {
                 <DropdownMenuItem asChild>
                   <Link href="/app/settings">
                     <Settings className="mr-2 h-4 w-4" />
-                    Settings
+                    {t('navigation.settings')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
+                  {t('navigation.signOut')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

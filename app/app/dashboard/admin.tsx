@@ -2,9 +2,11 @@
 
 import { useAuth } from "@/lib/auth-context"
 import { AppHeader } from "@/components/app-header"
+import { useTranslation } from '@/src/i18n'
 import EnhancedAdminDashboard from "@/components/dashboard/AdminDashboardEnhanced"
 
 export default function AdminDashboard() {
+  const { t } = useTranslation()
   const { token, user, isAdmin } = useAuth()
 
   if (!token) {
@@ -13,8 +15,8 @@ export default function AdminDashboard() {
         <AppHeader />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
-            <p className="text-muted-foreground">Please log in to access the admin dashboard.</p>
+            <h2 className="text-2xl font-bold mb-2">{t('status.authenticationRequired')}</h2>
+            <p className="text-muted-foreground">{t('admin.pleaseLogInToAccessAdminDashboard')}</p>
           </div>
         </main>
       </>
@@ -27,8 +29,8 @@ export default function AdminDashboard() {
         <AppHeader />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-            <p className="text-muted-foreground">You need administrator privileges to view this dashboard.</p>
+            <h2 className="text-2xl font-bold mb-2">{t('status.accessDenied')}</h2>
+            <p className="text-muted-foreground">{t('admin.accessDeniedMessage')}</p>
           </div>
         </main>
       </>

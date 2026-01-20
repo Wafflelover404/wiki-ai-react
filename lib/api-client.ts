@@ -311,7 +311,7 @@ export class ApiClient {
 }
 
 // Create singleton instance
-export const apiClient = new ApiClient('http://localhost:9001')
+export const apiClient = new ApiClient('https://localhost:9001')
 
 // For debugging in browser console
 if (typeof window !== 'undefined') {

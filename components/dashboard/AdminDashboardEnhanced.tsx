@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { useTranslation } from '@/src/i18n'
 import { metricsApi, filesApi, queryApi, dashboardApi } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -114,6 +115,7 @@ interface BusinessIntelligence {
 }
 
 export default function AdminDashboard() {
+  const { t } = useTranslation()
   const { token, user } = useAuth()
   const router = useRouter()
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
@@ -265,8 +267,8 @@ export default function AdminDashboard() {
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">You need administrator privileges to view this dashboard.</p>
+          <h2 className="text-2xl font-bold mb-2">{t('status.accessDenied')}</h2>
+          <p className="text-muted-foreground">{t('admin.accessDeniedMessage')}</p>
         </div>
       </div>
     )
@@ -277,19 +279,19 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('admin.title')}</h1>
           <p className="text-muted-foreground">
-            System overview and administrative controls • Last updated: {lastUpdated.toLocaleTimeString()}
+            {t('admin.systemOverview')} • {t('admin.lastUpdated')}: {lastUpdated.toLocaleTimeString()}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm">
             <Settings className="w-4 h-4 mr-2" />
-            Settings
+            {t('actions.settings')}
           </Button>
           <Button variant="outline" size="sm">
             <BarChart3 className="w-4 h-4 mr-2" />
-            Export Report
+            {t('admin.exportReport')}
           </Button>
         </div>
       </div>
@@ -311,7 +313,7 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">System Status</p>
+            {t('admin.systemStatus')}
                 <div className="flex items-center gap-2 mt-2">
                   {getHealthIcon(systemHealth?.status || "unknown")}
                   <span className={`text-2xl font-bold ${getHealthColor(systemHealth?.status || "unknown")}`}>
@@ -319,7 +321,7 @@ export default function AdminDashboard() {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Uptime: {systemHealth?.uptime || 0}%
+                  {t('admin.uptime')}: {systemHealth?.uptime || 0}%
                 </p>
               </div>
               <Server className="w-8 h-8 text-muted-foreground" />
@@ -331,10 +333,10 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Users</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('admin.activeUsers')}</p>
                 <p className="text-2xl font-bold">{userAnalytics?.active_users_today || 0}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  +{userAnalytics?.new_registrations_today || 0} new today
+                  +{userAnalytics?.new_registrations_today || 0} {t('admin.newToday')}
                 </p>
               </div>
               <Users className="w-8 h-8 text-muted-foreground" />
@@ -346,10 +348,10 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Documents</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('admin.totalDocuments')}</p>
                 <p className="text-2xl font-bold">{contentMetrics?.total_documents || 0}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  +{contentMetrics?.documents_uploaded_today || 0} today
+                  +{contentMetrics?.documents_uploaded_today || 0} {t('admin.today')}
                 </p>
               </div>
               <FileText className="w-8 h-8 text-muted-foreground" />
@@ -361,10 +363,10 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">API Response</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('admin.apiResponse')}</p>
                 <p className="text-2xl font-bold">{systemHealth?.api_response_time || 0}ms</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Error rate: {systemHealth?.error_rate || 0}%
+                  {t('admin.errorRate')}: {systemHealth?.error_rate || 0}%
                 </p>
               </div>
               <Zap className="w-8 h-8 text-muted-foreground" />
@@ -379,8 +381,8 @@ export default function AdminDashboard() {
           <Link href="/admin/users">
             <CardContent className="p-4 text-center">
               <UserPlus className="w-6 h-6 mx-auto mb-2 text-primary" />
-              <p className="text-sm font-medium">Users</p>
-              <p className="text-xs text-muted-foreground">{userAnalytics?.pending_approvals || 0} pending</p>
+              <p className="text-sm font-medium">{t('navigation.admin')}</p>
+              <p className="text-xs text-muted-foreground">{userAnalytics?.pending_approvals || 0} {t('admin.pending')}</p>
             </CardContent>
           </Link>
         </Card>
@@ -389,8 +391,8 @@ export default function AdminDashboard() {
           <Link href="/admin/content">
             <CardContent className="p-4 text-center">
               <FileText className="w-6 h-6 mx-auto mb-2 text-accent" />
-              <p className="text-sm font-medium">Content</p>
-              <p className="text-xs text-muted-foreground">{contentMetrics?.flagged_content || 0} flagged</p>
+              <p className="text-sm font-medium">{t('dashboard.files')}</p>
+              <p className="text-xs text-muted-foreground">{contentMetrics?.flagged_content || 0} {t('admin.flagged')}</p>
             </CardContent>
           </Link>
         </Card>
@@ -399,8 +401,8 @@ export default function AdminDashboard() {
           <Link href="/admin/security">
             <CardContent className="p-4 text-center">
               <Shield className="w-6 h-6 mx-auto mb-2 text-warning" />
-              <p className="text-sm font-medium">Security</p>
-              <p className="text-xs text-muted-foreground">{securityAlerts?.failed_logins || 0} alerts</p>
+              <p className="text-sm font-medium">{t('admin.security')}</p>
+              <p className="text-xs text-muted-foreground">{securityAlerts?.failed_logins || 0} {t('admin.alerts')}</p>
             </CardContent>
           </Link>
         </Card>
@@ -409,8 +411,8 @@ export default function AdminDashboard() {
           <Link href="/admin/organizations">
             <CardContent className="p-4 text-center">
               <Globe className="w-6 h-6 mx-auto mb-2 text-chart-3" />
-              <p className="text-sm font-medium">Orgs</p>
-              <p className="text-xs text-muted-foreground">Manage tenants</p>
+              <p className="text-sm font-medium">{t('admin.organizations')}</p>
+              <p className="text-xs text-muted-foreground">{t('admin.manageTenants')}</p>
             </CardContent>
           </Link>
         </Card>
@@ -419,8 +421,8 @@ export default function AdminDashboard() {
           <Link href="/admin/api-keys">
             <CardContent className="p-4 text-center">
               <Lock className="w-6 h-6 mx-auto mb-2 text-chart-1" />
-              <p className="text-sm font-medium">API Keys</p>
-              <p className="text-xs text-muted-foreground">{securityAlerts?.api_key_usage?.length || 0} active</p>
+              <p className="text-sm font-medium">{t('navigation.apiKeys')}</p>
+              <p className="text-xs text-muted-foreground">{securityAlerts?.api_key_usage?.length || 0} {t('admin.active')}</p>
             </CardContent>
           </Link>
         </Card>
@@ -429,8 +431,8 @@ export default function AdminDashboard() {
           <Link href="/admin/reports">
             <CardContent className="p-4 text-center">
               <BarChart3 className="w-6 h-6 mx-auto mb-2 text-chart-2" />
-              <p className="text-sm font-medium">Reports</p>
-              <p className="text-xs text-muted-foreground">View analytics</p>
+              <p className="text-sm font-medium">{t('admin.reports')}</p>
+              <p className="text-xs text-muted-foreground">{t('admin.viewAnalytics')}</p>
             </CardContent>
           </Link>
         </Card>
@@ -445,13 +447,13 @@ export default function AdminDashboard() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-primary" />
-                  User Analytics
+                  {t('admin.userAnalytics')}
                 </CardTitle>
-                <CardDescription>User activity and growth metrics</CardDescription>
+                <CardDescription>{t('admin.userActivityAndGrowthMetrics')}</CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/admin/users">
-                  Manage <ArrowRight className="ml-2 h-4 w-4" />
+                  {t('actions.manage')} <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>
@@ -459,21 +461,21 @@ export default function AdminDashboard() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-sm font-medium">Total Users</p>
+                <p className="text-sm font-medium">{t('admin.totalUsers')}</p>
                 <p className="text-2xl font-bold">{userAnalytics?.total_users || 0}</p>
-                <p className="text-xs text-success">+{userAnalytics?.user_growth_rate || 0}% growth</p>
+                <p className="text-xs text-success">+{userAnalytics?.user_growth_rate || 0}% {t('admin.growth')}</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-sm font-medium">Active Today</p>
+                <p className="text-sm font-medium">{t('admin.activeToday')}</p>
                 <p className="text-2xl font-bold">{userAnalytics?.active_users_today || 0}</p>
                 <p className="text-xs text-muted-foreground">
-                  {userAnalytics?.active_users_week || 0} this week
+                  {userAnalytics?.active_users_week || 0} {t('admin.thisWeek')}
                 </p>
               </div>
             </div>
             
             <div className="space-y-2">
-              <p className="text-sm font-medium">Top Active Users</p>
+              <p className="text-sm font-medium">{t('admin.topActiveUsers')}</p>
               {userAnalytics?.top_active_users?.slice(0, 3).map((user, index) => (
                 <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                   <div className="flex items-center gap-2">
@@ -482,7 +484,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">{user.username}</p>
-                      <p className="text-xs text-muted-foreground">{user.queries} queries</p>
+                      <p className="text-xs text-muted-foreground">{user.queries} {t('admin.queries')}</p>
                     </div>
                   </div>
                   <Badge variant="outline" className="text-xs">
@@ -501,9 +503,9 @@ export default function AdminDashboard() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="w-5 h-5 text-chart-1" />
-                  System Performance
+                  {t('admin.systemPerformance')}
                 </CardTitle>
-                <CardDescription>Real-time system metrics</CardDescription>
+                <CardDescription>{t('admin.realTimeSystemMetrics')}</CardDescription>
               </div>
               <Button variant="ghost" size="sm">
                 <Settings className="w-4 h-4" />
@@ -513,34 +515,34 @@ export default function AdminDashboard() {
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Database Status</span>
+                <span className="text-sm font-medium">{t('admin.databaseStatus')}</span>
                 <div className="flex items-center gap-2">
                   {systemHealth?.database_status === "connected" ? (
-                    <><CheckCircle className="w-4 h-4 text-success" /><span className="text-sm">Connected</span></>
+                    <><CheckCircle className="w-4 h-4 text-success" /><span className="text-sm">{t('admin.connected')}</span></>
                   ) : (
-                    <><XCircle className="w-4 h-4 text-destructive" /><span className="text-sm">Issues</span></>
+                    <><XCircle className="w-4 h-4 text-destructive" /><span className="text-sm">{t('admin.issues')}</span></>
                   )}
                 </div>
               </div>
               
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Storage Usage</span>
+                  <span>{t('admin.storageUsage')}</span>
                   <span>{systemHealth?.storage_usage.percentage || 0}%</span>
                 </div>
                 <Progress value={systemHealth?.storage_usage.percentage || 0} className="h-2" />
                 <p className="text-xs text-muted-foreground">
-                  {systemHealth?.storage_usage.used || 0} GB of {systemHealth?.storage_usage.total || 0} GB used
+                  {systemHealth?.storage_usage.used || 0} GB {t('admin.of')} {systemHealth?.storage_usage.total || 0} GB {t('admin.used')}
                 </p>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Active Connections</span>
+                <span className="text-sm font-medium">{t('admin.activeConnections')}</span>
                 <Badge variant="secondary">{systemHealth?.active_connections || 0}</Badge>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Error Rate</span>
+                <span className="text-sm font-medium">{t('admin.errorRate')}</span>
                 <Badge variant={systemHealth?.error_rate && systemHealth.error_rate > 1 ? "destructive" : "secondary"}>
                   {systemHealth?.error_rate || 0}%
                 </Badge>
@@ -557,16 +559,16 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-chart-2" />
-              Search Trends
+              {t('admin.searchTrends')}
             </CardTitle>
-            <CardDescription>Popular search terms</CardDescription>
+            <CardDescription>{t('admin.popularSearchTerms')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {businessIntelligence?.search_trends?.map((trend, index) => (
               <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
                 <div className="flex-1">
                   <p className="text-sm font-medium">{trend.term}</p>
-                  <p className="text-xs text-muted-foreground">{trend.frequency} searches</p>
+                  <p className="text-xs text-muted-foreground">{trend.frequency} {t('admin.searches')}</p>
                 </div>
                 <div className="flex items-center gap-1">
                   {trend.trend === "up" && <TrendingUp className="w-4 h-4 text-success" />}
@@ -583,18 +585,18 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-chart-3" />
-              Department Usage
+              {t('admin.departmentUsage')}
             </CardTitle>
-            <CardDescription>Activity by department</CardDescription>
+            <CardDescription>{t('admin.activityByDepartment')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {businessIntelligence?.department_usage?.map((dept, index) => (
               <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
                 <div className="flex-1">
                   <p className="text-sm font-medium">{dept.department}</p>
-                  <p className="text-xs text-muted-foreground">{dept.users} users</p>
+                  <p className="text-xs text-muted-foreground">{dept.users} {t('admin.users')}</p>
                 </div>
-                <Badge variant="outline">{dept.queries} queries</Badge>
+                <Badge variant="outline">{dept.queries} {t('admin.queries')}</Badge>
               </div>
             ))}
           </CardContent>
@@ -605,22 +607,22 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-chart-1" />
-              Cost Metrics
+              {t('admin.costMetrics')}
             </CardTitle>
-            <CardDescription>Operational costs</CardDescription>
+            <CardDescription>{t('admin.operationalCosts')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Cost per Query</span>
+                <span className="text-sm font-medium">{t('admin.costPerQuery')}</span>
                 <Badge variant="outline">${businessIntelligence?.cost_metrics.cost_per_query || 0}</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Daily Cost</span>
+                <span className="text-sm font-medium">{t('admin.dailyCost')}</span>
                 <Badge variant="secondary">${businessIntelligence?.cost_metrics.daily_operational_cost || 0}</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Monthly Projection</span>
+                <span className="text-sm font-medium">{t('admin.monthlyProjection')}</span>
                 <Badge variant="secondary">${businessIntelligence?.cost_metrics.monthly_projection || 0}</Badge>
               </div>
             </div>
@@ -635,13 +637,13 @@ export default function AdminDashboard() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-warning" />
-                Security Overview
+                {t('admin.securityOverview')}
               </CardTitle>
-              <CardDescription>Security events and alerts</CardDescription>
+              <CardDescription>{t('admin.securityEventsAndAlerts')}</CardDescription>
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/admin/security">
-                View details <ArrowRight className="ml-2 h-4 w-4" />
+                {t('admin.viewDetails')} <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -651,37 +653,37 @@ export default function AdminDashboard() {
             <div className="p-3 rounded-lg bg-muted/50">
               <div className="flex items-center gap-2">
                 <XCircle className="w-4 h-4 text-destructive" />
-                <span className="text-sm font-medium">Failed Logins</span>
+                <span className="text-sm font-medium">{t('admin.failedLogins')}</span>
               </div>
               <p className="text-xl font-bold mt-1">{securityAlerts?.failed_logins || 0}</p>
-              <p className="text-xs text-muted-foreground">Last 24 hours</p>
+              <p className="text-xs text-muted-foreground">{t('admin.last24Hours')}</p>
             </div>
             
             <div className="p-3 rounded-lg bg-muted/50">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-warning" />
-                <span className="text-sm font-medium">Suspicious Activity</span>
+                <span className="text-sm font-medium">{t('admin.suspiciousActivity')}</span>
               </div>
               <p className="text-xl font-bold mt-1">{securityAlerts?.suspicious_activity || 0}</p>
-              <p className="text-xs text-muted-foreground">Needs review</p>
+              <p className="text-xs text-muted-foreground">{t('admin.needsReview')}</p>
             </div>
             
             <div className="p-3 rounded-lg bg-muted/50">
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-chart-3" />
-                <span className="text-sm font-medium">Permission Denials</span>
+                <span className="text-sm font-medium">{t('admin.permissionDenials')}</span>
               </div>
               <p className="text-xl font-bold mt-1">{securityAlerts?.permission_denials || 0}</p>
-              <p className="text-xs text-muted-foreground">Access blocked</p>
+              <p className="text-xs text-muted-foreground">{t('admin.accessBlocked')}</p>
             </div>
             
             <div className="p-3 rounded-lg bg-muted/50">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Active Sessions</span>
+                <span className="text-sm font-medium">{t('admin.activeSessions')}</span>
               </div>
               <p className="text-xl font-bold mt-1">{securityAlerts?.active_sessions || 0}</p>
-              <p className="text-xs text-muted-foreground">Currently online</p>
+              <p className="text-xs text-muted-foreground">{t('admin.currentlyOnline')}</p>
             </div>
           </div>
         </CardContent>
