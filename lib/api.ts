@@ -57,7 +57,20 @@ export async function apiRequest<T = unknown>({
       body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : undefined,
     })
 
-    const result = await response.json()
+    let result
+    try {
+      result = await response.json()
+    } catch (jsonError) {
+      console.error('Failed to parse JSON response:', jsonError)
+      console.error('Response text:', await response.text())
+      result = { detail: `Invalid JSON response: ${response.status} ${response.statusText}` }
+    }
+
+    console.log(`API Response ${method} ${fullUrl}:`, {
+      status: response.status,
+      ok: response.ok,
+      result
+    })
 
     if (!response.ok) {
       // Handle structured validation errors (e.g., from FastAPI)
@@ -78,6 +91,8 @@ export async function apiRequest<T = unknown>({
         errorMessage = result.message
       }
       
+      console.error(`API Error ${response.status}:`, errorMessage)
+      
       return {
         status: "error",
         message: errorMessage,
@@ -86,6 +101,7 @@ export async function apiRequest<T = unknown>({
 
     return result
   } catch (error) {
+    console.error('Network or fetch error:', error)
     return {
       status: "error",
       message: error instanceof Error ? error.message : "Network error",
@@ -1130,6 +1146,7 @@ export const dashboardApi = {
     time_limit: number
     passing_score: number
     questions: Array<{
+      id: string
       type: "multiple-choice" | "true-false" | "text"
       question: string
       options?: string[]
@@ -1144,15 +1161,26 @@ export const dashboardApi = {
     // Transform frontend data to backend format
     const backendQuizData = {
       ...quizData,
-      questions: quizData.questions.map(q => ({
-        question: q.question,
-        options: q.options || [],
-        answer: typeof q.correct_answer === 'number' && q.options ? 
-          q.options[q.correct_answer] : 
-          q.correct_answer.toString(),
-        explanation: q.explanation,
-        points: q.points
-      }))
+      questions: quizData.questions.map((q, index) => {
+        const transformed = {
+          id: q.id,
+          type: q.type,
+          question: q.question,
+          options: q.options || [],
+          correct_answer: typeof q.correct_answer === 'number' && q.options ? 
+            q.options[q.correct_answer] : 
+            q.correct_answer.toString(),
+          explanation: q.explanation,
+          points: q.points
+        }
+        
+        console.log(`Transforming question ${index}:`, {
+          frontend: q,
+          backend: transformed
+        })
+        
+        return transformed
+      })
     }
     
     console.log("Transformed quiz data for backend:", backendQuizData)
@@ -1193,9 +1221,11 @@ export const dashboardApi = {
     
     if (quizData.questions) {
       backendQuizData.questions = quizData.questions.map(q => ({
+        id: q.id,
+        type: q.type,
         question: q.question,
         options: q.options || [],
-        answer: typeof q.correct_answer === 'number' && q.options ? 
+        correct_answer: typeof q.correct_answer === 'number' && q.options ? 
           q.options[q.correct_answer] : 
           q.correct_answer.toString(),
         explanation: q.explanation,
@@ -1349,6 +1379,7 @@ export const dashboardApi = {
       }
     }>({
       url: `/quiz/${encodeURIComponent(filename)}?regenerate=${regenerate}`,
+      method: "POST",
       token,
     })
   },

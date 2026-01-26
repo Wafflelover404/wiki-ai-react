@@ -48,6 +48,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
+import { useTranslation } from "@/src/i18n"
 
 // Enhanced File Viewer Component (reused from files page with search highlighting)
 function FileViewerModal({ isOpen, onClose, document, searchChunk }: { isOpen: boolean; onClose: () => void; document: any; searchChunk?: string }) {
@@ -213,6 +214,7 @@ interface Catalog {
 
 export default function AdminSearchPage() {
   const { token, user } = useAuth()
+  const { t } = useTranslation()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -701,15 +703,15 @@ export default function AdminSearchPage() {
   }
 
   const suggestedQuestions = [
-    "What products do we have in stock?",
-    "How do I configure the system settings?",
-    "What are the main features of the platform?",
-    "Show me recent order statistics",
+    t('search.whatProductsDoWeHaveInStock'),
+    t('search.howDoIConfigureTheSystemSettings'),
+    t('search.whatAreTheMainFeaturesOfThePlatform'),
+    t('search.showMeRecentOrderStatistics'),
   ]
 
   return (
     <>
-      <AppHeader breadcrumbs={[{ label: "Admin" }, { label: "Search" }]} />
+      <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('search.title') }]} />
       <main className="flex-1 p-4 md:p-6 relative">
         <div className="max-w-7xl mx-auto h-full">
           <div className="p-2 h-full overflow-hidden">
@@ -720,14 +722,13 @@ export default function AdminSearchPage() {
                       <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
                         <Sparkles className="w-10 h-10 text-primary" />
                       </div>
-                      <h2 className="text-2xl font-bold mb-2">Search Your Knowledge Base
-</h2>
+                      <h2 className="text-2xl font-bold mb-2">{t('search.searchYourKnowledgeBase')}</h2>
                       <p className="text-muted-foreground mb-8">
-                        Ask questions about your documents and get AI-powered answers with source references.
+                        {t('search.askQuestionsAboutYourDocuments')}
                       </p>
 
                       <div className="grid gap-3 w-full max-w-lg">
-                        <p className="text-sm font-medium text-muted-foreground">Try asking:</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t('search.tryAsking')}:</p>
                         {suggestedQuestions.map((question, index) => (
                           <Button
                             key={index}
@@ -765,7 +766,7 @@ export default function AdminSearchPage() {
                               <div>
                                 <div className="flex items-center gap-2 mb-3">
                                   <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                  <span className="font-medium text-blue-900 dark:text-blue-100">Sources</span>
+                                  <span className="font-medium text-blue-900 dark:text-blue-100">{t('search.sources')}</span>
                                 </div>
                                 
                                 {message.searchResults && message.searchResults.length > 0 && (
@@ -804,7 +805,7 @@ export default function AdminSearchPage() {
                                             {result.ai_ranked && (
                                               <Badge variant="secondary" className="text-xs">
                                                 <Brain className="w-3 h-3 mr-1" />
-                                                AI-Ranked
+                                                {t('search.aiRanked')}
                                               </Badge>
                                             )}
                                             {result.relevance && (
@@ -857,7 +858,7 @@ export default function AdminSearchPage() {
                                 
                                 {message.sources && message.sources.length > 0 && (
                                   <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
-                                    <p className="text-xs font-medium mb-2 text-blue-700 dark:text-blue-300">All Sources:</p>
+                                    <p className="text-xs font-medium mb-2 text-blue-700 dark:text-blue-300">{t('search.allSources')}:</p>
                                     <div className="flex flex-wrap gap-1">
                                       {message.sources.map((source: string, sourceIndex: number) => (
                                         <Badge key={sourceIndex} variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
@@ -875,7 +876,7 @@ export default function AdminSearchPage() {
                               <div className="w-full">
                                 <div className="flex items-center gap-2 mb-3">
                                   <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                                  <span className="font-medium text-purple-900 dark:text-purple-100">AI Overview</span>
+                                  <span className="font-medium text-purple-900 dark:text-purple-100">{t('search.aiOverview')}</span>
                                 </div>
                                 <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
                                   <ReactMarkdown>{message.content}</ReactMarkdown>
@@ -914,28 +915,28 @@ export default function AdminSearchPage() {
                                       onClick={() => setFeedbackMessage(message)}
                                     >
                                       <ThumbsDown className="w-3 h-3 mr-1" />
-                                      Report Issue
+                                      {t('search.reportAnIssue')}
                                     </Button>
                                   </DialogTrigger>
                                   <DialogContent>
                                     <DialogHeader>
-                                      <DialogTitle>Report an Issue</DialogTitle>
+                                      <DialogTitle>{t('search.reportAnIssue')}</DialogTitle>
                                       <DialogDescription>
-                                        Help us improve by describing what was wrong with this response.
+                                        {t('search.helpUsImproveByDescribingWhatWasWrongWithThisResponse')}
                                       </DialogDescription>
                                     </DialogHeader>
                                     <Textarea
-                                      placeholder="Describe the issue..."
+                                      placeholder={t('search.describeTheIssue')}
                                       value={feedbackText}
                                       onChange={(e) => setFeedbackText(e.target.value)}
                                       rows={4}
                                     />
                                     <DialogFooter>
                                       <Button variant="outline" onClick={() => setIsFeedbackOpen(false)}>
-                                        Cancel
+                                        {t('actions.cancel')}
                                       </Button>
                                       <Button onClick={handleFeedback} disabled={!feedbackText.trim()}>
-                                        Submit Feedback
+                                        {t('search.submitFeedback')}
                                       </Button>
                                     </DialogFooter>
                                   </DialogContent>
@@ -954,7 +955,7 @@ export default function AdminSearchPage() {
                           <Card className="max-w-[80%] animate-pulse">
                             <CardContent className="p-4 flex items-center gap-2">
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>Searching...</span>
+                              <span>{t('search.searching')}</span>
                             </CardContent>
                           </Card>
                         </div>
@@ -964,8 +965,9 @@ export default function AdminSearchPage() {
                 </ScrollArea>
 
                 {/* Search Input Area */}
-                <div className="fixed bottom-0 left-0 right-0 border-t bg-background p-4 z-50 shadow-lg">
-                  <div className="flex items-center gap-2 mb-4">
+                <div className="fixed bottom-0 left-64 right-0 border-t bg-background p-4 z-50 shadow-lg">
+                  <div className="px-4 md:px-6">
+                    <div className="flex items-center gap-2 mb-4">
                     {/* Settings Button - Temporarily Commented Out */}
                     {/* <Button
                       variant="outline"
@@ -979,26 +981,26 @@ export default function AdminSearchPage() {
                     {/* Copilot AI Search Mode Toggle */}
                     <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-lg">
                       <Bot className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium">AI-agent Search</span>
+                      <span className="text-sm font-medium">{t('search.aiAgentSearch')}</span>
                       <Switch
                         checked={false}
                         onCheckedChange={() => {}}
                         disabled
                       />
-                      <span className="text-xs text-muted-foreground">(Coming Soon)</span>
+                      <span className="text-xs text-muted-foreground">({t('search.comingSoon')})</span>
                     </div>
                     
                     {/* WebSocket Connection Status (hidden if not available) */}
                     {false && ( // Temporarily hide WebSocket status indicator
                       <div className="flex items-center gap-1 text-xs">
                         <Wifi className="w-3 h-3 text-green-500" />
-                        <span className="text-green-600">Real-time Search</span>
+                        <span className="text-green-600">{t('search.realTimeSearch')}</span>
                       </div>
                     )}
                     
                     <div className="flex-1" />
                     <div className="text-xs text-muted-foreground">
-                      {searchType === 'all' ? 'All' : searchType === 'documents' ? 'Documents' : 'Products'}
+                      {searchType === 'all' ? t('search.all') : searchType === 'documents' ? t('search.documents') : t('search.products')}
                     </div>
                   </div>
                   <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
@@ -1007,7 +1009,7 @@ export default function AdminSearchPage() {
                       <Input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder="Ask a question about your knowledge base..."
+                        placeholder={t('search.askAQuestionAboutYourKnowledgeBase')}
                         className="pl-12 pr-12 h-12 text-base"
                         disabled={isLoading}
                       />
@@ -1025,6 +1027,7 @@ export default function AdminSearchPage() {
               </div>
             </div>
           </div>
+        </div>
       </main>
       
       {/* Enhanced File Viewer Modal */}

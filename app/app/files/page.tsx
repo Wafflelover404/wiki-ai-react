@@ -800,12 +800,12 @@ export default function FilesPage() {
 
   return (
     <>
-      <AppHeader breadcrumbs={[{ label: "Files" }]} />
+      <AppHeader breadcrumbs={[{ label: t("nav.files") }]} />
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <div className="space-y-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">File Management</h1>
-            {isAdmin ? <p className="text-muted-foreground">Manage all uploaded documents</p> : <p className="text-muted-foreground">View all the available documents</p>}
+            <h1 className="text-2xl font-bold tracking-tight">{t("files.title")}</h1>
+            {isAdmin ? <p className="text-muted-foreground">{t("files.manageAllUploadedDocuments")}</p> : <p className="text-muted-foreground">{t("files.viewAllAvailableDocuments")}</p>}
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex-1" />
@@ -815,12 +815,12 @@ export default function FilesPage() {
                   {isUploading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
+                      {t("files.uploading")}
                     </>
                   ) : (
                     <>
                       <Upload className="mr-2 h-4 w-4" />
-                      Upload Files
+                      {t("files.uploadFiles")}
                     </>
                   )}
                   <input type="file" multiple className="hidden" onChange={handleUpload} disabled={isUploading} />
@@ -834,13 +834,13 @@ export default function FilesPage() {
           <div className="relative w-full sm:max-w-sm flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search files..."
+              placeholder={t("files.searchFiles")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 w-full"
             />
           </div>
-          <Badge variant="secondary" className="shrink-0">{filteredFiles.length} files</Badge>
+          <Badge variant="secondary" className="shrink-0">{filteredFiles.length} {t("files.files")}</Badge>
         </div>
 
         {isLoading ? (
@@ -851,15 +851,15 @@ export default function FilesPage() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FolderOpen className="w-16 h-16 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No files found</h3>
+              <h3 className="text-lg font-semibold mb-2">{t("files.noFilesFound")}</h3>
               <p className="text-muted-foreground text-center mb-4">
-                {searchQuery ? "No files match your search query" : "Upload documents to build your knowledge base"}
+                {searchQuery ? t("files.noFilesMatchYourSearchQuery") : t("files.uploadDocumentsToBuildYourKnowledgeBase")}
               </p>
               {!searchQuery && (
                 <Button asChild>
                   <label className="cursor-pointer">
                     <Upload className="mr-2 h-4 w-4" />
-                    Upload Files
+                    {t("files.uploadFiles")}
                     <input type="file" multiple className="hidden" onChange={handleUpload} />
                   </label>
                 </Button>
@@ -869,7 +869,7 @@ export default function FilesPage() {
         ) : (
           <Tabs defaultValue="all" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="all">All ({filteredFiles.length})</TabsTrigger>
+              <TabsTrigger value="all">{t("files.allFiles")} ({filteredFiles.length})</TabsTrigger>
               {Object.entries(filesByType).map(([type, typeFiles]) => (
                 <TabsTrigger key={type} value={type}>
                   {type} ({typeFiles.length})
@@ -880,8 +880,8 @@ export default function FilesPage() {
             <TabsContent value="all">
               <Card>
                 <CardHeader>
-                  <CardTitle>All Files</CardTitle>
-                  <CardDescription>All documents in your knowledge base</CardDescription>
+                  <CardTitle>{t("files.allFiles")}</CardTitle>
+                  <CardDescription>{t("files.allDocumentsInYourKnowledgeBase")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-1">
@@ -915,17 +915,17 @@ export default function FilesPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => handleViewFile(file.name)}>
                                 <Eye className="w-3 h-3 mr-2" />
-                                View
+                                {t("files.view")}
                               </DropdownMenuItem>
                               {isAdmin && (
                                 <DropdownMenuItem onClick={() => handleEditFile(file.name)}>
                                   <Edit className="w-3 h-3 mr-2" />
-                                  Edit
+                                  {t("files.edit")}
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuItem>
                                 <Download className="w-3 h-3 mr-2" />
-                                Download
+                                {t("files.download")}
                               </DropdownMenuItem>
                               {isAdmin && (
                                 <>
@@ -935,7 +935,7 @@ export default function FilesPage() {
                                     onClick={() => setDeleteFile(file.name)}
                                   >
                                     <Trash2 className="w-3 h-3 mr-2" />
-                                    Delete
+                                    {t("files.delete")}
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -953,9 +953,9 @@ export default function FilesPage() {
               <TabsContent key={type} value={type}>
                 <Card>
                   <CardHeader>
-                    <CardTitle>{type} Files</CardTitle>
+                    <CardTitle>{t("files.typeFiles", { type })}</CardTitle>
                     <CardDescription>
-                      {typeFiles.length} {type.toLowerCase()} file(s)
+                      {t("files.typeFilesCount", { count: typeFiles.length, type: type.toLowerCase() })}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -990,17 +990,17 @@ export default function FilesPage() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleViewFile(file.name)}>
                                   <Eye className="w-3 h-3 mr-2" />
-                                  View
+                                  {t("files.view")}
                                 </DropdownMenuItem>
                                 {isAdmin && (
                                   <DropdownMenuItem onClick={() => handleEditFile(file.name)}>
                                     <Edit className="w-3 h-3 mr-2" />
-                                    Edit
+                                    {t("files.edit")}
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem>
                                   <Download className="w-3 h-3 mr-2" />
-                                  Download
+                                  {t("files.download")}
                                 </DropdownMenuItem>
                                 {isAdmin && (
                                   <>
@@ -1010,7 +1010,7 @@ export default function FilesPage() {
                                       onClick={() => setDeleteFile(file.name)}
                                     >
                                       <Trash2 className="w-3 h-3 mr-2" />
-                                      Delete
+                                      {t("files.delete")}
                                     </DropdownMenuItem>
                                   </>
                                 )}
@@ -1041,9 +1041,9 @@ export default function FilesPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg">
                 <Edit className="w-5 h-5" />
-                <span className="truncate">Edit: {selectedFile?.filename}</span>
+                <span className="truncate">{t("files.editFile", { filename: selectedFile?.filename })}</span>
               </DialogTitle>
-              <DialogDescription>Make changes to the file content</DialogDescription>
+              <DialogDescription>{t("files.makeChangesToTheFileContent")}</DialogDescription>
             </DialogHeader>
             {isLoadingContent ? (
               <div className="flex items-center justify-center py-12">
@@ -1058,16 +1058,16 @@ export default function FilesPage() {
             )}
             <DialogFooter className="flex flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={isSaving} className="w-full sm:w-auto">
-                Cancel
+                {t("actions.cancel")}
               </Button>
               <Button onClick={handleSaveFile} disabled={isSaving} className="w-full sm:w-auto">
                 {isSaving ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
+                    {t("files.saving")}
                   </>
                 ) : (
-                  "Save Changes"
+                  t("files.saveChanges")
                 )}
               </Button>
             </DialogFooter>
@@ -1078,13 +1078,13 @@ export default function FilesPage() {
         <AlertDialog open={!!deleteFile} onOpenChange={() => setDeleteFile(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete File</AlertDialogTitle>
+              <AlertDialogTitle>{t("files.deleteFile")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete &quot;{deleteFile}&quot;? This action cannot be undone.
+                {t("files.areYouSureYouWantToDelete", { filename: deleteFile })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>{t("actions.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteFile}
                 disabled={isDeleting}
@@ -1093,10 +1093,10 @@ export default function FilesPage() {
                 {isDeleting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Deleting...
+                    {t("files.deleting")}
                   </>
                 ) : (
-                  "Delete"
+                  t("files.delete")
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>

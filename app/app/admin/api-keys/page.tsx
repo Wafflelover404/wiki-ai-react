@@ -119,14 +119,14 @@ export default function ApiKeysPage() {
 
       if (result.status === "success" && result.response) {
         setNewKey(result.response.key || result.response.full_key)
-        toast.success("API key created successfully")
+        toast.success(t('apiKeys.apiKeyCreatedSuccessfully') || 'API key created successfully')
         fetchKeys()
       } else {
-        toast.error(result.message || "Failed to create API key")
+        toast.error(result.message || t('apiKeys.failedToCreate') || 'Failed to create API key')
       }
     } catch (error) {
       console.error("Create key error:", error)
-      toast.error("Failed to create API key")
+      toast.error(t('apiKeys.failedToCreate') || 'Failed to create API key')
     } finally {
       setIsCreating(false)
     }
@@ -140,15 +140,15 @@ export default function ApiKeysPage() {
       const result = await apiKeysApi.delete(token, deleteKeyId)
 
       if (result.status === "success") {
-        toast.success("API key deleted successfully")
+        toast.success(t('apiKeys.apiKeyDeletedSuccessfully') || 'API key deleted successfully')
         setDeleteKeyId(null)
         fetchKeys()
       } else {
-        toast.error(result.message || "Failed to delete API key")
+        toast.error(result.message || t('apiKeys.failedToDelete') || 'Failed to delete API key')
       }
     } catch (error) {
       console.error("Delete key error:", error)
-      toast.error("Failed to delete API key")
+      toast.error(t('apiKeys.failedToDelete') || 'Failed to delete API key')
     } finally {
       setIsDeleting(false)
     }
@@ -156,7 +156,7 @@ export default function ApiKeysPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-    toast.success("Copied to clipboard")
+    toast.success(t('apiKeys.copiedToClipboard') || 'Copied to clipboard')
   }
 
   const closeDialog = () => {
@@ -171,7 +171,7 @@ export default function ApiKeysPage() {
   if (authLoading || isLoading) {
     return (
       <>
-        <AppHeader breadcrumbs={[{ label: "Admin", href: "/app/admin" }, { label: "API Keys" }]} />
+        <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('navigation.apiKeys') }]} />
         <main className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </main>
@@ -189,28 +189,28 @@ export default function ApiKeysPage() {
       <main className="flex-1 p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">API Key Management</h1>
-            <p className="text-muted-foreground">Manage API keys for programmatic access</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('apiKeys.apiKeys')}</h1>
+            <p className="text-muted-foreground">{t('apiKeys.keysForAuthenticatingApiRequests')}</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
-                Create Key
+                {t('apiKeys.createApiKey')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create API Key</DialogTitle>
-                <DialogDescription>Create a new API key for programmatic access</DialogDescription>
+                <DialogTitle>{t('apiKeys.createApiKey')}</DialogTitle>
+                <DialogDescription>{t('apiKeys.createApiKeyToEnableProgrammaticAccess')}</DialogDescription>
               </DialogHeader>
 
               {newKey ? (
                 <div className="space-y-4">
                   <div className="p-4 rounded-lg bg-success/10 border border-success/20">
-                    <p className="text-sm font-medium text-success mb-2">API key created successfully!</p>
+                    <p className="text-sm font-medium text-success mb-2">{t('apiKeys.apiKeyCreatedSuccessfully') || 'API key created successfully!'}</p>
                     <p className="text-xs text-muted-foreground mb-3">
-                      Copy this key now. You {"won't"} be able to see it again.
+                      {t('apiKeys.copyKeyNow') || 'Copy this key now. You won\'t be able to see it again.'}
                     </p>
                     <div className="flex items-center gap-2">
                       <Input value={newKey} readOnly className="font-mono text-sm" />
@@ -220,7 +220,7 @@ export default function ApiKeysPage() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={closeDialog}>Done</Button>
+                    <Button onClick={closeDialog}>{t('actions.done') || 'Done'}</Button>
                   </DialogFooter>
                 </div>
               ) : (
@@ -413,13 +413,13 @@ export default function ApiKeysPage() {
         <AlertDialog open={!!deleteKeyId} onOpenChange={() => setDeleteKeyId(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+              <AlertDialogTitle>{t('apiKeys.deleteApiKey') || 'Delete API Key'}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this API key? Any applications using this key will lose access.
+                {t('apiKeys.deleteConfirmation') || 'Are you sure you want to delete this API key? Any applications using this key will lose access.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>{t('apiKeys.cancel') || 'Cancel'}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteKey}
                 disabled={isDeleting}
@@ -428,10 +428,10 @@ export default function ApiKeysPage() {
                 {isDeleting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Deleting...
+                    {t('apiKeys.deleting') || 'Deleting...'}
                   </>
                 ) : (
-                  "Delete Key"
+                  t('apiKeys.deleteKey') || 'Delete Key'
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>
