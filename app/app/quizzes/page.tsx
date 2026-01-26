@@ -28,9 +28,11 @@ import {
   Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslation } from "@/src/i18n"
 
 export default function QuizzesPage() {
   const { token, user } = useAuth()
+  const { t } = useTranslation()
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -76,16 +78,16 @@ export default function QuizzesPage() {
           setQuizzes(data.response.quizzes)
         } else {
           console.error("API returned error:", data)
-          toast.error(data.message || "Failed to fetch quizzes")
+          toast.error(data.message || t('quizzes.failedToFetchQuizzes'))
         }
       } else {
         const errorText = await response.text()
         console.error("HTTP error:", response.status, errorText)
-        toast.error(`Failed to fetch quizzes: ${response.status}`)
+        toast.error(`${t('quizzes.failedToFetchQuizzes')}: ${response.status}`)
       }
     } catch (error) {
       console.error("Fetch error:", error)
-      toast.error("Failed to fetch quizzes")
+      toast.error(t('quizzes.failedToFetchQuizzes'))
     } finally {
       setLoading(false)
     }
@@ -127,14 +129,14 @@ export default function QuizzesPage() {
           setQuizCompleted(true)
           
           if (result.response.passed) {
-            toast.success(`Congratulations! You passed with ${result.response.score}/${result.response.total_points} points!`)
+            toast.success(`${t('quizzes.congratulationsYouPassedWith')} ${result.response.score}/${result.response.totalPoints} ${t('quizzes.pointsExclamation')}`)
           } else {
-            toast.error(`Quiz completed. You scored ${result.response.score}/${result.response.total_points} points. Try again!`)
+            toast.error(`${t('quizzes.quizCompletedYouScored')} ${result.response.score}/${result.response.totalPoints} ${t('quizzes.pointsTryAgain')}`)
           }
         }
       }
     } catch (error) {
-      toast.error("Failed to submit quiz")
+      toast.error(t('quizzes.failedToSubmitQuiz'))
     }
   }
 
@@ -152,7 +154,7 @@ export default function QuizzesPage() {
 
   const startQuiz = (quiz: Quiz) => {
     if (!quiz.questions) {
-      toast.error("Quiz has no questions")
+      toast.error(t('quizzes.quizHasNoQuestions'))
       return
     }
     
@@ -235,9 +237,9 @@ export default function QuizzesPage() {
     })
     
     if (passed) {
-      toast.success(`Congratulations! You passed with ${score}/${totalPoints} points!`)
+      toast.success(`${t('quizzes.congratulationsYouPassedWith')} ${score}/${totalPoints} ${t('quizzes.pointsExclamation')}`)
     } else {
-      toast.error(`Quiz completed. You scored ${score}/${totalPoints} points. Try again!`)
+      toast.error(`${t('quizzes.quizCompletedYouScored')} ${score}/${totalPoints} ${t('quizzes.pointsTryAgain')}`)
     }
   }
 
@@ -293,11 +295,11 @@ export default function QuizzesPage() {
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="true" id="true" />
-              <Label htmlFor="true" className="cursor-pointer">True</Label>
+              <Label htmlFor="true" className="cursor-pointer">{t('quizzes.true')}</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="false" id="false" />
-              <Label htmlFor="false" className="cursor-pointer">False</Label>
+              <Label htmlFor="false" className="cursor-pointer">{t('quizzes.false')}</Label>
             </div>
           </RadioGroup>
         )
@@ -307,7 +309,7 @@ export default function QuizzesPage() {
           <Textarea
             value={answers[question.id] as string || ""}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            placeholder="Type your answer here..."
+            placeholder={t('quizzes.typeYourAnswerHere')}
             className="min-h-[100px]"
           />
         )
@@ -320,40 +322,40 @@ export default function QuizzesPage() {
   if (!selectedQuiz) {
     return (
       <>
-        <AppHeader />
+        <AppHeader breadcrumbs={[{ label: t('nav.quizzes') }]} />
         <main className="flex-1 p-6 space-y-6">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight">Quizzes</h1>
-            <p className="text-muted-foreground">Test your knowledge and track your progress</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('quizzes.title')}</h1>
+            <p className="text-muted-foreground">{t('quizzes.testYourKnowledgeAndTrackYourProgress')}</p>
           </div>
 
           {/* Quiz Stats */}
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Total Quizzes</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('quizzes.totalQuizzes')}</CardTitle>
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{quizzes.length}</div>
-                <p className="text-xs text-muted-foreground">Available quizzes</p>
+                <p className="text-xs text-muted-foreground">{t('quizzes.availableQuizzes')}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Completed</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('quizzes.completed')}</CardTitle>
                 <CheckCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{userQuizHistory.length}</div>
-                <p className="text-xs text-muted-foreground">Quizzes finished</p>
+                <p className="text-xs text-muted-foreground">{t('quizzes.quizzesFinished')}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Pass Rate</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('quizzes.passRate')}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -362,13 +364,13 @@ export default function QuizzesPage() {
                     ? Math.round((userQuizHistory.filter(r => r.passed).length / userQuizHistory.length) * 100)
                     : 0}%
                 </div>
-                <p className="text-xs text-muted-foreground">Quizzes passed</p>
+                <p className="text-xs text-muted-foreground">{t('quizzes.quizzesPassed')}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Avg Score</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('quizzes.avgScore')}</CardTitle>
                 <Award className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -377,7 +379,7 @@ export default function QuizzesPage() {
                     ? Math.round(userQuizHistory.reduce((acc, r) => acc + (r.score / r.totalPoints) * 100, 0) / userQuizHistory.length)
                     : 0}%
                 </div>
-                <p className="text-xs text-muted-foreground">Average performance</p>
+                <p className="text-xs text-muted-foreground">{t('quizzes.averagePerformance')}</p>
               </CardContent>
             </Card>
           </div>
@@ -409,18 +411,18 @@ export default function QuizzesPage() {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        {quiz.time_limit} min
+                        {quiz.time_limit} {t('quizzes.min')}
                       </div>
                       <div className="flex items-center gap-1">
                         <Target className="w-4 h-4" />
-                        {quiz.passing_score}% to pass
+                        {quiz.passing_score}% {t('quizzes.toPass')}
                       </div>
                     </div>
 
                     {attempts.length > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <span>Best Score:</span>
+                          <span>{t('quizzes.bestScore')}</span>
                           <div className="flex items-center gap-2">
                             <span className="font-semibold">{bestScore?.toFixed(0)}%</span>
                             {bestScoreResult?.passed && <CheckCircle className="w-4 h-4 text-green-600" />}
@@ -428,7 +430,7 @@ export default function QuizzesPage() {
                         </div>
                         <Progress value={bestScore || 0} className="h-2" />
                         <div className="text-xs text-muted-foreground">
-                          {attempts.length} attempt{attempts.length !== 1 ? 's' : ''}
+                          {attempts.length} {attempts.length !== 1 ? t('quizzes.attemptsPlural') : t('quizzes.attempts')}
                         </div>
                       </div>
                     )}
@@ -440,7 +442,7 @@ export default function QuizzesPage() {
                         size="sm"
                       >
                         <Play className="w-4 h-4 mr-2" />
-                        {attempts.length > 0 ? "Retake Quiz" : "Start Quiz"}
+                        {attempts.length > 0 ? t('quizzes.retakeQuiz') : t('quizzes.startQuiz')}
                       </Button>
                     </div>
                   </CardContent>
@@ -458,15 +460,15 @@ export default function QuizzesPage() {
 
     return (
       <>
-        <AppHeader />
+        <AppHeader breadcrumbs={[{ label: t('nav.quizzes') }]} />
         <main className="flex-1 h-screen overflow-hidden">
           <div className="h-full flex">
             {/* Left Section - Header */}
             <div className="flex-shrink-0 w-1/3 p-6 border-r bg-background">
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <h1 className="text-2xl font-bold tracking-tight">Quiz Completed!</h1>
-                  <p className="text-muted-foreground">Here are your results for {selectedQuiz.title}</p>
+                  <h1 className="text-2xl font-bold tracking-tight">{t('quizzes.quizCompleted')}</h1>
+                  <p className="text-muted-foreground">{t('quizzes.hereAreYourResultsFor')} {selectedQuiz.title}</p>
                 </div>
                 
                 {/* Stats Square - Top Right */}
@@ -483,7 +485,7 @@ export default function QuizzesPage() {
                     </div>
                     <div className="text-center">
                       <div className={`text-xl font-bold ${quizResults.passed ? "text-green-600" : "text-red-600"}`}>
-                        {quizResults.passed ? "Passed!" : "Not Passed"}
+                        {quizResults.passed ? t('quizzes.passed') : t('quizzes.notPassed')}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {quizResults.score}/{quizResults.totalPoints} ({percentage.toFixed(1)}%)
@@ -493,11 +495,11 @@ export default function QuizzesPage() {
                     <div className="grid grid-cols-2 gap-2 text-center pt-2">
                       <div>
                         <div className="text-lg font-bold">{formatTime(quizResults.timeSpent)}</div>
-                        <div className="text-xs text-muted-foreground">Time</div>
+                        <div className="text-xs text-muted-foreground">{t('quizzes.time')}</div>
                       </div>
                       <div>
                         <div className="text-lg font-bold">{selectedQuiz.questions?.length || 0}</div>
-                        <div className="text-xs text-muted-foreground">Questions</div>
+                        <div className="text-xs text-muted-foreground">{t('quizzes.questions')}</div>
                       </div>
                     </div>
                   </div>
@@ -512,8 +514,8 @@ export default function QuizzesPage() {
                 <div className="h-full bg-muted/30 rounded-lg border overflow-hidden">
                   <div className="h-full flex flex-col">
                     <div className="flex-shrink-0 p-4 border-b bg-background/80">
-                      <h2 className="text-lg font-semibold">Question Review</h2>
-                      <p className="text-sm text-muted-foreground">Review your answers and explanations</p>
+                      <h2 className="text-lg font-semibold">{t('quizzes.questionReview')}</h2>
+                      <p className="text-sm text-muted-foreground">{t('quizzes.reviewAnswers')}</p>
                     </div>
                     
                     <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -535,14 +537,14 @@ export default function QuizzesPage() {
                                 </div>
                                 <div className="flex gap-3 text-xs">
                                   <div className="flex items-center gap-1">
-                                    <span className="text-muted-foreground">You:</span>
+                                    <span className="text-muted-foreground">{t('quizzes.you')}</span>
                                     <span className={`font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
                                       {userAnswer}
                                     </span>
                                   </div>
                                   {!isCorrect && (
                                     <div className="flex items-center gap-1">
-                                      <span className="text-muted-foreground">Correct:</span>
+                                      <span className="text-muted-foreground">{t('quizzes.correct')}</span>
                                       <span className="font-medium text-green-600">{question.correct_answer}</span>
                                     </div>
                                   )}
@@ -550,7 +552,7 @@ export default function QuizzesPage() {
                                 {question.explanation && (
                                   <div className="bg-blue-50 border border-blue-200 rounded p-2">
                                     <p className="text-xs text-blue-800">
-                                      <strong>Explanation:</strong> {question.explanation}
+                                      <strong>{t('quizzes.explanation')}</strong> {question.explanation}
                                     </p>
                                   </div>
                                 )}
@@ -569,11 +571,11 @@ export default function QuizzesPage() {
                 <div className="flex gap-3">
                   <Button onClick={resetQuiz} variant="outline" className="flex-1">
                     <BookOpen className="w-4 h-4 mr-2" />
-                    Back to Quizzes
+                    {t('quizzes.backToQuizzes')}
                   </Button>
                   <Button onClick={() => startQuiz(selectedQuiz!)} className="flex-1">
                     <RotateCcw className="w-4 h-4 mr-2" />
-                    Retake Quiz
+                    {t('quizzes.retakeQuiz')}
                   </Button>
                 </div>
               </div>
@@ -598,7 +600,7 @@ export default function QuizzesPage() {
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">{selectedQuiz.title}</h1>
                 <p className="text-muted-foreground">
-                  Question {currentQuestionIndex + 1} of {selectedQuiz.questions?.length || 0}
+                  {t('quizzes.question')} {currentQuestionIndex + 1} {t('quizzes.of')} {selectedQuiz.questions?.length || 0}
                 </p>
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -617,10 +619,10 @@ export default function QuizzesPage() {
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
-                  <CardTitle className="text-lg">{currentQuestion?.question || "Loading question..."}</CardTitle>
+                  <CardTitle className="text-lg">{currentQuestion?.question || t('quizzes.loadingQuestion')}</CardTitle>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{currentQuestion?.type || "unknown"}</Badge>
-                    <span className="text-sm text-muted-foreground">{currentQuestion?.points || 0} points</span>
+                    <span className="text-sm text-muted-foreground">{currentQuestion?.points || 0} {t('quizzes.points')}</span>
                   </div>
                 </div>
               </div>
@@ -641,7 +643,7 @@ export default function QuizzesPage() {
               onClick={previousQuestion}
               disabled={currentQuestionIndex === 0}
             >
-              Previous
+              {t('quizzes.previous')}
             </Button>
 
             <div className="flex items-center gap-2">
@@ -663,12 +665,12 @@ export default function QuizzesPage() {
 
             {currentQuestionIndex === (selectedQuiz.questions?.length || 0) - 1 ? (
               <Button onClick={handleQuizSubmit}>
-                Submit Quiz
+                {t('quizzes.submitQuiz')}
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
               <Button onClick={nextQuestion}>
-                Next
+                {t('quizzes.next')}
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             )}

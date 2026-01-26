@@ -323,7 +323,7 @@ export default function UsersPage() {
   if (authLoading || isLoading) {
     return (
       <>
-        <AppHeader breadcrumbs={[{ label: "Admin", href: "/app/admin" }, { label: "Users" }]} />
+        <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('userManagement.title') }]} />
         <main className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </main>
@@ -337,21 +337,21 @@ export default function UsersPage() {
 
   return (
     <>
-      <AppHeader breadcrumbs={[{ label: "Admin", href: "/app/admin" }, { label: "Users" }]} />
+      <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('userManagement.title') }]} />
       <main className="flex-1 p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-            <p className="text-muted-foreground">Manage user accounts and permissions</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('userManagement.title')}</h1>
+            <p className="text-muted-foreground">{t('userManagement.manageUserAccountsAndPermissions')}</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              Add User
+              {t('userManagement.addUser')}
             </Button>
             <Button variant="outline" onClick={() => setIsInviteOpen(true)}>
               <Mail className="w-4 h-4 mr-2" />
-              Create Invite
+              {t('userManagement.createInvite')}
             </Button>
           </div>
         </div>
@@ -363,8 +363,8 @@ export default function UsersPage() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-lg font-semibold">Create New User</h2>
-                    <p className="text-sm text-muted-foreground">Add a new user to the system</p>
+                    <h2 className="text-lg font-semibold">{t('userManagement.createNewUser')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('userManagement.addNewUserToTheSystem')}</p>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(false)}>
                     ×
@@ -373,10 +373,10 @@ export default function UsersPage() {
                 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="username">{t('userManagement.username')}</Label>
                     <Input
                       id="username"
-                      placeholder="Enter username"
+                      placeholder={t('userManagement.enterUsername')}
                       value={newUsername}
                       onChange={(e) => setNewUsername(e.target.value)}
                       disabled={isCreating}
@@ -384,11 +384,11 @@ export default function UsersPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t('userManagement.password')}</Label>
                     <Input
                       id="password"
                       type="password"
-                      placeholder="Enter password (min 6 characters)"
+                      placeholder={t('userManagement.enterPasswordMin6Characters')}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       disabled={isCreating}
@@ -396,22 +396,22 @@ export default function UsersPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
+                    <Label htmlFor="role">{t('userManagement.role')}</Label>
                     <Select value={newRole} onValueChange={setNewRole} disabled={isCreating}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
+                        <SelectValue placeholder={t('userManagement.selectRole')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="user">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4" />
-                            User
+                            {t('userManagement.roleOptions.user')}
                           </div>
                         </SelectItem>
                         <SelectItem value="admin">
                           <div className="flex items-center gap-2">
                             <Shield className="w-4 h-4" />
-                            Admin
+                            {t('userManagement.roleOptions.admin')}
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -420,12 +420,12 @@ export default function UsersPage() {
                       {newRole === "admin" ? (
                         <>
                           <Shield className="w-3 h-3" />
-                          Full system access and user management
+                          {t('userManagement.fullSystemAccessAndUserManagement')}
                         </>
                       ) : (
                         <>
                           <User className="w-3 h-3" />
-                          Standard user with assigned file permissions
+                          {t('userManagement.standardUserWithAssignedFilePermissions')}
                         </>
                       )}
                     </div>
@@ -433,7 +433,7 @@ export default function UsersPage() {
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label>File Permissions</Label>
+                      <Label>{t('userManagement.filePermissions')}</Label>
                       {allFiles.length > 0 && (
                         <Button
                           variant="ghost"
@@ -442,7 +442,7 @@ export default function UsersPage() {
                           disabled={isCreating}
                           className="text-xs"
                         >
-                          {newAllowedFiles.length === allFiles.length ? "Deselect All" : "Select All"}
+                          {newAllowedFiles.length === allFiles.length ? t('userManagement.selectNone') : t('userManagement.selectAll')}
                         </Button>
                       )}
                     </div>
@@ -504,33 +504,33 @@ export default function UsersPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search users..."
+              placeholder={t('userManagement.searchUsers')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
-          <Badge variant="secondary">{filteredUsers.length} users</Badge>
+          <Badge variant="secondary">{filteredUsers.length} {t('userManagement.users2')}</Badge>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Users
+              {t('userManagement.users2')}
             </CardTitle>
-            <CardDescription>All registered user accounts</CardDescription>
+            <CardDescription>{t('userManagement.allRegisteredUserAccounts')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Organization</TableHead>
-                  <TableHead>Files Access</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="w-[80px]">Actions</TableHead>
+                  <TableHead>{t('userManagement.username2')}</TableHead>
+                  <TableHead>{t('userManagement.role2')}</TableHead>
+                  <TableHead>{t('userManagement.organization')}</TableHead>
+                  <TableHead>{t('userManagement.filesAccess')}</TableHead>
+                  <TableHead>{t('userManagement.created')}</TableHead>
+                  <TableHead className="w-[80px]">{t('userManagement.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -546,7 +546,7 @@ export default function UsersPage() {
                         {user.username}
                         {user.username === currentUser?.username && (
                           <Badge variant="outline" className="text-xs">
-                            You
+                            {t('userManagement.you')}
                           </Badge>
                         )}
                       </div>
@@ -558,7 +558,7 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{user.organization_id || "N/A"}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{(user.role === "admin") ? "all" : (user.allowed_files?.length || 0)} files</Badge>
+                      <Badge variant="outline">{(user.role === "admin") ? t('userManagement.all') : (user.allowed_files?.length || 0)} {t('userManagement.files')}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}
@@ -573,7 +573,7 @@ export default function UsersPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEditUser(user)}>
                             <Edit className="w-4 h-4 mr-2" />
-                            Edit
+                            {t('actions.edit')}
                           </DropdownMenuItem>
                           {user.username !== currentUser?.username && (
                             <>
@@ -583,7 +583,7 @@ export default function UsersPage() {
                                 onClick={() => setDeleteUsername(user.username)}
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
-                                Delete
+                                {t('actions.delete')}
                               </DropdownMenuItem>
                             </>
                           )}
@@ -604,8 +604,8 @@ export default function UsersPage() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-lg font-semibold">Edit User: {editUser.username}</h2>
-                    <p className="text-sm text-muted-foreground">Update user role and file permissions</p>
+                    <h2 className="text-lg font-semibold">{t('userManagement.editUser')}: {editUser.username}</h2>
+                    <p className="text-sm text-muted-foreground">{t('userManagement.updateUserRoleAndFilePermissions')}</p>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setEditUser(null)}>
                     ×
@@ -614,7 +614,7 @@ export default function UsersPage() {
                 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Username</Label>
+                    <Label>{t('userManagement.username2')}</Label>
                     <Input value={editUser.username} disabled className="bg-muted" />
                   </div>
                   
@@ -643,12 +643,12 @@ export default function UsersPage() {
                       {editRole === "admin" ? (
                         <>
                           <Shield className="w-3 h-3" />
-                          Full system access and user management
+                          {t('users.adminRoleDescription')}
                         </>
                       ) : (
                         <>
                           <User className="w-3 h-3" />
-                          Standard user with assigned file permissions
+                          {t('users.userRoleDescription')}
                         </>
                       )}
                     </div>
@@ -701,10 +701,10 @@ export default function UsersPage() {
                     {isSaving ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Saving...
+                        {t('actions.saving')}
                       </>
                     ) : (
-                      "Save Changes"
+                      t('actions.saveChanges')
                     )}
                   </Button>
                 </div>
@@ -720,8 +720,8 @@ export default function UsersPage() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-lg font-semibold">Create Invite Link</h2>
-                    <p className="text-sm text-muted-foreground">Generate an invitation link for new users</p>
+                    <h2 className="text-lg font-semibold">{t('userManagement.createInviteLink')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('userManagement.generateInvitationLinkForNewUsers')}</p>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setIsInviteOpen(false)}>
                     ×
@@ -730,7 +730,7 @@ export default function UsersPage() {
                 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="invite-email">Email (Optional)</Label>
+                    <Label htmlFor="invite-email">{t('userManagement.emailOptional')}</Label>
                     <Input
                       id="invite-email"
                       type="email"
@@ -766,52 +766,52 @@ export default function UsersPage() {
                       {inviteRole === "admin" ? (
                         <>
                           <Shield className="w-3 h-3" />
-                          Full system access and user management
+                          {t('users.adminRoleDescription')}
                         </>
                       ) : (
                         <>
                           <User className="w-3 h-3" />
-                          Standard user with assigned file permissions
+                          {t('users.userRoleDescription')}
                         </>
                       )}
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="invite-expires">Expires In</Label>
+                    <Label htmlFor="invite-expires">{t('userManagement.expiresIn')}</Label>
                     <Select value={inviteExpiresInDays.toString()} onValueChange={(value) => setInviteExpiresInDays(Number(value))} disabled={isCreatingInvite}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select expiration" />
+                        <SelectValue placeholder={t('userManagement.selectExpiration')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="1">
                           <div className="flex items-center gap-2">
                             <span>🕐</span>
-                            1 Day
+                            {t('userManagement.1day')}
                           </div>
                         </SelectItem>
                         <SelectItem value="3">
                           <div className="flex items-center gap-2">
                             <span>🕐</span>
-                            3 Days
+                            {t('userManagement.3days')}
                           </div>
                         </SelectItem>
                         <SelectItem value="7">
                           <div className="flex items-center gap-2">
                             <span>🕐</span>
-                            1 Week
+                            {t('userManagement.1week')}
                           </div>
                         </SelectItem>
                         <SelectItem value="14">
                           <div className="flex items-center gap-2">
                             <span>🕐</span>
-                            2 Weeks
+                            {t('userManagement.2weeks')}
                           </div>
                         </SelectItem>
                         <SelectItem value="30">
                           <div className="flex items-center gap-2">
                             <span>🕐</span>
-                            1 Month
+                            {t('userManagement.1month')}
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -822,7 +822,7 @@ export default function UsersPage() {
                     <Label htmlFor="invite-message">Message (Optional)</Label>
                     <textarea
                       id="invite-message"
-                      placeholder="Welcome to our platform! We're excited to have you join us."
+                      placeholder={t('userManagement.welcomeToOurPlatformWereExcitedToHaveYouJoinUs')}
                       value={inviteMessage}
                       onChange={(e) => setInviteMessage(e.target.value)}
                       disabled={isCreatingInvite}
@@ -845,10 +845,10 @@ export default function UsersPage() {
                     {isCreatingInvite ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Creating...
+                        {t('actions.creating')}
                       </>
                     ) : (
-                      "Create Invite"
+                      t('userManagement.createInvite')
                     )}
                   </Button>
                 </div>
@@ -864,8 +864,8 @@ export default function UsersPage() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-lg font-semibold text-green-600">Invite Created!</h2>
-                    <p className="text-sm text-muted-foreground">Share this link with your invitee</p>
+                    <h2 className="text-lg font-semibold text-green-600">{t('userManagement.inviteCreated')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('userManagement.shareThisLinkWithYourInvitee')}</p>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setCreatedInvite(null)}>
                     ×
@@ -876,7 +876,7 @@ export default function UsersPage() {
                   <div className="bg-muted/50 p-3 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <Link className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Invite Link</span>
+                      <span className="text-sm font-medium">{t('userManagement.inviteLink')}</span>
                     </div>
                     <div className="bg-background p-2 rounded border">
                       <code className="text-xs break-all">{createdInvite.link}</code>
@@ -894,16 +894,16 @@ export default function UsersPage() {
                   
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Role:</span>
+                      <span className="text-muted-foreground">{t('userManagement.role3')}:</span>
                       <div className="font-medium capitalize">{createdInvite.role}</div>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Expires:</span>
+                      <span className="text-muted-foreground">{t('userManagement.expires2')}:</span>
                       <div className="font-medium">{new Date(createdInvite.expires_at).toLocaleDateString()}</div>
                     </div>
                     {createdInvite.email && (
                       <div className="col-span-2">
-                        <span className="text-muted-foreground">Email:</span>
+                        <span className="text-muted-foreground">{t('userManagement.email')}:</span>
                         <div className="font-medium">{createdInvite.email}</div>
                       </div>
                     )}
@@ -911,7 +911,7 @@ export default function UsersPage() {
                 </div>
                 
                 <Button onClick={() => setCreatedInvite(null)} className="w-full">
-                  Done
+                  {t('actions.done')}
                 </Button>
               </div>
             </div>
@@ -922,13 +922,13 @@ export default function UsersPage() {
         <AlertDialog open={!!deleteUsername} onOpenChange={() => setDeleteUsername(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete User</AlertDialogTitle>
+              <AlertDialogTitle>{t('userManagement.deleteUser2')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete &quot;{deleteUsername}&quot;? This action cannot be undone.
+                {t('userManagement.areYouSureYouWantToDelete')} &quot;{deleteUsername}&quot;? {t('userManagement.thisActionCannotBeUndone')}.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>{t('actions.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteUser}
                 disabled={isDeleting}
@@ -937,10 +937,10 @@ export default function UsersPage() {
                 {isDeleting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Deleting...
+                    {t('actions.deleting')}
                   </>
                 ) : (
-                  "Delete User"
+                  t('userManagement.deleteUser2')
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>

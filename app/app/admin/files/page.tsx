@@ -327,12 +327,12 @@ export default function AdminFilesPage() {
 
   return (
     <>
-      <AppHeader breadcrumbs={[{ label: "Admin" }, { label: "Files" }]} />
+      <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('fileManagement.title') }]} />
       <main className="flex-1 p-6 space-y-6">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">File Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('fileManagement.title')}</h1>
           <p className="text-muted-foreground">
-            Upload, view, and manage all documents in the system
+            {t('fileManagement.uploadViewAndManageAllDocuments')}
           </p>
         </div>
 
@@ -340,45 +340,45 @@ export default function AdminFilesPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Files</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('fileManagement.totalFiles')}</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{files.length}</div>
-              <p className="text-xs text-muted-foreground">Documents uploaded</p>
+              <p className="text-xs text-muted-foreground">{t('fileManagement.documentsUploaded')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Size</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('fileManagement.totalSize')}</CardTitle>
               <HardDrive className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatFileSize(totalSize)}</div>
-              <p className="text-xs text-muted-foreground">Storage used</p>
+              <p className="text-xs text-muted-foreground">{t('fileManagement.storageUsed')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Indexed</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('fileManagement.indexed')}</CardTitle>
               <Search className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{indexedCount}</div>
-              <p className="text-xs text-muted-foreground">Searchable files</p>
+              <p className="text-xs text-muted-foreground">{t('fileManagement.searchableFiles')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Upload Progress</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('fileManagement.uploadProgress')}</CardTitle>
               <Upload className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{uploadedFiles.length}</div>
-              <p className="text-xs text-muted-foreground">Files pending</p>
+              <p className="text-xs text-muted-foreground">{t('fileManagement.filesPending')}</p>
             </CardContent>
           </Card>
         </div>
@@ -386,9 +386,9 @@ export default function AdminFilesPage() {
         {/* Upload Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Upload Files</CardTitle>
+            <CardTitle>{t('fileManagement.uploadFiles')}</CardTitle>
             <CardDescription>
-              Upload documents to make them searchable and available for AI queries
+              {t('fileManagement.uploadDocumentsToBuildYourKnowledgeBase')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -407,10 +407,10 @@ export default function AdminFilesPage() {
                 <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <div className="space-y-2">
                   <h3 className="text-lg font-medium">
-                    {isDragging ? "Drop files here" : "Drag and drop files here"}
+                    {isDragging ? t('fileManagement.dragAndDropFilesHere') : t('fileManagement.dragAndDropFilesHere')}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    or click the button below to select files
+                    {t('fileManagement.selectFiles')}
                   </p>
                 </div>
                 <div className="flex gap-2 mt-4">
@@ -426,19 +426,19 @@ export default function AdminFilesPage() {
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Upload className="h-4 w-4 mr-2" />
-                    Select Files
+                    {t('fileManagement.selectFiles')}
                   </Button>
                   {uploadedFiles.length > 0 && (
                     <Button onClick={handleFileUpload} disabled={uploading}>
                       {uploading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Uploading...
+                          {t('fileManagement.uploading')}
                         </>
                       ) : (
                         <>
                           <Upload className="h-4 w-4 mr-2" />
-                          Upload {uploadedFiles.length} file(s)
+                          {t('fileManagement.uploadFiles')} ({uploadedFiles.length} {t('files.files')})
                         </>
                       )}
                     </Button>
@@ -448,7 +448,7 @@ export default function AdminFilesPage() {
 
               {uploadedFiles.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Selected Files:</h4>
+                  <h4 className="text-sm font-medium">{t('fileManagement.selectedFiles', { count: uploadedFiles.length })}:</h4>
                   <div className="space-y-1">
                     {uploadedFiles.map((file, index) => (
                       <div key={index} className="flex items-center gap-2 text-sm">
@@ -476,16 +476,16 @@ export default function AdminFilesPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Files</CardTitle>
+                <CardTitle>{t('files.allFiles')}</CardTitle>
                 <CardDescription>
-                  Manage and view all uploaded documents
+                  {t('files.allDocumentsInYourKnowledgeBase')}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="relative flex-shrink-0">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input
-                    placeholder="Search files..."
+                    placeholder={t('files.searchFiles')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 w-80 h-10 bg-background border-input hover:border-primary/50 focus:border-primary transition-colors"
@@ -499,11 +499,11 @@ export default function AdminFilesPage() {
                       className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
                     <span className="text-sm font-medium text-foreground">
-                      {selectedFiles.size === filteredFiles.length ? 'Deselect All' : 'Select All'}
+                      {selectedFiles.size === filteredFiles.length ? t('fileManagement.selectNone') : t('fileManagement.selectAll')}
                     </span>
                     {selectedFiles.size > 0 && (
                       <span className="text-xs text-muted-foreground bg-background px-2 py-1 rounded-full">
-                        {selectedFiles.size} selected
+                        {selectedFiles.size} {t('fileManagement.selectedFiles')}
                       </span>
                     )}
                   </div>
@@ -523,7 +523,7 @@ export default function AdminFilesPage() {
                   <div className="flex items-center justify-between p-4 bg-muted/50 border-b mb-4">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">
-                        {selectedFiles.size} file{selectedFiles.size !== 1 ? 's' : ''} selected
+                        { /* {t('fileManagement.selectedFiles', { count: selectedFiles.size })} */}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -533,7 +533,7 @@ export default function AdminFilesPage() {
                         onClick={() => setSelectedFiles(new Set())}
                       >
                         <X className="h-4 w-4 mr-2" />
-                        Clear Selection
+                        {t('actions.clear')}
                       </Button>
                       <Button
                         variant="destructive"
@@ -541,7 +541,7 @@ export default function AdminFilesPage() {
                         onClick={() => setBulkDeleteDialogOpen(true)}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Selected
+                        {t('fileManagement.deleteFiles')}
                       </Button>
                     </div>
                   </div>
@@ -600,7 +600,7 @@ export default function AdminFilesPage() {
                             setEditDialogOpen(true)
                           }}>
                             <Edit className="h-4 w-4 mr-2" />
-                            Edit Metadata
+                            {t('fileManagement.metadata')}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -611,7 +611,7 @@ export default function AdminFilesPage() {
                             className="text-destructive"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
+                            {t('actions.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -619,7 +619,7 @@ export default function AdminFilesPage() {
                   ))}
                   {filteredFiles.length === 0 && (
                     <div className="text-center text-muted-foreground py-8">
-                      {searchQuery ? "No files found matching your search." : "No files uploaded yet."}
+                      {searchQuery ? t('files.noFilesMatchYourSearchQuery') : t('fileManagement.noFilesFound')}
                     </div>
                   )}
                 </div>
@@ -641,14 +641,14 @@ export default function AdminFilesPage() {
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Edit File Metadata</DialogTitle>
+              <DialogTitle>{t('fileManagement.metadata')}</DialogTitle>
               <DialogDescription>
-                Update metadata for {editingFile?.filename}
+                {t('fileManagement.updateMetadataFor')} {editingFile?.filename}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="metadata">Metadata (JSON)</label>
+                <label htmlFor="metadata">{t('fileManagement.metadata')} (JSON)</label>
                 <Textarea
                   id="metadata"
                   value={editMetadata}
@@ -660,10 +660,10 @@ export default function AdminFilesPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-                Cancel
+                {t('actions.cancel')}
               </Button>
               <Button onClick={handleEditMetadata}>
-                Save Changes
+                {t('fileManagement.saveChanges')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -673,15 +673,15 @@ export default function AdminFilesPage() {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete File</AlertDialogTitle>
+              <AlertDialogTitle>{t('fileManagement.deleteFile')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete &quot;{fileToDelete?.filename}&quot;? This action cannot be undone.
+                {t('fileManagement.areYouSureYouWantToDelete', { filename: fileToDelete?.filename })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t('actions.cancel')}</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteFile}>
-                Delete
+                {t('actions.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -691,15 +691,15 @@ export default function AdminFilesPage() {
         <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Multiple Files</AlertDialogTitle>
+              <AlertDialogTitle>{t('fileManagement.deleteFiles')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete {selectedFiles.size} file{selectedFiles.size !== 1 ? 's' : ''}? This action cannot be undone.
+                {t('fileManagement.confirmDeleteFiles', { count: selectedFiles.size })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t('actions.cancel')}</AlertDialogCancel>
               <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground">
-                Delete {selectedFiles.size} File{selectedFiles.size !== 1 ? 's' : ''}
+                {t('fileManagement.deleteFiles')} {selectedFiles.size} {t('files.files')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

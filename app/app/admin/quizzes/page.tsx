@@ -36,6 +36,7 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslation } from "@/src/i18n"
 
 interface Quiz {
   id: string
@@ -86,6 +87,7 @@ interface QuizFormData {
 
 export default function AdminQuizzesPage() {
   const { token, user } = useAuth()
+  const { t } = useTranslation()
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
   const [quizStats, setQuizStats] = useState<Record<string, QuizStats>>({})
@@ -191,6 +193,7 @@ export default function AdminQuizzesPage() {
       }
       
       const response = await dashboardApi.createQuiz(formData, token)
+      console.log('Create quiz response:', response)
       if (response.status === "success") {
         toast.success("Quiz created successfully")
         setShowCreateDialog(false)
@@ -204,6 +207,10 @@ export default function AdminQuizzesPage() {
           questions: []
         })
         fetchQuizzes()
+      } else {
+        console.error('Quiz creation failed:', response)
+        const errorMessage = response.message || "Failed to create quiz"
+        toast.error(errorMessage)
       }
     } catch (error) {
       toast.error("Failed to create quiz")
@@ -332,15 +339,28 @@ export default function AdminQuizzesPage() {
         }
         
         // Convert to form format
-        const convertedQuestions = parsedQuiz?.questions?.map((q: any, index: number) => ({
-          id: (index + 1).toString(),
-          type: q.options?.length > 2 ? "multiple-choice" : "true-false",
-          question: q.question,
-          options: q.options || [],
-          correct_answer: q.options?.indexOf(q.answer) >= 0 ? q.options?.indexOf(q.answer) : q.answer,
-          explanation: q.explanation || "",
-          points: 10
-        })) || []
+        const convertedQuestions = parsedQuiz?.questions?.map((q: any, index: number) => {
+          const correctAnswer = q.options?.indexOf(q.answer) >= 0 ? q.options?.indexOf(q.answer) : q.answer
+          const questionType = q.options?.length > 2 ? "multiple-choice" : "true-false"
+          
+          console.log(`Converting question ${index}:`, {
+            original: q,
+            correctAnswer,
+            questionType
+          })
+          
+          return {
+            id: (index + 1).toString(),
+            type: questionType,
+            question: q.question,
+            options: q.options || [],
+            correct_answer: correctAnswer,
+            explanation: q.explanation || "",
+            points: 10
+          }
+        }) || []
+        
+        console.log('Final converted questions:', convertedQuestions)
         
         const aiGeneratedQuiz: QuizFormData = {
           title: `AI Quiz: ${selectedFile}`,
@@ -449,7 +469,7 @@ export default function AdminQuizzesPage() {
   if (loading) {
     return (
       <>
-        <AppHeader />
+        <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('quizManagement.title') }]} />
         <main className="flex-1 p-6 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin" />
         </main>
@@ -459,12 +479,12 @@ export default function AdminQuizzesPage() {
 
   return (
     <>
-      <AppHeader />
+      <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('quizManagement.title') }]} />
       <main className="flex-1 p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight">Quiz Management</h1>
-            <p className="text-muted-foreground">Create and manage quizzes for users</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('quizManagement.title')}</h1>
+            <p className="text-muted-foreground">{t('quizManagement.createAndManageQuizzesForUsers')}</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={generateQuizFromAI} variant="outline" disabled={generatingQuiz}>
@@ -473,57 +493,57 @@ export default function AdminQuizzesPage() {
               ) : (
                 <Brain className="w-4 h-4 mr-2" />
               )}
-              Generate with AI
+              {t('quizManagement.generateWithAI')}
             </Button>
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Quiz
+                  {t('quizManagement.createQuiz')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Create New Quiz</DialogTitle>
+                  <DialogTitle>{t('quizManagement.createNewQuiz')}</DialogTitle>
                   <DialogDescription>
-                    Create a new quiz for users to test their knowledge
+                    {t('quizManagement.createNewQuizForUsersToTestTheirKnowledge')}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="title">Title</Label>
+                      <Label htmlFor="title">{t('quizManagement.quizTitle')}</Label>
                       <Input
                         id="title"
                         value={formData.title}
                         onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                        placeholder="Enter quiz title"
+                        placeholder={t('quizManagement.enterQuizTitle')}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
+                      <Label htmlFor="category">{t('quizManagement.quizCategory')}</Label>
                       <Input
                         id="category"
                         value={formData.category}
                         onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                        placeholder="Enter category"
+                        placeholder={t('quizManagement.enterCategory')}
                       />
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">{t('quizManagement.description')}</Label>
                     <Textarea
                       id="description"
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Enter quiz description"
+                      placeholder={t('quizManagement.enterQuizDescription')}
                     />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="difficulty">Difficulty</Label>
+                      <Label htmlFor="difficulty">{t('quizManagement.difficulty')}</Label>
                       <Select
                         value={formData.difficulty}
                         onValueChange={(value: "easy" | "medium" | "hard") => 
@@ -534,14 +554,14 @@ export default function AdminQuizzesPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="easy">Easy</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="hard">Hard</SelectItem>
+                          <SelectItem value="easy">{t('quizManagement.easy')}</SelectItem>
+                          <SelectItem value="medium">{t('quizManagement.medium')}</SelectItem>
+                          <SelectItem value="hard">{t('quizManagement.hard')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="time_limit">Time Limit (minutes)</Label>
+                      <Label htmlFor="time_limit">{t('quizManagement.timeLimitMinutes')}</Label>
                       <Input
                         id="time_limit"
                         type="number"
@@ -550,7 +570,7 @@ export default function AdminQuizzesPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="passing_score">Passing Score (%)</Label>
+                      <Label htmlFor="passing_score">{t('quizManagement.passingScore')}</Label>
                       <Input
                         id="passing_score"
                         type="number"
@@ -564,10 +584,10 @@ export default function AdminQuizzesPage() {
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">Questions</h3>
+                      <h3 className="text-lg font-semibold">{t('quizManagement.questions')}</h3>
                       <Button onClick={addQuestion} variant="outline" size="sm">
                         <Plus className="w-4 h-4 mr-2" />
-                        Add Question
+                        {t('quizManagement.addQuestion')}
                       </Button>
                     </div>
 
@@ -578,7 +598,7 @@ export default function AdminQuizzesPage() {
                             <CardContent className="pt-6">
                               <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                  <h4 className="font-medium">Question {index + 1}</h4>
+                                  <h4 className="font-medium">{t('quizManagement.question')} {index + 1}</h4>
                                   <Button
                                     onClick={() => removeQuestion(index)}
                                     variant="outline"
@@ -590,7 +610,7 @@ export default function AdminQuizzesPage() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                   <div className="space-y-2">
-                                    <Label>Question Type</Label>
+                                    <Label>{t('quizManagement.questionType')}</Label>
                                     <Select
                                       value={question.type}
                                       onValueChange={(value: "multiple-choice" | "true-false" | "text") => 
@@ -601,14 +621,14 @@ export default function AdminQuizzesPage() {
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                                        <SelectItem value="true-false">True/False</SelectItem>
-                                        <SelectItem value="text">Text Answer</SelectItem>
+                                        <SelectItem value="multiple-choice">{t('quizManagement.multipleChoice')}</SelectItem>
+                                        <SelectItem value="true-false">{t('quizManagement.trueFalse')}</SelectItem>
+                                        <SelectItem value="text">{t('quizManagement.textAnswer')}</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
                                   <div className="space-y-2">
-                                    <Label>Points</Label>
+                                    <Label>{t('quizManagement.points')}</Label>
                                     <Input
                                       type="number"
                                       value={question.points}
@@ -618,17 +638,17 @@ export default function AdminQuizzesPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                  <Label>Question</Label>
+                                  <Label>{t('quizManagement.question')}</Label>
                                   <Textarea
                                     value={question.question}
                                     onChange={(e) => updateQuestion(index, "question", e.target.value)}
-                                    placeholder="Enter your question"
+                                    placeholder={t('quizManagement.enterYourQuestion')}
                                   />
                                 </div>
 
                                 {question.type === "multiple-choice" && (
                                   <div className="space-y-2">
-                                    <Label>Options</Label>
+                                    <Label>{t('quizManagement.options')}</Label>
                                     {question.options?.map((option, optIndex) => (
                                       <div key={optIndex} className="flex items-center gap-2">
                                         <Input
@@ -638,14 +658,14 @@ export default function AdminQuizzesPage() {
                                             newOptions[optIndex] = e.target.value
                                             updateQuestion(index, "options", newOptions)
                                           }}
-                                          placeholder={`Option ${optIndex + 1}`}
+                                          placeholder={`${t('quizManagement.option')} ${optIndex + 1}`}
                                         />
                                         <Button
                                           onClick={() => updateQuestion(index, "correct_answer", optIndex)}
                                           variant={question.correct_answer === optIndex ? "default" : "outline"}
                                           size="sm"
                                         >
-                                          Correct
+                                          {t('quizManagement.correct')}
                                         </Button>
                                       </div>
                                     ))}
@@ -654,7 +674,7 @@ export default function AdminQuizzesPage() {
 
                                 {question.type === "true-false" && (
                                   <div className="space-y-2">
-                                    <Label>Correct Answer</Label>
+                                    <Label>{t('quizManagement.correctAnswer')}</Label>
                                     <Select
                                       value={question.correct_answer.toString()}
                                       onValueChange={(value) => updateQuestion(index, "correct_answer", value)}
@@ -663,8 +683,8 @@ export default function AdminQuizzesPage() {
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="true">True</SelectItem>
-                                        <SelectItem value="false">False</SelectItem>
+                                        <SelectItem value="true">{t('quizManagement.true')}</SelectItem>
+                                        <SelectItem value="false">{t('quizManagement.false')}</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
@@ -672,21 +692,21 @@ export default function AdminQuizzesPage() {
 
                                 {question.type === "text" && (
                                   <div className="space-y-2">
-                                    <Label>Correct Answer</Label>
+                                    <Label>{t('quizManagement.correctAnswer')}</Label>
                                     <Input
                                       value={question.correct_answer as string}
                                       onChange={(e) => updateQuestion(index, "correct_answer", e.target.value)}
-                                      placeholder="Enter the correct answer"
+                                      placeholder={t('quizManagement.enterTheCorrectAnswer')}
                                     />
                                   </div>
                                 )}
 
                                 <div className="space-y-2">
-                                  <Label>Explanation (Optional)</Label>
+                                  <Label>{t('quizManagement.explanationOptional')}</Label>
                                   <Textarea
                                     value={question.explanation || ""}
                                     onChange={(e) => updateQuestion(index, "explanation", e.target.value)}
-                                    placeholder="Explain why this is the correct answer"
+                                    placeholder={t('quizManagement.explainWhyThisIsTheCorrectAnswer')}
                                   />
                                 </div>
                               </div>
@@ -699,9 +719,9 @@ export default function AdminQuizzesPage() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Cancel
+                    {t('actions.cancel')}
                   </Button>
-                  <Button onClick={createQuiz}>Create Quiz</Button>
+                  <Button onClick={createQuiz}>{t('quizManagement.createQuiz')}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -712,44 +732,44 @@ export default function AdminQuizzesPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Quizzes</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('quizManagement.totalQuizzes')}</CardTitle>
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{quizzes.length}</div>
-              <p className="text-xs text-muted-foreground">Active quizzes</p>
+              <p className="text-xs text-muted-foreground">{t('quizManagement.activeQuizzes')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('quizManagement.totalQuestions')}</CardTitle>
               <Brain className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {quizzes.reduce((acc, quiz) => acc + quiz.questions.length, 0)}
               </div>
-              <p className="text-xs text-muted-foreground">Questions across all quizzes</p>
+              <p className="text-xs text-muted-foreground">{t('quizManagement.questionsAcrossAllQuizzes')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Categories</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('quizManagement.categories')}</CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {new Set(quizzes.map(q => q.category)).size}
               </div>
-              <p className="text-xs text-muted-foreground">Quiz categories</p>
+              <p className="text-xs text-muted-foreground">{t('quizManagement.quizCategories')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Avg Difficulty</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('quizManagement.avgDifficulty')}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -759,7 +779,7 @@ export default function AdminQuizzesPage() {
                   : "0.0"
                 }
               </div>
-              <p className="text-xs text-muted-foreground">Average difficulty level</p>
+              <p className="text-xs text-muted-foreground">{t('quizManagement.averageDifficultyLevel')}</p>
             </CardContent>
           </Card>
         </div>
@@ -787,7 +807,7 @@ export default function AdminQuizzesPage() {
                         </div>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Target className="w-4 h-4" />
-                          {quiz.passing_score}% to pass
+                          {quiz.passing_score}% {t('quizManagement.toPass')}
                         </div>
                       </div>
                     </div>
@@ -802,7 +822,7 @@ export default function AdminQuizzesPage() {
                         }}
                       >
                         <BarChart3 className="w-4 h-4 mr-2" />
-                        Stats
+                        {t('quizManagement.stats')}
                       </Button>
                       <Button
                         variant="outline"
@@ -822,7 +842,7 @@ export default function AdminQuizzesPage() {
                         }}
                       >
                         <Edit className="w-4 h-4 mr-2" />
-                        Edit
+                        {t('quizManagement.edit')}
                       </Button>
                       <Button
                         variant="outline"
@@ -837,27 +857,27 @@ export default function AdminQuizzesPage() {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between text-sm">
-                      <span>{quiz.questions.length} questions</span>
-                      <span>Created {new Date(quiz.created_at).toLocaleDateString()}</span>
+                      <span>{quiz.questions.length} {t('quizManagement.questionsCount')}</span>
+                      <span>{t('quizManagement.created')} {new Date(quiz.created_at).toLocaleDateString()}</span>
                     </div>
                     
                     {stats && (
                       <div className="grid grid-cols-4 gap-4 text-center">
                         <div>
                           <div className="text-lg font-semibold">{stats.total_submissions}</div>
-                          <p className="text-xs text-muted-foreground">Submissions</p>
+                          <p className="text-xs text-muted-foreground">{t('quizManagement.submissions')}</p>
                         </div>
                         <div>
                           <div className="text-lg font-semibold">{stats.pass_rate.toFixed(0)}%</div>
-                          <p className="text-xs text-muted-foreground">Pass Rate</p>
+                          <p className="text-xs text-muted-foreground">{t('quizManagement.passRate')}</p>
                         </div>
                         <div>
                           <div className="text-lg font-semibold">{stats.avg_score.toFixed(0)}%</div>
-                          <p className="text-xs text-muted-foreground">Avg Score</p>
+                          <p className="text-xs text-muted-foreground">{t('quizManagement.avgScore')}</p>
                         </div>
                         <div>
                           <div className="text-lg font-semibold">{Math.round(stats.avg_time_spent / 60)}m</div>
-                          <p className="text-xs text-muted-foreground">Avg Time</p>
+                          <p className="text-xs text-muted-foreground">{t('quizManagement.avgTime')}</p>
                         </div>
                       </div>
                     )}
@@ -872,15 +892,15 @@ export default function AdminQuizzesPage() {
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Quiz</DialogTitle>
+              <DialogTitle>{t('quizManagement.editQuiz')}</DialogTitle>
               <DialogDescription>
-                Update quiz details and questions
+                {t('quizManagement.updateQuiz')} details and questions
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-title">Title</Label>
+                  <Label htmlFor="edit-title">{t('quizManagement.quizTitle')}</Label>
                   <Input
                     id="edit-title"
                     value={formData.title}
@@ -888,7 +908,7 @@ export default function AdminQuizzesPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-category">Category</Label>
+                  <Label htmlFor="edit-category">{t('quizManagement.quizCategory')}</Label>
                   <Input
                     id="edit-category"
                     value={formData.category}
@@ -898,7 +918,7 @@ export default function AdminQuizzesPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="edit-description">Description</Label>
+                <Label htmlFor="edit-description">{t('quizManagement.description')}</Label>
                 <Textarea
                   id="edit-description"
                   value={formData.description}
@@ -908,7 +928,7 @@ export default function AdminQuizzesPage() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-difficulty">Difficulty</Label>
+                  <Label htmlFor="edit-difficulty">{t('quizManagement.difficulty')}</Label>
                   <Select
                     value={formData.difficulty}
                     onValueChange={(value: "easy" | "medium" | "hard") => 
@@ -919,14 +939,14 @@ export default function AdminQuizzesPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
+                      <SelectItem value="easy">{t('quizManagement.easy')}</SelectItem>
+                      <SelectItem value="medium">{t('quizManagement.medium')}</SelectItem>
+                      <SelectItem value="hard">{t('quizManagement.hard')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-time_limit">Time Limit (minutes)</Label>
+                  <Label htmlFor="edit-time_limit">{t('quizManagement.timeLimitMinutes')}</Label>
                   <Input
                     id="edit-time_limit"
                     type="number"
@@ -935,7 +955,7 @@ export default function AdminQuizzesPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-passing_score">Passing Score (%)</Label>
+                  <Label htmlFor="edit-passing_score">{t('quizManagement.passingScore')}</Label>
                   <Input
                     id="edit-passing_score"
                     type="number"
@@ -947,9 +967,9 @@ export default function AdminQuizzesPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                Cancel
+                {t('actions.cancel')}
               </Button>
-              <Button onClick={updateQuiz}>Update Quiz</Button>
+              <Button onClick={updateQuiz}>{t('quizManagement.updateQuiz')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -958,9 +978,9 @@ export default function AdminQuizzesPage() {
         <Dialog open={showStatsDialog} onOpenChange={setShowStatsDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Quiz Statistics</DialogTitle>
+              <DialogTitle>{t('quizManagement.quizStatistics')}</DialogTitle>
               <DialogDescription>
-                Performance analytics for {selectedQuiz?.title}
+                {t('quizManagement.performanceAnalyticsFor')} {selectedQuiz?.title}
               </DialogDescription>
             </DialogHeader>
             {selectedQuiz && quizStats[selectedQuiz.id] && (
@@ -970,7 +990,7 @@ export default function AdminQuizzesPage() {
                     <CardContent className="pt-6">
                       <div className="text-center">
                         <div className="text-2xl font-bold">{quizStats[selectedQuiz.id].total_submissions}</div>
-                        <p className="text-sm text-muted-foreground">Total Submissions</p>
+                        <p className="text-sm text-muted-foreground">{t('quizManagement.totalSubmissions')}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -978,14 +998,14 @@ export default function AdminQuizzesPage() {
                     <CardContent className="pt-6">
                       <div className="text-center">
                         <div className="text-2xl font-bold">{quizStats[selectedQuiz.id].pass_rate.toFixed(0)}%</div>
-                        <p className="text-sm text-muted-foreground">Pass Rate</p>
+                        <p className="text-sm text-muted-foreground">{t('quizManagement.passRate')}</p>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="font-semibold">Recent Submissions</h3>
+                  <h3 className="font-semibold">{t('quizManagement.recentSubmissions')}</h3>
                   <ScrollArea className="h-64">
                     <div className="space-y-2">
                       {quizStats[selectedQuiz.id].recent_submissions.map((submission, index) => (
@@ -1018,18 +1038,18 @@ export default function AdminQuizzesPage() {
         <Dialog open={showFileSelectDialog} onOpenChange={setShowFileSelectDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Generate Quiz from Document</DialogTitle>
+              <DialogTitle>{t('quizManagement.generateQuizFromDocument')}</DialogTitle>
               <DialogDescription>
-                Select a document to generate a quiz from using AI
+                {t('quizManagement.selectADocumentToGenerateAQuizFromUsingAI')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Select Document</Label>
+                <Label>{t('quizManagement.selectDocument')}</Label>
                 <ScrollArea className="h-64 w-full border rounded-md p-2">
                   <div className="space-y-2">
                     {availableFiles.length === 0 ? (
-                      <p className="text-muted-foreground">No documents available</p>
+                      <p className="text-muted-foreground">{t('quizManagement.noDocumentsAvailable')}</p>
                     ) : (
                       availableFiles.map((file) => (
                         <div
@@ -1054,7 +1074,7 @@ export default function AdminQuizzesPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowFileSelectDialog(false)}>
-                Cancel
+                {t('actions.cancel')}
               </Button>
               <Button 
                 onClick={generateQuizFromSelectedFile} 
@@ -1065,7 +1085,7 @@ export default function AdminQuizzesPage() {
                 ) : (
                   <Brain className="w-4 h-4 mr-2" />
                 )}
-                Generate Quiz
+                {t('quizManagement.generateQuiz')}
               </Button>
             </DialogFooter>
           </DialogContent>
