@@ -45,8 +45,16 @@ export const getTranslations = (locale) => {
 
 // Main translation hook
 export function useTranslation() {
-  const [locale, setLocale] = useState(getStoredLocale)
-  const [translations, setTranslations] = useState(() => getTranslations(locale))
+  const [locale, setLocale] = useState(defaultLocale)
+  const [translations, setTranslations] = useState(() => getTranslations(defaultLocale))
+
+  useEffect(() => {
+    const storedLocale = getStoredLocale()
+    if (storedLocale !== locale) {
+      setLocale(storedLocale)
+      setTranslations(getTranslations(storedLocale))
+    }
+  }, [])
 
   const changeLanguage = (newLocale) => {
     setLocale(newLocale)

@@ -91,7 +91,8 @@
     "loginSuccessful": "Login successful",
     "loginFailed": "Login failed",
     "organizationCreatedSuccessfully": "Organization created successfully! You can now login.",
-    "failedToCreateOrganization": "Failed to create organization"
+    "failedToCreateOrganization": "Failed to create organization",
+    "organizationPendingApproval": "Your organization is pending approval. Please contact your administrator."
   },
   "search": {
     "title": "Search",
@@ -135,6 +136,14 @@
     "pleaseOpenThisFileFromTheFilesPageForFullViewing": "Please open this file from the Files page for full viewing",
     "wordDocumentPreviewNotAvailable": "Word document preview not available in search results",
     "loadingDocument": "Loading document...",
+    "documentPreviewWithSearchHighlighting": "Document preview with search highlighting",
+    "close": "Close",
+    "loadingDocument2": "Loading document...",
+    "pdfPreviewNotAvailable": "PDF preview not available in search results",
+    "wordDocumentPreviewNotAvailable2": "Word document preview not available in search results",
+    "pleaseOpenThisFileFromTheFilesPageForFullViewing2": "Please open this file from the Files page for full viewing",
+    "searchingAcrossYourKnowledgeBase": "Searching across your Knowledge Base...",
+    "sorryIEncounteredAnErrorWhileSearchingPleaseTryAgain": "Sorry, I encountered an error while searching. Please try again.",
     "whatProductsDoWeHaveInStock": "What products do we have in stock?",
     "howDoIConfigureTheSystemSettings": "How do I configure the system settings?",
     "whatAreTheMainFeaturesOfThePlatform": "What are the main features of the platform?",
@@ -586,9 +595,7 @@
     "totalQuizzes": "Total Quizzes",
     "availableQuizzes": "Available quizzes",
     "quizzesFinished": "Quizzes finished",
-    "passRate": "Pass Rate",
     "quizzesPassed": "Quizzes passed",
-    "avgScore": "Avg Score",
     "averagePerformance": "Average performance",
     "quizCompleted": "Quiz Completed!",
     "hereAreYourResultsFor": "Here are your results for",
@@ -659,8 +666,6 @@
     "correctAnswerRequired": "Question {{index}} must have a correct answer selected",
     "quizStats": "Quiz Statistics",
     "totalSubmissions": "Total Submissions",
-    "passRate": "Pass Rate",
-    "avgScore": "Avg Score",
     "avgTime": "Avg Time",
     "recentSubmissions": "Recent Submissions"
   },
@@ -711,5 +716,363 @@
     "saveChanges": "Save Changes",
     "saving": "Saving...",
     "settingsSavedSuccessfully": "Settings saved successfully"
+  },
+  "userDashboard": {
+    "welcomeBack": "Welcome back, {{username}}",
+    "knowledgeBaseActivityOverview": "Here's an overview of your knowledge base activity.",
+    "quickActions": "Quick Actions",
+    "searchKnowledge": "Search Knowledge",
+    "queryYourDocuments": "Query your documents",
+    "manageFiles": "Manage Files",
+    "documentsIndexed": "{{count}} documents indexed",
+    "catalogs": "Catalogs",
+    "productSearch": "Product search",
+    "myQueries": "My Queries",
+    "personalQueries": "Personal queries",
+    "successRate": "Success Rate",
+    "avgResponseTime": "Avg Response Time",
+    "queryLatency": "Query latency",
+    "accessibleFiles": "Accessible Files",
+    "availableToSearch": "Available to search",
+    "recentActivity": "Recent Activity",
+    "recentQueries": "Recent Queries",
+    "latestQuestionsFromUsers": "Latest questions from users",
+    "viewAll": "View all",
+    "noRecentQueries": "No recent queries",
+    "startSearchingYourKnowledgeBase": "Start searching your knowledge base",
+    "myPerformance": "My Performance",
+    "yourQueryStatistics": "Your query statistics",
+    "totalQueries": "Total Queries",
+    "successfulQueries": "Successful Queries",
+    "failedQueries": "Failed Queries",
+    "organization": "Organization"
+  },
+  "dashboard2": {
+    "manageYourDocumentsAndExploreTheKnowledgeBase": "Manage your documents and explore the knowledge base",
+    "totalDocuments": "Total Documents",
+    "inYourKnowledgeBase": "In your knowledge base",
+    "recentUploads": "Recent Uploads",
+    "last7Days": "Last 7 days",
+    "queriesMade": "Queries Made",
+    "totalSearches": "Total searches",
+    "responseTime": "Response Time",
+    "averageQueryTime": "Average query time",
+    "browseFiles": "Browse Files",
+    "viewAllDocuments": "View all documents",
+    "recentDocuments": "Recent Documents",
+    "yourLatestUploadedFiles": "Your latest uploaded files",
+    "viewAll": "View All",
+    "noDocumentsFound": "No documents found",
+    "uploadDocuments": "Upload Documents"
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing", 
+      "about": "About",
+      "contact": "Contact",
+      "signIn": "Sign In",
+      "brochure": "Brochure",
+      "account": "Account"
+    },
+    "hero": {
+      "badge": "AI-Powered Knowledge Management",
+      "title": "Knowledge Base Reimagined with ",
+      "titleHighlight": "AI",
+      "subtitle": "Transform your organization's knowledge into an intelligent, searchable resource. Get instant answers, manage documents, and empower your team with AI-driven insights.",
+      "getStarted": "Get Started",
+      "learnMore": "Learn More",
+      "viewBrochure": "View Brochure",
+      "noCreditCard": "No credit card required",
+      "freeTrial": "14-day free trial",
+      "setupMinutes": "Setup in minutes"
+    },
+    "features": {
+      "title": "Powerful Features for Modern Teams",
+      "subtitle": "Everything you need to manage, search, and leverage your organization's knowledge effectively.",
+      "smartSearch": {
+        "title": "Smart Search",
+        "description": "Find information instantly across your entire knowledge base with advanced semantic search."
+      },
+      "aiAnswers": {
+        "title": "AI-Powered Answers",
+        "description": "Get intelligent responses to your questions with context-aware AI assistance."
+      },
+      "documentManagement": {
+        "title": "Document Management", 
+        "description": "Upload, organize, and manage all your documents in one centralized location."
+      },
+      "secure": {
+        "title": "Secure & Private",
+        "description": "Enterprise-grade security with role-based access control and data encryption."
+      },
+      "realTime": {
+        "title": "Real-time Processing",
+        "description": "Experience fast, responsive performance with real-time updates and WebSocket connectivity."
+      },
+      "collaboration": {
+        "title": "Team Collaboration",
+        "description": "Work together seamlessly with shared knowledge bases and collaborative features."
+      }
+    },
+    "benefits": {
+      "title": "Why Choose WikiAI?",
+      "subtitle": "Our intelligent knowledge management system helps teams work smarter, not harder. Experience the power of AI-driven information retrieval and collaboration.",
+      "reduceTime": "Reduce information retrieval time by 80%",
+      "improveSharing": "Improve team knowledge sharing",
+      "centralizedManagement": "Centralized document management",
+      "aiInsights": "AI-powered insights and recommendations",
+      "security": "Secure role-based access control",
+      "realTimeUpdates": "Real-time search and updates",
+      "startFreeTrial": "Start Your Free Trial",
+      "semanticSearch": "Semantic Search",
+      "semanticSearchDesc": "Find what you need, instantly",
+      "aiAssistant": "AI Assistant",
+      "aiAssistantDesc": "Get intelligent answers",
+      "analytics": "Analytics",
+      "analyticsDesc": "Track usage and insights"
+    },
+    "cta": {
+      "title": "Ready to Transform Your Knowledge Management?",
+      "subtitle": "Join thousands of teams already using WikiAI to organize, search, and leverage their collective knowledge.",
+      "startFreeTrial": "Start Free Trial",
+      "requestDemo": "Request Demo"
+    },
+    "footer": {
+      "description": "AI-powered knowledge management for modern teams.",
+      "product": "Product",
+      "company": "Company", 
+      "support": "Support",
+      "copyright": " 2024 WikiAI. All rights reserved."
+    }
+  },
+  "about": {
+    "hero": {
+      "badge": "About WikiAI",
+      "title": "Transforming Knowledge into ",
+      "titleHighlight": "Actionable Insights",
+      "subtitle": "We're on a mission to help organizations unlock their collective intelligence through AI-powered knowledge management that's intuitive, powerful, and secure."
+    },
+    "stats": {
+      "activeUsers": "Active Users",
+      "enterpriseCustomers": "Enterprise Customers", 
+      "uptime": "Uptime",
+      "customerRating": "Customer Rating"
+    },
+    "mission": {
+      "title": "Our Mission",
+      "subtitle1": "To democratize knowledge management by making it accessible, intelligent, and actionable for every organization.",
+      "subtitle2": "We believe that every team deserves to have their collective knowledge at their fingertips, enhanced by AI that understands context and provides intelligent insights.",
+      "joinJourney": "Join Our Journey",
+      "rating": "4.9/5 rating"
+    },
+    "values": {
+      "title": "Our Values",
+      "subtitle": "The principles that guide everything we do, from product development to customer support.",
+      "innovation": {
+        "title": "Innovation",
+        "description": "Continuously pushing the boundaries of what's possible with AI and knowledge management."
+      },
+      "customerCentric": {
+        "title": "Customer-Centric", 
+        "description": "Our customers' success is our success. We build solutions that solve real problems."
+      },
+      "passion": {
+        "title": "Passion",
+        "description": "We're passionate about helping teams unlock their collective knowledge."
+      },
+      "excellence": {
+        "title": "Excellence",
+        "description": "Committed to delivering the highest quality products and experiences."
+      }
+    },
+    "journey": {
+      "title": "Our Journey",
+      "subtitle": "From a simple idea to a platform powering thousands of teams worldwide."
+    },
+    "team": {
+      "title": "Meet Our Team",
+      "subtitle": "A diverse group of passionate individuals committed to revolutionizing knowledge management."
+    },
+    "joinUs": {
+      "title": "Ready to Join Us?",
+      "subtitle": "We're always looking for talented people who share our passion for innovation and excellence.",
+      "viewPositions": "View Open Positions",
+      "contactUs": "Contact Us"
+    }
+  },
+  "contact": {
+    "hero": {
+      "badge": "Contact Us",
+      "title": "Get in",
+      "titleHighlight": "Touch",
+      "subtitle": "Have questions about WikiAI? We're here to help. Reach out to our team and we'll get back to you as soon as possible."
+    },
+    "options": {
+      "emailSupport": {
+        "title": "Email Support",
+        "description": "Get help with your account, billing, or general questions",
+        "hours": "24/7 Support"
+      },
+      "phoneSupport": {
+        "title": "Phone Support", 
+        "description": "Speak directly with our support team",
+        "hours": "Mon-Fri, 9AM-6PM EST"
+      },
+      "telegramSupport": {
+        "title": "Telegram Support",
+        "description": "Join our Telegram community for quick help",
+        "hours": "Community Support"
+      }
+    },
+    "form": {
+      "title": "Send us a Message",
+      "name": "Name",
+      "namePlaceholder": "John Doe",
+      "email": "Email",
+      "emailPlaceholder": "john@example.com",
+      "company": "Company",
+      "companyPlaceholder": "Acme Corp",
+      "message": "Message",
+      "messagePlaceholder": "Tell us how we can help you...",
+      "sendMessage": "Send Message"
+    },
+    "companyInfo": {
+      "title": "WikiAI Inc.",
+      "globalSupport": {
+        "title": "Global Support",
+        "address": "Serving customers worldwide\n24/7 Email Support"
+      },
+      "phoneSupport": {
+        "title": "Phone Support",
+        "hours": "Mon-Fri, 9AM-6PM EST"
+      },
+      "community": {
+        "title": "Community",
+        "description": "Get help from our community"
+      }
+    },
+    "offices": {
+      "title": "Our Offices",
+      "subtitle": "Find us around the world. We're always happy to connect in person.",
+      "hq": "HQ"
+    },
+    "faq": {
+      "title": "Have Questions?",
+      "subtitle": "Check out our FAQ section for quick answers to common questions.",
+      "viewFaq": "View FAQ"
+    },
+    "success": {
+      "title": "Message Sent!",
+      "subtitle": "Thank you for reaching out. We'll get back to you within 24 hours.",
+      "sendAnother": "Send Another Message"
+    }
+  },
+  "pricing": {
+    "hero": {
+      "badge": "Pricing Plans",
+      "title": "Simple, Transparent ",
+      "titleHighlight": "Pricing",
+      "subtitle": "Choose the perfect plan for your team. Start with a free trial and scale as you grow.",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "save": "Save 20%"
+    },
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Perfect for small teams getting started",
+        "mostPopular": "Most Popular",
+        "buttonText": "Start Free Trial"
+      },
+      "professional": {
+        "name": "Professional", 
+        "description": "Ideal for growing teams and businesses",
+        "buttonText": "Get Started"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "Complete solution for large organizations", 
+        "buttonText": "Contact Sales"
+      }
+    },
+    "features": {
+      "upToUsers": "Up to {{count}} users",
+      "documents": "documents",
+      "basicAiSearch": "Basic AI search",
+      "advancedAiSearch": "Advanced AI search & answers",
+      "emailSupport": "Email support",
+      "prioritySupport": "Priority support",
+      "phoneSupport": "24/7 phone support",
+      "storage": "storage",
+      "standardSecurity": "Standard security",
+      "realTimeCollaboration": "Real-time collaboration",
+      "customIntegrations": "Custom integrations",
+      "advancedAnalytics": "Advanced analytics",
+      "dedicatedAccountManager": "Dedicated account manager",
+      "customAiTraining": "Custom AI training",
+      "slaGuarantee": "SLA guarantee",
+      "unlimitedUsers": "Unlimited users",
+      "unlimitedDocuments": "Unlimited documents",
+      "unlimitedStorage": "Unlimited storage",
+      "advancedSecurity": "Advanced security & compliance",
+      "onpremiseDeployment": "On-premise deployment option"
+    },
+    "comparison": {
+      "title": "Compare Features",
+      "subtitle": "Detailed comparison of all features across our plans.",
+      "feature": "Feature",
+      "users": "Users",
+      "documents": "Documents", 
+      "storage": "Storage",
+      "aiSearch": "AI Search",
+      "support": "Support",
+      "integrations": "Integrations",
+      "analytics": "Analytics",
+      "sla": "SLA"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Got questions? We've got answers.",
+      "question1": "Can I change plans anytime?",
+      "answer1": "Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.",
+      "question2": "What happens if I exceed my limits?",
+      "answer2": "We'll notify you when you're approaching your limits. You can upgrade your plan or purchase additional storage/users as needed.",
+      "question3": "Do you offer discounts for non-profits?",
+      "answer3": "Yes, we offer a 50% discount for qualified non-profit organizations. Contact our sales team for more information.",
+      "question4": "Is my data secure?",
+      "answer4": "Absolutely. We use enterprise-grade encryption, regular security audits, and comply with GDPR, SOC 2, and other major compliance standards.",
+      "question5": "Can I try before I buy?",
+      "answer5": "Yes! All plans come with a 14-day free trial. No credit card required to start your trial."
+    },
+    "cta": {
+      "title": "Ready to Get Started?",
+      "subtitle": "Join thousands of teams already using WikiAI to transform their knowledge management.",
+      "startFreeTrial": "Start Free Trial",
+      "contactSales": "Contact Sales"
+    }
+  },
+  "blog": {
+    "title": "WikiAI Blog",
+    "description": "Discover the latest insights, tutorials, and updates on AI-powered knowledge management",
+    "searchPlaceholder": "Search articles...",
+    "featured": "Featured Articles",
+    "allCategories": "All Categories",
+    "latest": "Latest",
+    "popular": "Most Popular",
+    "oldest": "Oldest",
+    "articles": "articles",
+    "noArticles": "No articles found",
+    "previous": "Previous",
+    "next": "Next",
+    "newsletter": {
+      "title": "Stay Updated",
+      "description": "Get the latest articles and insights delivered to your inbox",
+      "placeholder": "Enter your email",
+      "subscribe": "Subscribe",
+      "subscribing": "Subscribing...",
+      "success": "Successfully subscribed!",
+      "error": "Failed to subscribe. Please try again."
+    }
   }
 }
