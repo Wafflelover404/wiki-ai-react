@@ -8,6 +8,7 @@ import { AppHeader } from "@/components/app-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useTranslation } from "@/src/i18n"
 import { Search, FileText, MessageSquare, TrendingUp, Clock, ArrowRight, Loader2 } from "lucide-react"
 
 interface MetricsSummary {
@@ -32,6 +33,7 @@ interface RecentQuery {
 
 export default function UserDashboard() {
   const { token, user } = useAuth()
+  const { t } = useTranslation()
   const [metrics, setMetrics] = useState<MetricsSummary | null>(null)
   const [recentQueries, setRecentQueries] = useState<RecentQuery[]>([])
   const [fileCount, setFileCount] = useState(0)
@@ -86,8 +88,8 @@ export default function UserDashboard() {
       <AppHeader />
       <main className="flex-1 p-6 space-y-6">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">Welcome back, {user?.username}</h1>
-          <p className="text-muted-foreground">{"Here's an overview of your knowledge base activity."}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('userDashboard.welcomeBack', { username: user?.username })}</h1>
+          <p className="text-muted-foreground">{t('userDashboard.knowledgeBaseActivityOverview')}</p>
         </div>
 
         {/* Quick Actions */}
@@ -100,8 +102,8 @@ export default function UserDashboard() {
                     <Search className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <p className="font-semibold">Search Knowledge</p>
-                    <p className="text-sm text-muted-foreground">Query your documents</p>
+                    <p className="font-semibold">{t('userDashboard.searchKnowledge')}</p>
+                    <p className="text-sm text-muted-foreground">{t('userDashboard.queryYourDocuments')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -116,8 +118,8 @@ export default function UserDashboard() {
                     <FileText className="w-6 h-6 text-accent" />
                   </div>
                   <div>
-                    <p className="font-semibold">Manage Files</p>
-                    <p className="text-sm text-muted-foreground">{fileCount} documents indexed</p>
+                    <p className="font-semibold">{t('userDashboard.manageFiles')}</p>
+                    <p className="text-sm text-muted-foreground">{t('userDashboard.documentsIndexed', { count: fileCount })}</p>
                   </div>
                 </div>
               </CardContent>
@@ -132,8 +134,8 @@ export default function UserDashboard() {
                     <MessageSquare className="w-6 h-6 text-chart-3" />
                   </div>
                   <div>
-                    <p className="font-semibold">Catalogs</p>
-                    <p className="text-sm text-muted-foreground">Product search</p>
+                    <p className="font-semibold">{t('userDashboard.catalogs')}</p>
+                    <p className="text-sm text-muted-foreground">{t('userDashboard.productSearch')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -146,18 +148,18 @@ export default function UserDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">My Queries</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('userDashboard.myQueries')}</CardTitle>
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{metrics?.total_queries?.toLocaleString() || 0}</div>
-              <p className="text-xs text-muted-foreground">Personal queries</p>
+              <p className="text-xs text-muted-foreground">{t('userDashboard.personalQueries')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('userDashboard.successRate')}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -170,25 +172,25 @@ export default function UserDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('userDashboard.avgResponseTime')}</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {(metrics?.avg_response_time_ms ? (metrics.avg_response_time_ms / 1000).toFixed(2) : metrics?.avg_response_time?.toFixed(2)) || 0}s
               </div>
-              <p className="text-xs text-muted-foreground">Query latency</p>
+              <p className="text-xs text-muted-foreground">{t('userDashboard.queryLatency')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Accessible Files</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('userDashboard.accessibleFiles')}</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{fileCount}</div>
-              <p className="text-xs text-muted-foreground">Available to search</p>
+              <p className="text-xs text-muted-foreground">{t('userDashboard.availableToSearch')}</p>
             </CardContent>
           </Card>
         </div>
@@ -199,12 +201,12 @@ export default function UserDashboard() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Recent Queries</CardTitle>
-                  <CardDescription>Latest questions from users</CardDescription>
+                  <CardTitle>{t('userDashboard.recentQueries')}</CardTitle>
+                  <CardDescription>{t('userDashboard.latestQuestionsFromUsers')}</CardDescription>
                 </div>
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/app/search">
-                    View all <ArrowRight className="ml-2 h-4 w-4" />
+                    {t('userDashboard.viewAll')} <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
@@ -230,8 +232,8 @@ export default function UserDashboard() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No recent queries</p>
-                  <p className="text-sm mt-1">Start searching your knowledge base</p>
+                  <p>{t('userDashboard.noRecentQueries')}</p>
+                  <p className="text-sm mt-1">{t('userDashboard.startSearchingYourKnowledgeBase')}</p>
                 </div>
               )}
             </CardContent>
@@ -241,8 +243,8 @@ export default function UserDashboard() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>My Performance</CardTitle>
-                  <CardDescription>Your query statistics</CardDescription>
+                  <CardTitle>{t('userDashboard.myPerformance')}</CardTitle>
+                  <CardDescription>{t('userDashboard.yourQueryStatistics')}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -253,7 +255,7 @@ export default function UserDashboard() {
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                       <MessageSquare className="w-4 h-4 text-primary" />
                     </div>
-                    <span className="text-sm font-medium">Total Queries</span>
+                    <span className="text-sm font-medium">{t('userDashboard.totalQueries')}</span>
                   </div>
                   <Badge variant="secondary">{metrics?.total_queries || 0}</Badge>
                 </div>
@@ -263,7 +265,7 @@ export default function UserDashboard() {
                     <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
                       <TrendingUp className="w-4 h-4 text-success" />
                     </div>
-                    <span className="text-sm font-medium">Successful Queries</span>
+                    <span className="text-sm font-medium">{t('userDashboard.successfulQueries')}</span>
                   </div>
                   <Badge variant="secondary">{metrics?.successful_queries || 0}</Badge>
                 </div>
@@ -273,7 +275,7 @@ export default function UserDashboard() {
                     <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
                       <MessageSquare className="w-4 h-4 text-destructive" />
                     </div>
-                    <span className="text-sm font-medium">Failed Queries</span>
+                    <span className="text-sm font-medium">{t('userDashboard.failedQueries')}</span>
                   </div>
                   <Badge variant="secondary">{metrics?.failed_queries || 0}</Badge>
                 </div>
@@ -283,7 +285,7 @@ export default function UserDashboard() {
                     <div className="w-8 h-8 rounded-full bg-chart-3/10 flex items-center justify-center">
                       <Clock className="w-4 h-4 text-chart-3" />
                     </div>
-                    <span className="text-sm font-medium">Organization</span>
+                    <span className="text-sm font-medium">{t('userDashboard.organization')}</span>
                   </div>
                   <Badge variant="outline">{user?.organization || "Default"}</Badge>
                 </div>

@@ -16,101 +16,113 @@ import {
   Zap,
   Users,
   BookOpen,
-  Brain
+  Brain,
+  FileText as LeafletIcon
 } from "lucide-react"
+import { useTranslation } from '@/src/i18n'
+import LandingHeader from '@/components/landing-header'
 
 export default function LandingPage() {
+  const { t } = useTranslation()
+  
   const features = [
     {
       icon: <Search className="w-6 h-6" />,
-      title: "Smart Search",
-      description: "Find information instantly across your entire knowledge base with advanced semantic search."
+      title: t('landing.features.smartSearch.title'),
+      description: t('landing.features.smartSearch.description')
     },
     {
       icon: <Brain className="w-6 h-6" />,
-      title: "AI-Powered Answers",
-      description: "Get intelligent responses to your questions with context-aware AI assistance."
+      title: t('landing.features.aiAnswers.title'),
+      description: t('landing.features.aiAnswers.description')
     },
     {
       icon: <FileText className="w-6 h-6" />,
-      title: "Document Management",
-      description: "Upload, organize, and manage all your documents in one centralized location."
+      title: t('landing.features.documentManagement.title'),
+      description: t('landing.features.documentManagement.description')
     },
     {
       icon: <Shield className="w-6 h-6" />,
-      title: "Secure & Private",
-      description: "Enterprise-grade security with role-based access control and data encryption."
+      title: t('landing.features.secure.title'),
+      description: t('landing.features.secure.description')
     },
     {
       icon: <Zap className="w-6 h-6" />,
-      title: "Real-time Processing",
-      description: "Experience fast, responsive performance with real-time updates and WebSocket connectivity."
+      title: t('landing.features.realTime.title'),
+      description: t('landing.features.realTime.description')
     },
     {
       icon: <Users className="w-6 h-6" />,
-      title: "Team Collaboration",
-      description: "Work together seamlessly with shared knowledge bases and collaborative features."
+      title: t('landing.features.collaboration.title'),
+      description: t('landing.features.collaboration.description')
     }
   ]
 
   const benefits = [
-    "Reduce information retrieval time by 80%",
-    "Improve team knowledge sharing",
-    "Centralized document management",
-    "AI-powered insights and recommendations",
-    "Secure role-based access control",
-    "Real-time search and updates"
+    t('landing.benefits.reduceTime'),
+    t('landing.benefits.improveSharing'),
+    t('landing.benefits.centralizedManagement'),
+    t('landing.benefits.aiInsights'),
+    t('landing.benefits.security'),
+    t('landing.benefits.realTimeUpdates')
   ]
 
   return (
     <div className="min-h-screen bg-background">
+      <LandingHeader />
       {/* Hero Section */}
       <section className="relative px-6 pt-20 pb-16 text-center">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
         <div className="relative max-w-4xl mx-auto">
           <Badge variant="secondary" className="mb-4">
             <Sparkles className="w-3 h-3 mr-1" />
-            AI-Powered Knowledge Management
+            {t('landing.hero.badge')}
           </Badge>
           
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Knowledge Base Reimagined with
-            <span className="text-primary"> AI</span>
+            {t('landing.hero.title')}
+            <span className="text-primary">{t('landing.hero.titleHighlight')}</span>
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            Transform your organization's knowledge into an intelligent, searchable resource. 
-            Get instant answers, manage documents, and empower your team with AI-driven insights.
+            {t('landing.hero.subtitle')}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button asChild size="lg" className="text-base px-8">
               <Link href="/login">
-                Get Started
+                {t('landing.hero.getStarted')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
             
             <Button asChild variant="outline" size="lg" className="text-base px-8">
               <Link href="#features">
-                Learn More
+                {t('landing.hero.learnMore')}
                 <BookOpen className="w-4 h-4 ml-2" />
               </Link>
             </Button>
+            
+            {/* <Button asChild variant="secondary" size="lg" className="text-base px-8">
+              <Link href="/leaflet">
+                {t('landing.hero.viewBrochure')}
+                <LeafletIcon className="w-4 h-4 ml-2" />
+              </Link>
+            </Button> */}
           </div>
           
           <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              <span>No credit card required</span>
+              <span>{t('landing.hero.noCreditCard')}</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              <span>14-day free trial</span>
+              <span>{t('landing.hero.freeTrial')}</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              <span>Setup in minutes</span>
+              <span>{t('landing.hero.setupMinutes')}</span>
             </div>
           </div>
         </div>
@@ -120,9 +132,9 @@ export default function LandingPage() {
       <section id="features" className="px-6 py-16 border-y">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Powerful Features for Modern Teams</h2>
+            <h2 className="text-3xl font-bold mb-4">{t('landing.features.title')}</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Everything you need to manage, search, and leverage your organization's knowledge effectively.
+              {t('landing.features.subtitle')}
             </p>
           </div>
           
@@ -147,13 +159,12 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-6">Why Choose WikiAI?</h2>
+              <h2 className="text-3xl font-bold mb-6">{t('landing.benefits.title')}</h2>
               <p className="text-muted-foreground text-lg mb-8">
-                Our intelligent knowledge management system helps teams work smarter, not harder. 
-                Experience the power of AI-driven information retrieval and collaboration.
+                {t('landing.benefits.subtitle')}
               </p>
               
-              <div className="space-y-4">
+              <div className="space-y-4 m-4">
                 {benefits.map((benefit, index) => (
                   <div key={index} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
@@ -162,9 +173,9 @@ export default function LandingPage() {
                 ))}
               </div>
               
-              <Button asChild className="mt-8">
+              <Button asChild>
                 <Link href="/login">
-                  Start Your Free Trial
+                  {t('landing.benefits.startFreeTrial')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
@@ -179,8 +190,8 @@ export default function LandingPage() {
                         <Search className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <p className="font-medium">Semantic Search</p>
-                        <p className="text-sm text-muted-foreground">Find what you need, instantly</p>
+                        <p className="font-medium">{t('landing.benefits.semanticSearch')}</p>
+                        <p className="text-sm text-muted-foreground">{t('landing.benefits.semanticSearchDesc')}</p>
                       </div>
                     </div>
                     
@@ -189,8 +200,8 @@ export default function LandingPage() {
                         <Bot className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                       </div>
                       <div>
-                        <p className="font-medium">AI Assistant</p>
-                        <p className="text-sm text-muted-foreground">Get intelligent answers</p>
+                        <p className="font-medium">{t('landing.benefits.aiAssistant')}</p>
+                        <p className="text-sm text-muted-foreground">{t('landing.benefits.aiAssistantDesc')}</p>
                       </div>
                     </div>
                     
@@ -199,8 +210,8 @@ export default function LandingPage() {
                         <BarChart3 className="w-5 h-5 text-green-600 dark:text-green-400" />
                       </div>
                       <div>
-                        <p className="font-medium">Analytics</p>
-                        <p className="text-sm text-muted-foreground">Track usage and insights</p>
+                        <p className="font-medium">{t('landing.benefits.analytics')}</p>
+                        <p className="text-sm text-muted-foreground">{t('landing.benefits.analyticsDesc')}</p>
                       </div>
                     </div>
                   </div>
@@ -214,22 +225,22 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="px-6 py-16 bg-primary/5">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Knowledge Management?</h2>
+          <h2 className="text-3xl font-bold mb-4">{t('landing.cta.title')}</h2>
           <p className="text-muted-foreground text-lg mb-8">
-            Join thousands of teams already using WikiAI to organize, search, and leverage their collective knowledge.
+            {t('landing.cta.subtitle')}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="text-base px-8">
               <Link href="/login">
-                Start Free Trial
+                {t('landing.cta.startFreeTrial')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
             
             <Button asChild variant="outline" size="lg" className="text-base px-8">
               <Link href="/invite">
-                Request Demo
+                {t('landing.cta.requestDemo')}
               </Link>
             </Button>
           </div>
@@ -243,30 +254,31 @@ export default function LandingPage() {
             <div>
               <h3 className="font-semibold mb-4">WikiAI</h3>
               <p className="text-sm text-muted-foreground">
-                AI-powered knowledge management for modern teams.
+                {t('landing.footer.description')}
               </p>
             </div>
             
             <div>
-              <h4 className="font-medium mb-3">Product</h4>
+              <h4 className="font-medium mb-3">{t('landing.footer.product')}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#features" className="hover:text-foreground">Features</Link></li>
-                <li><Link href="/pricing" className="hover:text-foreground">Pricing</Link></li>
-                <li><Link href="/invite" className="hover:text-foreground">Demo</Link></li>
+                <li><Link href="#features" className="hover:text-foreground">{t('landing.nav.features')}</Link></li>
+                <li><Link href="/pricing" className="hover:text-foreground">{t('landing.nav.pricing')}</Link></li>
+                <li><Link href="/invite" className="hover:text-foreground">{t('landing.cta.requestDemo')}</Link></li>
+                <li><Link href="/leaflet" className="hover:text-foreground">{t('landing.nav.brochure')}</Link></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-medium mb-3">Company</h4>
+              <h4 className="font-medium mb-3">{t('landing.footer.company')}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/about" className="hover:text-foreground">About</Link></li>
+                <li><Link href="/about" className="hover:text-foreground">{t('landing.nav.about')}</Link></li>
                 <li><Link href="/blog" className="hover:text-foreground">Blog</Link></li>
-                <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
+                <li><Link href="/contact" className="hover:text-foreground">{t('landing.nav.contact')}</Link></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-medium mb-3">Support</h4>
+              <h4 className="font-medium mb-3">{t('landing.footer.support')}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/docs" className="hover:text-foreground">Documentation</Link></li>
                 <li><Link href="/help" className="hover:text-foreground">Help Center</Link></li>
@@ -276,7 +288,7 @@ export default function LandingPage() {
           </div>
           
           <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 WikiAI. All rights reserved.</p>
+            <p>{t('landing.footer.copyright')}</p>
           </div>
         </div>
       </footer>

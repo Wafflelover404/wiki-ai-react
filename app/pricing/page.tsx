@@ -16,130 +16,134 @@ import {
   Crown,
   Building
 } from "lucide-react"
+import { useTranslation } from '@/src/i18n'
+import LandingHeader from '@/components/landing-header'
 
 export default function PricingPage() {
+  const { t } = useTranslation()
   const [isAnnual, setIsAnnual] = useState(false)
 
   const plans = [
     {
-      name: "Starter",
-      description: "Perfect for small teams getting started",
+      name: t('pricing.plans.starter.name'),
+      description: t('pricing.plans.starter.description'),
       price: isAnnual ? 29 : 35,
       yearlyPrice: 348,
       icon: <Star className="w-6 h-6" />,
       features: [
-        "Up to 10 users",
-        "1,000 documents",
-        "Basic AI search",
-        "Email support",
-        "5GB storage",
-        "Standard security"
+        t('pricing.features.upToUsers', { count: 10 }),
+        `1,000 ${t('pricing.features.documents')}`,
+        t('pricing.features.basicAiSearch'),
+        t('pricing.features.emailSupport'),
+        `5GB ${t('pricing.features.storage')}`,
+        t('pricing.features.standardSecurity')
       ],
       notIncluded: [
-        "Advanced AI features",
-        "Real-time collaboration",
-        "Custom integrations",
-        "Priority support"
+        t('pricing.features.advancedAiFeatures'),
+        t('pricing.features.realTimeCollaboration'),
+        t('pricing.features.customIntegrations'),
+        t('pricing.features.prioritySupport')
       ],
       popular: false,
-      buttonText: "Start Free Trial"
+      buttonText: t('pricing.plans.starter.buttonText')
     },
     {
-      name: "Professional",
-      description: "Ideal for growing teams and businesses",
+      name: t('pricing.plans.professional.name'),
+      description: t('pricing.plans.professional.description'),
       price: isAnnual ? 79 : 99,
       yearlyPrice: 948,
       icon: <Zap className="w-6 h-6" />,
       features: [
-        "Up to 50 users",
-        "10,000 documents",
-        "Advanced AI search & answers",
-        "Real-time collaboration",
-        "50GB storage",
-        "Priority support",
-        "Custom integrations",
-        "Advanced analytics"
+        t('pricing.features.upToUsers', { count: 50 }),
+        `10,000 ${t('pricing.features.documents')}`,
+        t('pricing.features.advancedAiSearch'),
+        t('pricing.features.realTimeCollaboration'),
+        `50GB ${t('pricing.features.storage')}`,
+        t('pricing.features.prioritySupport'),
+        t('pricing.features.customIntegrations'),
+        t('pricing.features.advancedAnalytics')
       ],
       notIncluded: [
-        "Dedicated account manager",
-        "Custom AI training",
-        "SLA guarantee"
+        t('pricing.features.dedicatedAccountManager'),
+        t('pricing.features.customAiTraining'),
+        t('pricing.features.slaGuarantee')
       ],
       popular: true,
-      buttonText: "Get Started"
+      buttonText: t('pricing.plans.professional.buttonText')
     },
     {
-      name: "Enterprise",
-      description: "Complete solution for large organizations",
+      name: t('pricing.plans.enterprise.name'),
+      description: t('pricing.plans.enterprise.description'),
       price: "Custom",
       yearlyPrice: null,
       icon: <Building className="w-6 h-6" />,
       features: [
-        "Unlimited users",
-        "Unlimited documents",
-        "Custom AI training",
-        "Dedicated account manager",
-        "Unlimited storage",
-        "24/7 phone support",
-        "Advanced security & compliance",
-        "Custom integrations",
-        "SLA guarantee",
-        "On-premise deployment option"
+        t('pricing.features.unlimitedUsers'),
+        t('pricing.features.unlimitedDocuments'),
+        t('pricing.features.customAiTraining'),
+        t('pricing.features.dedicatedAccountManager'),
+        t('pricing.features.unlimitedStorage'),
+        t('pricing.features.phoneSupport'),
+        t('pricing.features.advancedSecurity'),
+        t('pricing.features.customIntegrations'),
+        t('pricing.features.slaGuarantee'),
+        t('pricing.features.onpremiseDeployment')
       ],
       notIncluded: [],
       popular: false,
-      buttonText: "Contact Sales"
+      buttonText: t('pricing.plans.enterprise.buttonText')
     }
   ]
 
   const faqs = [
     {
-      question: "Can I change plans anytime?",
-      answer: "Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle."
+      question: t('pricing.faq.question1'),
+      answer: t('pricing.faq.answer1')
     },
     {
-      question: "What happens if I exceed my limits?",
-      answer: "We'll notify you when you're approaching your limits. You can upgrade your plan or purchase additional storage/users as needed."
+      question: t('pricing.faq.question2'),
+      answer: t('pricing.faq.answer2')
     },
     {
-      question: "Do you offer discounts for non-profits?",
-      answer: "Yes, we offer a 50% discount for qualified non-profit organizations. Contact our sales team for more information."
+      question: t('pricing.faq.question3'),
+      answer: t('pricing.faq.answer3')
     },
     {
-      question: "Is my data secure?",
-      answer: "Absolutely. We use enterprise-grade encryption, regular security audits, and comply with GDPR, SOC 2, and other major compliance standards."
+      question: t('pricing.faq.question4'),
+      answer: t('pricing.faq.answer4')
     },
     {
-      question: "Can I try before I buy?",
-      answer: "Yes! All plans come with a 14-day free trial. No credit card required to start your trial."
+      question: t('pricing.faq.question5'),
+      answer: t('pricing.faq.answer5')
     }
   ]
 
   return (
     <div className="min-h-screen bg-background">
+      <LandingHeader />
       {/* Hero Section */}
       <section className="relative px-6 pt-20 pb-16">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple/5" />
         <div className="relative max-w-6xl mx-auto text-center">
-          <Badge variant="secondary" className="mb-4">Pricing Plans</Badge>
+          <Badge variant="secondary" className="mb-4">{t('pricing.hero.badge')}</Badge>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Simple, Transparent
-            <span className="text-primary"> Pricing</span>
+            {t('pricing.hero.title')}
+            <span className="text-primary">{t('pricing.hero.titleHighlight')}</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
-            Choose the perfect plan for your team. Start with a free trial and scale as you grow.
+            {t('pricing.hero.subtitle')}
           </p>
           
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-4 mb-8">
-            <span className={`text-sm ${!isAnnual ? 'font-medium' : 'text-muted-foreground'}`}>Monthly</span>
+            <span className={`text-sm ${!isAnnual ? 'font-medium' : 'text-muted-foreground'}`}>{t('pricing.hero.monthly')}</span>
             <Switch
               checked={isAnnual}
               onCheckedChange={setIsAnnual}
             />
             <span className={`text-sm ${isAnnual ? 'font-medium' : 'text-muted-foreground'}`}>
-              Annual
-              <Badge variant="secondary" className="ml-2">Save 20%</Badge>
+              {t('pricing.hero.annual')}
+              <Badge variant="secondary" className="ml-2">{t('pricing.hero.save')}</Badge>
             </span>
           </div>
         </div>
@@ -157,7 +161,7 @@ export default function PricingPage() {
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                     <Badge className="bg-primary text-primary-foreground">
                       <Crown className="w-3 h-3 mr-1" />
-                      Most Popular
+                      {t('pricing.plans.starter.mostPopular')}
                     </Badge>
                   </div>
                 )}
@@ -222,9 +226,9 @@ export default function PricingPage() {
       <section className="px-6 py-16 border-y">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Compare Features</h2>
+            <h2 className="text-3xl font-bold mb-4">{t('pricing.comparison.title')}</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Detailed comparison of all features across our plans.
+              {t('pricing.comparison.subtitle')}
             </p>
           </div>
           
@@ -234,22 +238,22 @@ export default function PricingPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4">Feature</th>
-                      <th className="text-center py-3 px-4">Starter</th>
-                      <th className="text-center py-3 px-4">Professional</th>
-                      <th className="text-center py-3 px-4">Enterprise</th>
+                      <th className="text-left py-3 px-4">{t('pricing.comparison.feature')}</th>
+                      <th className="text-center py-3 px-4">{t('pricing.plans.starter.name')}</th>
+                      <th className="text-center py-3 px-4">{t('pricing.plans.professional.name')}</th>
+                      <th className="text-center py-3 px-4">{t('pricing.plans.enterprise.name')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {[
-                      { feature: "Users", starter: "10", professional: "50", enterprise: "Unlimited" },
-                      { feature: "Documents", starter: "1,000", professional: "10,000", enterprise: "Unlimited" },
-                      { feature: "Storage", starter: "5GB", professional: "50GB", enterprise: "Unlimited" },
-                      { feature: "AI Search", starter: "Basic", professional: "Advanced", enterprise: "Custom" },
-                      { feature: "Support", starter: "Email", professional: "Priority", enterprise: "24/7 Phone" },
-                      { feature: "Integrations", starter: "Basic", professional: "Custom", enterprise: "Unlimited" },
-                      { feature: "Analytics", starter: "Basic", professional: "Advanced", enterprise: "Custom" },
-                      { feature: "SLA", starter: "No", professional: "No", enterprise: "99.9%" }
+                      { feature: t('pricing.comparison.users'), starter: "10", professional: "50", enterprise: t('pricing.features.unlimitedUsers') },
+                      { feature: t('pricing.comparison.documents'), starter: "1,000", professional: "10,000", enterprise: t('pricing.features.unlimitedDocuments') },
+                      { feature: t('pricing.comparison.storage'), starter: "5GB", professional: "50GB", enterprise: t('pricing.features.unlimitedStorage') },
+                      { feature: t('pricing.comparison.aiSearch'), starter: t('pricing.features.basicAiSearch'), professional: t('pricing.features.advancedAiSearch'), enterprise: t('pricing.features.customAiTraining') },
+                      { feature: t('pricing.comparison.support'), starter: t('pricing.features.emailSupport'), professional: t('pricing.features.prioritySupport'), enterprise: t('pricing.features.phoneSupport') },
+                      { feature: t('pricing.comparison.integrations'), starter: t('pricing.comparison.integrations'), professional: t('pricing.features.customIntegrations'), enterprise: t('pricing.features.unlimitedUsers') },
+                      { feature: t('pricing.comparison.analytics'), starter: t('pricing.comparison.analytics'), professional: t('pricing.features.advancedAnalytics'), enterprise: t('pricing.features.customAiTraining') },
+                      { feature: t('pricing.comparison.sla'), starter: t('pricing.comparison.sla'), professional: t('pricing.comparison.sla'), enterprise: "99.9%" }
                     ].map((row, index) => (
                       <tr key={index} className="border-b hover:bg-muted/50">
                         <td className="py-3 px-4 font-medium">{row.feature}</td>
@@ -270,9 +274,9 @@ export default function PricingPage() {
       <section className="px-6 py-16">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
+            <h2 className="text-3xl font-bold mb-4">{t('pricing.faq.title')}</h2>
             <p className="text-muted-foreground text-lg">
-              Got questions? We've got answers.
+              {t('pricing.faq.subtitle')}
             </p>
           </div>
           
@@ -292,17 +296,17 @@ export default function PricingPage() {
       {/* CTA Section */}
       <section className="px-6 py-16 bg-primary/5">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
+          <h2 className="text-3xl font-bold mb-4">{t('pricing.cta.title')}</h2>
           <p className="text-muted-foreground text-lg mb-8">
-            Join thousands of teams already using WikiAI to transform their knowledge management.
+            {t('pricing.cta.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg">
-              Start Free Trial
+              {t('pricing.cta.startFreeTrial')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Button variant="outline" size="lg">
-              Contact Sales
+              {t('pricing.cta.contactSales')}
             </Button>
           </div>
         </div>

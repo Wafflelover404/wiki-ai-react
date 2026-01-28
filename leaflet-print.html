@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WikiAI Professional Brochure</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            line-height: 1.6;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .page {
+            width: 1122px;
+            height: 794px;
+            margin: 0 auto;
+            background: #0f172a;
+            position: relative;
+            page-break-after: always;
+        }
+        
+        .page:last-child {
+            page-break-after: auto;
+        }
+        
+        .slide {
+            width: 100%;
+            height: 100%;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .slide-front {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            height: 100%;
+        }
+        
+        .slide-back {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            height: 100%;
+        }
+        
+        .panel {
+            padding: 32px;
+            border-right: 1px solid #334155;
+            overflow-y: auto;
+        }
+        
+        .panel:last-child {
+            border-right: none;
+        }
+        
+        .section {
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 16px;
+        }
+        
+        .section-title i {
+            color: #3b82f6;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .text-muted {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 4px 4px 4px 0;
+        }
+        
+        .separator {
+            height: 1px;
+            background: #334155;
+            margin: 24px 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .feature-item i {
+            color: #3b82f6;
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .feature-title {
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 4px;
+        }
+        
+        .feature-desc {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .tech-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        
+        .tech-item i {
+            color: #3b82f6;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .contact-item i {
+            color: #3b82f6;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .contact-label {
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 2px;
+        }
+        
+        .contact-value {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        
+        .qr-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            background: rgba(51, 65, 85, 0.3);
+            border: 2px dashed #334155;
+            border-radius: 8px;
+            text-align: center;
+            margin: 16px 0;
+        }
+        
+        .qr-placeholder i {
+            color: #94a3b8;
+            width: 64px;
+            height: 64px;
+            margin-bottom: 8px;
+        }
+        
+        .qr-text {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .qr-subtext {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        
+        .button {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        
+        .button-outline {
+            background: transparent;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+        
+        .button-text {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        
+        .image-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            background: rgba(51, 65, 85, 0.3);
+            border: 2px dashed #334155;
+            border-radius: 8px;
+            text-align: center;
+            min-height: 300px;
+        }
+        
+        .image-placeholder i {
+            color: #94a3b8;
+            width: 64px;
+            height: 64px;
+            margin-bottom: 8px;
+        }
+        
+        .image-text {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .image-subtext {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 32px 0 24px 0;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: #94a3b8;
+            font-size: 18px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 8px;
+        }
+        
+        .footer-link {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        .footer-link:hover {
+            color: #f8fafc;
+        }
+        
+        .export-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            z-index: 1000;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .export-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .export-title i {
+            width: 16px;
+            height: 16px;
+            color: #3b82f6;
+        }
+        
+        .export-button {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: background-color 0.2s;
+        }
+        
+        .export-button:hover {
+            background: #2563eb;
+        }
+        
+        .export-button:last-child {
+            margin-bottom: 0;
+        }
+        
+        .export-button.secondary {
+            background: transparent;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+        
+        .export-button.secondary:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .export-status {
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 4px;
+            font-size: 11px;
+            color: #3b82f6;
+            display: none;
+        }
+        
+        .export-status.show {
+            display: block;
+        }
+        
+        @media print {
+            .export-controls {
+                display: none;
+            }
+        }
+        
+        .stars {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+        
+        .stars i {
+            color: #3b82f6;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .stars.empty i {
+            color: #94a3b8;
+        }
+        
+        .review-card {
+            background: rgba(51, 65, 85, 0.5);
+            border-left: 4px solid #3b82f6;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        
+        .review-text {
+            color: #94a3b8;
+            font-style: italic;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        
+        .review-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3b82f6;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .author-name {
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 2px;
+        }
+        
+        .author-title {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .page {
+                margin: 0;
+                page-break-after: always;
+            }
+            
+            .page:last-child {
+                page-break-after: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Export Controls -->
+    <div class="export-controls">
+        <div class="export-title">
+            <i data-lucide="download"></i>
+            Export Options
+        </div>
+        <button class="export-button" onclick="exportAsPDF()">
+            📄 Download as PDF
+        </button>
+        <button class="export-button" onclick="exportAsImage('png')">
+            🖼️ Download as PNG
+        </button>
+        <button class="export-button" onclick="exportAsImage('jpg')">
+            📷 Download as JPG
+        </button>
+        <button class="export-button secondary" onclick="printPage()">
+            🖨️ Print Dialog
+        </button>
+        <div id="exportStatus" class="export-status"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>WikiAI</h1>
+        <p>Professional Brochure</p>
+    </div>
+
+    <!-- Page 1: Front Slide -->
+    <div class="page">
+        <div class="slide slide-front">
+            <!-- Left Panel - About WikiAI -->
+            <div class="panel">
+                <div class="section">
+                    <div class="section-title">
+                        <i data-lucide="lightbulb"></i>
+                        About WikiAI
+                    </div>
+                    <p class="text-muted">
+                        WikiAI is a cutting-edge knowledge management platform that leverages artificial intelligence to transform how organizations handle information. Our system seamlessly integrates with your existing workflows, providing intelligent search and real-time insights.
+                    </p>
+                    <p class="text-muted">
+                        Built for modern teams, WikiAI combines advanced natural language processing with machine learning to deliver contextual answers and enhance collaboration.
+                    </p>
+                    <div>
+                        <span class="badge">AI-Powered</span>
+                        <span class="badge">Cloud-Native</span>
+                        <span class="badge">Enterprise Ready</span>
+                    </div>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="section">
+                    <div class="section-title">
+                        <i data-lucide="database"></i>
+                        Key Technologies
+                    </div>
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <i data-lucide="database"></i>
+                            RAG Architecture
+                        </div>
+                        <div class="tech-item">
+                            <i data-lucide="zap"></i>
+                            Real-time Processing
+                        </div>
+                        <div class="tech-item">
+                            <i data-lucide="shield"></i>
+                            End-to-end Encryption
+                        </div>
+                        <div class="tech-item">
+                            <i data-lucide="building"></i>
+                            Enterprise Scale
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Mission -->
+            <div class="panel">
+                <div class="section">
+                    <div class="section-title">
+                        <i data-lucide="target"></i>
+                        Our Mission
+                    </div>
+                    
+                    <div class="feature-item">
+                        <i data-lucide="check-circle"></i>
+                        <div>
+                            <div class="feature-title">Democratize Knowledge</div>
+                            <div class="feature-desc">Make information accessible to everyone</div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <i data-lucide="check-circle"></i>
+                        <div>
+                            <div class="feature-title">Boost Productivity</div>
+                            <div class="feature-desc">Reduce search time by up to 80%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <i data-lucide="check-circle"></i>
+                        <div>
+                            <div class="feature-title">Enhance Collaboration</div>
+                            <div class="feature-desc">Unified knowledge base for teams</div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <i data-lucide="check-circle"></i>
+                        <div>
+                            <div class="feature-title">Drive Innovation</div>
+                            <div class="feature-desc">AI-powered insights and discoveries</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="section">
+                    <div class="section-title">
+                        <i data-lucide="arrow-right"></i>
+                        Core Features
+                    </div>
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <i data-lucide="arrow-right"></i>
+                            Semantic Search
+                        </div>
+                        <div class="tech-item">
+                            <i data-lucide="arrow-right"></i>
+                            AI-Powered Q&A
+                        </div>
+                        <div class="tech-item">
+                            <i data-lucide="arrow-right"></i>
+                            Document Management
+                        </div>
+                        <div class="tech-item">
+                            <i data-lucide="arrow-right"></i>
+                            Real-time Tools
+                        </div>
+                        <div class="tech-item">
+                            <i data-lucide="arrow-right"></i>
+                            Advanced Analytics
+                        </div>
+                        <div class="tech-item">
+                            <i data-lucide="arrow-right"></i>
+                            Smart Insights
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Contact & QR Code -->
+            <div class="panel">
+                <div class="section">
+                    <div class="section-title">
+                        <i data-lucide="users"></i>
+                        Get Started
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i data-lucide="mail"></i>
+                        <div>
+                            <div class="contact-label">Contact</div>
+                            <div class="contact-value">contact@wiki-ai.com</div>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i data-lucide="phone"></i>
+                        <div>
+                            <div class="contact-label">Phone</div>
+                            <div class="contact-value">+1 (555) 123-4567</div>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i data-lucide="map-pin"></i>
+                        <div>
+                            <div class="contact-label">Office</div>
+                            <div class="contact-value">San Francisco, CA</div>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i data-lucide="globe"></i>
+                        <div>
+                            <div class="contact-label">Website</div>
+                            <div class="contact-value">www.wiki-ai.com</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="section">
+                    <div class="section-title">
+                        <i data-lucide="qr-code"></i>
+                        Scan to Get Started
+                    </div>
+                    <div class="qr-placeholder">
+                        <i data-lucide="qr-code"></i>
+                        <div class="qr-text">QR Code for Demo</div>
+                        <div class="qr-subtext">Scan QR code for free demo</div>
+                    </div>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="section">
+                    <div class="section-title">
+                        <i data-lucide="arrow-right"></i>
+                        Ready to Transform?
+                    </div>
+                    <button class="button">Start Free Trial</button>
+                    <button class="button button-outline">Contact Us</button>
+                    <div class="button-text">No credit card required • 14-day free trial</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 2: Back Slide -->
+    <div class="page">
+        <div class="slide slide-back">
+            <!-- Left Panel - Diploma 1 -->
+            <div class="panel">
+                <div class="section">
+                    <div class="section-title">
+                        <i data-lucide="award"></i>
+                        Diploma 1
+                    </div>
+                    <div class="image-placeholder">
+                        <i data-lucide="image"></i>
+                        <div class="image-text">Diploma (vertical)</div>
+                        <div class="image-subtext">Place for first diploma</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Diploma 2 -->
+            <div class="panel">
+                <div class="section">
+                    <div class="section-title">
+                        <i data-lucide="award"></i>
+                        Diploma 2
+                    </div>
+                    <div class="image-placeholder">
+                        <i data-lucide="image"></i>
+                        <div class="image-text">Diploma (vertical)</div>
+                        <div class="image-subtext">Place for second diploma</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Review -->
+            <div class="panel">
+                <div class="section">
+                    <div class="section-title">
+                        <i data-lucide="star"></i>
+                        Review
+                    </div>
+                    <div class="image-placeholder">
+                        <i data-lucide="image"></i>
+                        <div class="image-text">Review (vertical)</div>
+                        <div class="image-subtext">Place for review</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>© 2024 WikiAI. Empowering organizations with intelligent knowledge management.</p>
+        <div class="footer-links">
+            <a href="#" class="footer-link">Privacy Policy</a>
+            <a href="#" class="footer-link">Terms of Service</a>
+            <a href="#" class="footer-link">Documentation</a>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Export functionality
+        function showStatus(message, isError = false) {
+            const status = document.getElementById('exportStatus');
+            status.textContent = message;
+            status.style.background = isError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)';
+            status.style.borderColor = isError ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)';
+            status.style.color = isError ? '#ef4444' : '#3b82f6';
+            status.classList.add('show');
+            
+            setTimeout(() => {
+                status.classList.remove('show');
+            }, 3000);
+        }
+        
+        async function exportAsPDF() {
+            showStatus('Generating PDF...');
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                // Capture both pages
+                const pages = document.querySelectorAll('.page');
+                
+                for (let i = 0; i < pages.length; i++) {
+                    if (i > 0) pdf.addPage();
+                    
+                    const canvas = await html2canvas(pages[i], {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#0f172a'
+                    });
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const imgWidth = 297; // A4 width in mm (landscape)
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                }
+                
+                pdf.save('wiki-ai-brochure.pdf');
+                showStatus('PDF downloaded successfully!');
+                
+            } catch (error) {
+                console.error('PDF generation failed:', error);
+                showStatus('PDF generation failed. Please try print dialog instead.', true);
+            }
+        }
+        
+        async function exportAsImage(format) {
+            showStatus(`Generating ${format.toUpperCase()}...`);
+            
+            try {
+                // Create a container for both pages
+                const container = document.createElement('div');
+                container.style.background = '#0f172a';
+                container.style.padding = '20px';
+                
+                const pages = document.querySelectorAll('.page');
+                const canvases = [];
+                
+                // Capture each page
+                for (let i = 0; i < pages.length; i++) {
+                    const canvas = await html2canvas(pages[i], {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#0f172a'
+                    });
+                    canvases.push(canvas);
+                }
+                
+                // Create a combined canvas
+                const combinedCanvas = document.createElement('canvas');
+                const totalHeight = canvases.reduce((sum, canvas) => sum + canvas.height, 0);
+                combinedCanvas.width = canvases[0].width;
+                combinedCanvas.height = totalHeight;
+                
+                const ctx = combinedCanvas.getContext('2d');
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
+                
+                let currentY = 0;
+                canvases.forEach(canvas => {
+                    ctx.drawImage(canvas, 0, currentY);
+                    currentY += canvas.height;
+                });
+                
+                // Download the image
+                const link = document.createElement('a');
+                link.download = `wiki-ai-brochure.${format}`;
+                link.href = combinedCanvas.toDataURL(`image/${format}`, 0.95);
+                link.click();
+                
+                showStatus(`${format.toUpperCase()} downloaded successfully!`);
+                
+            } catch (error) {
+                console.error('Image generation failed:', error);
+                showStatus('Image generation failed. Please try PDF export instead.', true);
+            }
+        }
+        
+        function printPage() {
+            showStatus('Opening print dialog...');
+            
+            // Hide export controls temporarily
+            const exportControls = document.querySelector('.export-controls');
+            exportControls.style.display = 'none';
+            
+            // Trigger print dialog
+            window.print();
+            
+            // Show export controls again after print dialog closes
+            setTimeout(() => {
+                exportControls.style.display = 'block';
+            }, 1000);
+        }
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'p':
+                        e.preventDefault();
+                        printPage();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        exportAsPDF();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
