@@ -1,289 +1,404 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useTranslation } from "@/src/i18n"
 import Link from "next/link"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { 
-  Search, 
-  Calendar, 
-  User, 
-  Clock, 
-  ArrowRight,
-  TrendingUp,
-  Lightbulb,
-  MessageSquare,
-  BookOpen
-} from "lucide-react"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Search, Calendar, Clock, User, Eye } from "lucide-react"
+import { landingPagesApi } from "@/lib/api"
+import LandingHeader from '@/components/landing-header'
+
+interface BlogPost {
+  id: number
+  title: string
+  slug: string
+  excerpt?: string
+  content: string
+  author: string
+  category: string
+  featured: boolean
+  tags: string[]
+  image_url?: string
+  read_time?: string
+  status: string
+  views: number
+  created_at: string
+  updated_at: string
+}
+
+interface BlogCategory {
+  name: string
+  slug: string
+  description: string
+  color: string
+}
 
 export default function BlogPage() {
+  const { t } = useTranslation()
+  const [posts, setPosts] = useState<BlogPost[]>([])
+  const [categories, setCategories] = useState<BlogCategory[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [sortBy, setSortBy] = useState<string>("latest")
+  const [currentPage, setCurrentPage] = useState(1)
+  const postsPerPage = 6
 
-  const categories = [
-    { id: "all", name: "All Posts", icon: <BookOpen className="w-4 h-4" /> },
-    { id: "ai", name: "AI & ML", icon: <Lightbulb className="w-4 h-4" /> },
-    { id: "product", name: "Product Updates", icon: <TrendingUp className="w-4 h-4" /> },
-    { id: "tutorials", name: "Tutorials", icon: <MessageSquare className="w-4 h-4" /> }
-  ]
+  useEffect(() => {
+    fetchBlogData()
+  }, [searchTerm, selectedCategory, sortBy, currentPage])
 
-  const posts = [
-    {
-      id: 1,
-      title: "The Future of AI-Powered Knowledge Management",
-      excerpt: "Explore how artificial intelligence is revolutionizing the way organizations manage and access their collective knowledge.",
-      author: "Sarah Chen",
-      date: "2024-12-15",
-      readTime: "8 min read",
-      category: "ai",
-      image: "/api/placeholder/600/400",
-      featured: true,
-      tags: ["AI", "Knowledge Management", "Innovation"]
-    },
-    {
-      id: 2,
-      title: "New Feature: Real-time Collaboration is Here",
-      excerpt: "We're excited to announce our latest feature that enables teams to collaborate on knowledge bases in real-time.",
-      author: "Marcus Johnson",
-      date: "2024-12-10",
-      readTime: "5 min read",
-      category: "product",
-      image: "/api/placeholder/600/400",
-      featured: false,
-      tags: ["Product", "Collaboration", "Features"]
-    },
-    {
-      id: 3,
-      title: "Getting Started with Advanced Search Filters",
-      excerpt: "Learn how to use our powerful search filters to find exactly what you need in seconds.",
-      author: "Emily Rodriguez",
-      date: "2024-12-05",
-      readTime: "6 min read",
-      category: "tutorials",
-      image: "/api/placeholder/600/400",
-      featured: false,
-      tags: ["Tutorial", "Search", "Tips"]
-    },
-    {
-      id: 4,
-      title: "How AI is Transforming Enterprise Knowledge Sharing",
-      excerpt: "Discover the impact of artificial intelligence on enterprise knowledge sharing and collaboration.",
-      author: "Sarah Chen",
-      date: "2024-11-28",
-      readTime: "10 min read",
-      category: "ai",
-      image: "/api/placeholder/600/400",
-      featured: true,
-      tags: ["AI", "Enterprise", "Knowledge Sharing"]
-    },
-    {
-      id: 5,
-      title: "Best Practices for Organizing Your Knowledge Base",
-      excerpt: "Essential tips and strategies for creating an organized and efficient knowledge base that your team will love.",
-      author: "Emily Rodriguez",
-      date: "2024-11-20",
-      readTime: "7 min read",
-      category: "tutorials",
-      image: "/api/placeholder/600/400",
-      featured: false,
-      tags: ["Best Practices", "Organization", "Tips"]
-    },
-    {
-      id: 6,
-      title: "Security First: How We Protect Your Data",
-      excerpt: "A deep dive into our security measures and compliance standards that keep your knowledge safe.",
-      author: "Marcus Johnson",
-      date: "2024-11-15",
-      readTime: "9 min read",
-      category: "product",
-      image: "/api/placeholder/600/400",
-      featured: false,
-      tags: ["Security", "Compliance", "Privacy"]
+  const fetchBlogData = async () => {
+    setLoading(true)
+    try {
+      // Fetch posts
+      const postsData = await landingPagesApi.getBlogPosts({
+        search: searchTerm,
+        category: selectedCategory === "all" ? undefined : selectedCategory,
+        limit: postsPerPage,
+        offset: (currentPage - 1) * postsPerPage,
+      })
+
+      console.log("Posts Data:", postsData)
+
+      setPosts(postsData)
+
+      // Fetch categories
+      const categoriesData = await landingPagesApi.getBlogCategories()
+      console.log("Categories Data:", categoriesData)
+      setCategories(categoriesData)
+    } catch (error) {
+      console.error("Error fetching blog data:", error)
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
 
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === "all" || post.category === selectedCategory
-    return matchesSearch && matchesCategory
-  })
+  const featuredPosts = posts.filter(post => post.featured).slice(0, 3)
+  const regularPosts = posts.filter(post => !post.featured)
 
-  const featuredPosts = posts.filter(post => post.featured)
-  const regularPosts = filteredPosts.filter(post => !post.featured)
+  const getCategoryColor = (categoryName: string) => {
+    const category = categories.find(cat => cat.name === categoryName)
+    return category?.color || "#3b82f6"
+  }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative px-6 pt-20 pb-16">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple/5" />
-        <div className="relative max-w-6xl mx-auto text-center">
-          <Badge variant="secondary" className="mb-4">WikiAI Blog</Badge>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Insights, Updates, and
-            <span className="text-primary"> Best Practices</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Stay up to date with the latest in AI-powered knowledge management, 
-            product updates, and expert tips from our team.
-          </p>
-        </div>
-      </section>
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
 
-      {/* Search and Filter */}
-      <section className="px-6 pb-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search posts..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <div className="flex gap-2 flex-wrap">
-              {categories.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category.id)}
-                  className="flex items-center gap-2"
-                >
-                  {category.icon}
-                  {category.name}
-                </Button>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg shadow-sm p-6">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                </div>
               ))}
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    )
+  }
 
-      {/* Featured Posts */}
-      {selectedCategory === "all" && !searchTerm && featuredPosts.length > 0 && (
-        <section className="px-6 pb-16">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-2xl font-bold mb-8">Featured Posts</h2>
-            <div className="grid md:grid-cols-2 gap-8">
+  return (
+    <div className="min-h-screen bg-background">
+      <LandingHeader />
+      
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl font-bold mb-4">{t("blog.title") || "WikiAI Blog"}</h1>
+            <p className="text-xl mb-8 text-muted-foreground">
+              {t("blog.description") || "Discover the latest insights, tutorials, and updates on AI-powered knowledge management"}
+            </p>
+            
+            {/* Search Bar */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                type="text"
+                placeholder={t("blog.searchPlaceholder") || "Search articles..."}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-background border-input"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Featured Posts */}
+        {featuredPosts.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">{t("blog.featured") || "Featured Articles"}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredPosts.map((post) => (
-                <Card key={post.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer">
-                  <CardContent className="p-0">
-                    <div className="aspect-video bg-gradient-to-br from-primary/20 to-purple/20 rounded-t-lg flex items-center justify-center">
-                      <BookOpen className="w-16 h-16 text-primary/50" />
+                <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  {post.image_url && (
+                    <div className="aspect-video overflow-hidden">
+                      <img
+                        src={post.image_url}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="p-6">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Badge variant="secondary">Featured</Badge>
-                        <Badge variant="outline">{post.category}</Badge>
-                      </div>
-                      <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                  )}
+                  <CardHeader>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge 
+                        style={{ backgroundColor: getCategoryColor(post.category) }}
+                        className="text-white"
+                      >
+                        {post.category}
+                      </Badge>
+                      {post.featured && (
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                          {t("blog.featured") || "Featured"}
+                        </Badge>
+                      )}
+                    </div>
+                    <CardTitle className="line-clamp-2">
+                      <Link href={`/blog/${post.slug}`} className="hover:text-primary transition-colors">
                         {post.title}
-                      </h3>
-                      <p className="text-muted-foreground mb-4 line-clamp-2">{post.excerpt}</p>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            {post.author}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(post.date).toLocaleDateString()}
-                          </div>
+                      </Link>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4 line-clamp-3">
+                      {post.excerpt || post.content.substring(0, 150) + "..."}
+                    </p>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1">
+                          <User className="w-4 h-4" />
+                          <span>{post.author}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {post.readTime}
+                          <Eye className="w-4 h-4" />
+                          <span>{post.views}</span>
                         </div>
                       </div>
-                      <div className="flex gap-2 mb-4">
-                        {post.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        <span>{formatDate(post.created_at)}</span>
                       </div>
-                      <Button variant="ghost" className="p-0 h-auto font-normal">
-                        Read more
-                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      {/* Regular Posts Grid */}
-      <section className="px-6 pb-16">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold mb-8">
-            {selectedCategory !== "all" ? `${categories.find(c => c.id === selectedCategory)?.name}` : "Recent Posts"}
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {regularPosts.map((post) => (
-              <Card key={post.id} className="border-0 shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer">
-                <CardContent className="p-0">
-                  <div className="aspect-video bg-gradient-to-br from-primary/10 to-purple/10 rounded-t-lg flex items-center justify-center">
-                    <BookOpen className="w-12 h-12 text-primary/30" />
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline" className="text-xs">{post.category}</Badge>
-                    </div>
-                    <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-primary transition-colors">
-                      {post.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{post.excerpt}</p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
-                      <div className="flex items-center gap-3">
-                        <span>{post.author}</span>
-                        <span>•</span>
-                        <span>{new Date(post.date).toLocaleDateString()}</span>
-                      </div>
-                      <span>{post.readTime}</span>
-                    </div>
-                    <Button variant="ghost" className="p-0 h-auto font-normal text-sm">
-                      Read more
-                      <ArrowRight className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        {/* Filters and Controls */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div className="flex flex-wrap gap-2">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-48 bg-background border-input">
+                <SelectValue placeholder={t("blog.allCategories") || "All Categories"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("blog.allCategories") || "All Categories"}</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.slug} value={category.name}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-48 bg-background border-input">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="latest">{t("blog.latest") || "Latest"}</SelectItem>
+                <SelectItem value="popular">{t("blog.popular") || "Most Popular"}</SelectItem>
+                <SelectItem value="oldest">{t("blog.oldest") || "Oldest"}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          
-          {filteredPosts.length === 0 && (
+
+          <div className="text-sm text-muted-foreground">
+            {posts.length} {t("blog.articles") || "articles"}
+          </div>
+        </div>
+
+        {/* Regular Posts */}
+        <section>
+          {regularPosts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {regularPosts.map((post) => (
+                <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  {post.image_url && (
+                    <div className="aspect-video overflow-hidden">
+                      <img
+                        src={post.image_url}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <CardHeader>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge 
+                        style={{ backgroundColor: getCategoryColor(post.category) }}
+                        className="text-white"
+                      >
+                        {post.category}
+                      </Badge>
+                      {post.tags.length > 0 && (
+                        <Badge variant="outline" className="text-xs">
+                          {post.tags[0]}
+                        </Badge>
+                      )}
+                    </div>
+                    <CardTitle className="line-clamp-2">
+                      <Link href={`/blog/${post.slug}`} className="hover:text-primary transition-colors">
+                        {post.title}
+                      </Link>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4 line-clamp-3">
+                      {post.excerpt || post.content.substring(0, 150) + "..."}
+                    </p>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1">
+                          <User className="w-4 h-4" />
+                          <span>{post.author}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Eye className="w-4 h-4" />
+                          <span>{post.views}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDate(post.created_at)}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No posts found matching your criteria.</p>
+              <p className="text-muted-foreground text-lg">
+                {t("blog.noArticles") || "No articles found"}
+              </p>
             </div>
           )}
-        </div>
-      </section>
+        </section>
+
+        {/* Pagination */}
+        {posts.length === postsPerPage && (
+          <div className="flex justify-center mt-8">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+              >
+                {t("blog.previous") || "Previous"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(currentPage + 1)}
+              >
+                {t("blog.next") || "Next"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Newsletter Section */}
-      <section className="px-6 py-16 bg-primary/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Stay Updated</h2>
-          <p className="text-muted-foreground text-lg mb-8">
-            Get the latest posts and updates delivered straight to your inbox.
+      <div className="bg-muted border-t">
+        <div className="container mx-auto px-4 text-center py-16">
+          <h2 className="text-3xl font-bold mb-4">
+            {t("blog.newsletter.title") || "Stay Updated"}
+          </h2>
+          <p className="text-xl mb-8 text-muted-foreground max-w-2xl mx-auto">
+            {t("blog.newsletter.description") || "Get the latest articles and insights delivered to your inbox"}
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <Input placeholder="Enter your email" className="flex-1" />
-            <Button>Subscribe</Button>
-          </div>
-          <p className="text-sm text-muted-foreground mt-4">
-            No spam. Unsubscribe at any time.
-          </p>
+          <NewsletterForm />
         </div>
-      </section>
+      </div>
     </div>
+  )
+}
+
+function NewsletterForm() {
+  const { t } = useTranslation()
+  const [email, setEmail] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [message, setMessage] = useState("")
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setMessage("")
+
+    try {
+      const response = await landingPagesApi.subscribeNewsletter(email)
+      if (response.status === "success") {
+        setMessage(t("blog.newsletter.success") || "Successfully subscribed!")
+        setEmail("")
+      } else {
+        setMessage(t("blog.newsletter.error") || "Failed to subscribe. Please try again.")
+      }
+    } catch (error) {
+      setMessage(t("blog.newsletter.error") || "Failed to subscribe. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto">
+      <div className="flex gap-2">
+        <Input
+          type="email"
+          placeholder={t("blog.newsletter.placeholder") || "Enter your email"}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="bg-background border-input"
+        />
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? t("blog.newsletter.subscribing") || "Subscribing..." : t("blog.newsletter.subscribe") || "Subscribe"}
+        </Button>
+      </div>
+      {message && (
+        <p className={`mt-2 text-sm ${message.includes("Successfully") ? "text-green-400" : "text-red-400"}`}>
+          {message}
+        </p>
+      )}
+    </form>
   )
 }
