@@ -84,7 +84,7 @@ export function AppSidebar() {
                     <Brain className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-semibold text-sm">{t('common.wikiAi')}</span>
+                    <span className="font-semibold text-sm">{t('WikiAi')}</span>
                     <span className="text-xs text-muted-foreground">{user?.organization}</span>
                   </div>
                 </div>

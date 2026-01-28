@@ -82,7 +82,8 @@ export default function LeafletPage() {
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
+        compress: false
       })
       
       // Get current theme state
@@ -99,16 +100,30 @@ export default function LeafletPage() {
       console.log('PDF colors - Dark:', isDarkTheme, 'BG:', bgColor, 'Text:', textColor)
       
       // Page 1 - Front
-      pdf.setFillColor(...bgColor)
+      // Draw gradient background FIRST
+      pdf.setFillColor(220, 200, 240) // Purple
       pdf.rect(0, 0, 297, 210, 'F')
+      pdf.setFillColor(200, 220, 250) // Blue
+      pdf.rect(100, 50, 197, 160, 'F')
+      pdf.setFillColor(240, 200, 220) // Pink
+      pdf.rect(150, 105, 147, 105, 'F')
       
+      // Add some circles for gradient effect
+      pdf.setFillColor(180, 160, 220) // Darker purple
+      pdf.circle(74, 52.5, 30, 'F')
+      pdf.setFillColor(160, 200, 240) // Darker blue
+      pdf.circle(223, 157.5, 30, 'F')
+      pdf.setFillColor(220, 160, 190) // Darker pink
+      pdf.circle(148.5, 105, 30, 'F')
+      
+      // Additional spacing
+      
+
       // Title
-      pdf.setTextColor(...primaryColor)
       pdf.setFontSize(32)
       pdf.setFont('helvetica', 'bold')
       pdf.text('WikiAI', 20, 30)
       
-      pdf.setTextColor(...textColor)
       pdf.setFontSize(16)
       pdf.setFont('helvetica', 'normal')
       
@@ -116,7 +131,6 @@ export default function LeafletPage() {
       pdf.text('Professional Brochure', 20, 45)
       
       // Left Panel - About WikiAI
-      pdf.setTextColor(...textColor)
       pdf.setFontSize(14)
       pdf.setFont('helvetica', 'bold')
       pdf.text('About WikiAI', 20, 70)
@@ -160,7 +174,7 @@ export default function LeafletPage() {
         'Contact: afanasieffivan@gmail.com',
         'Phone: +375 44 508-85-75',
         'School: Gymnasium #1, Brest',
-        'Website: www.wikiai.by'
+        'Website: wikiai.by'
       ]
       
       contactInfo.forEach((info, index) => {
@@ -168,19 +182,32 @@ export default function LeafletPage() {
       })
       
       // QR Code placeholder
-      pdf.setDrawColor(...textColor)
       pdf.rect(220, 140, 50, 50)
-      pdf.setTextColor(...textColor)
       pdf.setFontSize(8)
       pdf.text('QR Code', 245, 165)
       
       // Page 2 - Back
       pdf.addPage()
-      pdf.setFillColor(...bgColor)
+      
+      // Draw gradient background FIRST
+      pdf.setFillColor(220, 200, 240) // Purple
+      pdf.rect(0, 0, 297, 210, 'F')
+      pdf.setFillColor(200, 220, 250) // Blue
+      pdf.rect(100, 50, 197, 160, 'F')
+      pdf.setFillColor(240, 200, 220) // Pink
+      pdf.rect(150, 105, 147, 105, 'F')
+      
+      // Add some circles for gradient effect
+      pdf.setFillColor(180, 160, 220) // Darker purple
+      pdf.circle(74, 52.5, 30, 'F')
+      pdf.setFillColor(160, 200, 240) // Darker blue
+      pdf.circle(223, 157.5, 30, 'F')
+      pdf.setFillColor(220, 160, 190) // Darker pink
+      pdf.circle(148.5, 105, 30, 'F')
+      
       pdf.rect(0, 0, 297, 210, 'F')
       
       // Diploma sections
-      pdf.setTextColor(...textColor)
       pdf.setFontSize(16)
       pdf.setFont('helvetica', 'bold')
       
@@ -189,12 +216,10 @@ export default function LeafletPage() {
       pdf.text('Review', 230, 30)
       
       // Placeholder boxes
-      pdf.setDrawColor(...textColor)
       pdf.rect(20, 50, 80, 120)
       pdf.rect(108, 50, 80, 120)
       pdf.rect(198, 50, 80, 120)
       
-      pdf.setTextColor(...textColor)
       pdf.setFontSize(10)
       pdf.text('Place for diploma', 40, 110)
       pdf.text('Place for diploma', 128, 110)
@@ -254,7 +279,12 @@ export default function LeafletPage() {
               * { color: #000000 !important; background-color: #ffffff !important; }
               .bg-card, .bg-muted { background-color: #f8fafc !important; }
               .bg-primary { background-color: #3b82f6 !important; }
-              .text-primary { color: #3b82f6 !important; }
+              .text-primary {
+                color: #3b82f6 !important;
+              }
+              h1 .text-primary {
+                color: #3b82f6 !important;
+              }
               .text-muted-foreground { color: #64748b !important; }
               .text-foreground { color: #0f172a !important; }
               .border-border { border-color: #e2e8f0 !important; }
@@ -362,6 +392,13 @@ export default function LeafletPage() {
             border: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
+            background: linear-gradient(135deg, 
+              rgba(147, 51, 234, 0.5) 0%, 
+              rgba(59, 130, 246, 0.45) 50%, 
+              rgba(236, 72, 153, 0.5) 100%) !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
           }
           
           .leaflet-slide:last-child {
@@ -371,7 +408,13 @@ export default function LeafletPage() {
           /* Light theme print styles */
           html:not(.dark) .leaflet-slide,
           :not(.dark) .leaflet-slide {
-            background: #f8fafc !important;
+            background: linear-gradient(135deg, 
+              rgba(147, 51, 234, 0.4) 0%, 
+              rgba(59, 130, 246, 0.35) 50%, 
+              rgba(236, 72, 153, 0.4) 100%) !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
           }
           
           html:not(.dark) .bg-card,
@@ -384,9 +427,18 @@ export default function LeafletPage() {
             background-color: #f1f5f9 !important;
           }
           
-          html:not(.dark) .text-foreground,
-          :not(.dark) .text-foreground {
-            color: #0f172a !important;
+          html:not(.dark) .text-primary,
+          .dark .text-primary {
+            color: #3b82f6 !important;
+          }
+          
+          .dark h1 .text-primary {
+            color: #3b82f6 !important;
+          }
+          
+          html:not(.dark) h1 .text-primary,
+          :not(.dark) h1 .text-primary {
+            color: #3b82f6 !important;
           }
           
           html:not(.dark) .text-muted-foreground,
@@ -401,7 +453,13 @@ export default function LeafletPage() {
           
           /* Dark theme print styles */
           .dark .leaflet-slide {
-            background: #0c0d0f !important;
+            background: linear-gradient(135deg, 
+              rgba(147, 51, 234, 0.6) 0%, 
+              rgba(59, 130, 246, 0.55) 50%, 
+              rgba(236, 72, 153, 0.6) 100%) !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
           }
           
           .dark .bg-card {
@@ -610,10 +668,32 @@ export default function LeafletPage() {
           h1, h2, h3, h4, p, div, span {
             color: inherit !important;
           }
+          
+          /* Print styles for gradient blur circles */
+          .leaflet-slide > div[style*="position: absolute"] {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          
+          /* Ensure backdrop-blur elements have solid backgrounds for print */
+          .bg-card\/30 {
+            background-color: rgba(248, 250, 252, 0.95) !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          
+          .dark .bg-card\/30 {
+            background-color: rgba(12, 13, 15, 0.95) !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
         }
       `}</style>
       {/* Export Controls - Under Brochure */}
-      <div className="max-w-7xl mx-auto mt-8 print:hidden">
+      <div className="max-w-7xl mx-auto mt-24 print:hidden">
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -723,9 +803,12 @@ export default function LeafletPage() {
         </Card>
       </div>
 
-      <div ref={leafletRef} className="max-w-7xl mx-auto space-y-8 print:max-w-none print:space-y-0">
+      <div ref={leafletRef} className="max-w-7xl mx-auto space-y-16 print:max-w-none print:space-y-0">
+        {/* Empty spacing above title */}
+        <div className="h-2 print:hidden"></div>
+        
         {/* Header - Hidden when printing */}
-        <div className="text-center space-y-2 print:hidden">
+        <div className="text-center space-y-2 mb-16 print:hidden">
           <h1 className="text-4xl font-bold text-primary">WikiAI</h1>
           <p className="text-lg text-muted-foreground">
             {locale === 'ru' ? 'Профессиональная брошюра' : 'Professional Brochure'}
@@ -734,64 +817,170 @@ export default function LeafletPage() {
 
         {/* A4 Horizontal Slide 1 - Front */}
         <div 
-          className="leaflet-slide bg-card border border-border rounded-lg shadow-xl overflow-hidden print:shadow-none print:rounded-none print:border-0" 
+          className="leaflet-slide border border-border rounded-lg shadow-xl overflow-hidden print:shadow-none print:rounded-none print:border-0 relative" 
           style={{
             width: '1122px', 
             height: '794px', 
             margin: '0 auto', 
-            backgroundColor: theme === 'dark' ? '#0c0d0f' : '#f8fafc', 
-            borderColor: theme === 'dark' ? '#334155' : '#e2e8f0'
+            borderColor: theme === 'dark' ? '#334155' : '#e2e8f0',
+            background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(59, 130, 246, 0.06) 50%, rgba(236, 72, 153, 0.08) 100%)',
+            position: 'relative'
           }}
         >
-          <div className="grid grid-cols-3 h-full divide-x divide-border" style={{borderColor: theme === 'dark' ? '#334155' : '#e2e8f0'}}>
-            {/* Left Panel - Project Description */}
-            <div className="p-8 space-y-6 overflow-y-auto">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="h-6 w-6 text-primary" />
-                  <h2 className="text-2xl font-bold text-foreground">
-                    {locale === 'ru' ? 'О WikiAI' : 'About WikiAI'}
-                  </h2>
+          {/* Additional blur circles hardcoded */}
+          <div 
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: '25%',
+              width: '384px',
+              height: '384px',
+              background: 'rgba(147, 51, 234, 0.08)',
+              borderRadius: '50%',
+              filter: 'blur(96px)',
+              pointerEvents: 'none'
+            }}
+          />
+          <div 
+            style={{
+              position: 'absolute',
+              bottom: '0',
+              right: '25%',
+              width: '384px',
+              height: '384px',
+              background: 'rgba(59, 130, 246, 0.08)',
+              borderRadius: '50%',
+              filter: 'blur(96px)',
+              pointerEvents: 'none'
+            }}
+          />
+          <div 
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '384px',
+              height: '384px',
+              background: 'rgba(236, 72, 153, 0.2)',
+              borderRadius: '50%',
+              filter: 'blur(96px)',
+              pointerEvents: 'none'
+            }}
+          />
+          <div className="grid grid-cols-3 h-full divide-x divide-border relative z-10" style={{borderColor: theme === 'dark' ? '#334155' : '#e2e8f0'}}>
+            {/* Left Panel - Logo */}
+            <div className="p-8 space-y-6 overflow-y-auto bg-card/30 backdrop-blur-sm">
+              <div className="flex flex-col items-center justify-center h-full space-y-6">
+                {/* Logo with two colors */}
+                <div className="text-center space-y-4">
+                  <h1 className="text-6xl font-bold">
+                    <span className="text-foreground">Wiki</span>
+                    <span className="text-primary">AI</span>
+                  </h1>
+                  
+                  {/* Subtitle */}
+                  <p className="text-xl text-muted-foreground">
+                    {locale === 'ru' 
+                      ? 'Интеллектуальное управление знаниями' 
+                      : 'Intelligent Knowledge Management'
+                    }
+                  </p>
                 </div>
                 
-                <div className="space-y-4 text-muted-foreground">
-                  <p className="leading-relaxed">
-                    {locale === 'ru' 
-                      ? 'WikiAI - это передовая платформа управления знаниями, которая использует искусственный интеллект для преобразования того, как организации обрабатывают информацию. Наша система бесшовно интегрируется с существующими рабочими процессами, обеспечивая интеллектуальный поиск и аналитику в реальном времени.'
-                      : 'WikiAI is a cutting-edge knowledge management platform that leverages artificial intelligence to transform how organizations handle information. Our system seamlessly integrates with your existing workflows, providing intelligent search and real-time insights.'
-                    }
-                  </p>
-                  <p className="leading-relaxed">
-                    {locale === 'ru'
-                      ? 'Созданная для современных команд, WikiAI объединяет передовую обработку естественного языка с машинным обучением для предоставления контекстных ответов и улучшения сотрудничества.'
-                      : 'Built for modern teams, WikiAI combines advanced natural language processing with machine learning to deliver contextual answers and enhance collaboration.'
-                    }
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
+                {/* Simple badges */}
+                <div className="flex flex-wrap gap-2 justify-center">
                   <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
                     <Cloud className="h-3 w-3 mr-1" />
-                    {locale === 'ru' ? 'Облачная архитектура' : 'Cloud-Native'}
+                    {locale === 'ru' ? 'Облачный' : 'Cloud'}
                   </Badge>
                   <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
                     <Zap className="h-3 w-3 mr-1" />
-                    {locale === 'ru' ? 'Масштабируемость' : 'Highly Scalable'}
+                    {locale === 'ru' ? 'Быстрый' : 'Fast'}
                   </Badge>
                   <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
                     <Search className="h-3 w-3 mr-1" />
-                    {locale === 'ru' ? 'Интеллектуальный поиск' : 'Smart Search'}
-                  </Badge>
-                  <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                    <BarChart3 className="h-3 w-3 mr-1" />
-                    {locale === 'ru' ? 'Аналитика в реальном времени' : 'Real-time Analytics'}
+                    {locale === 'ru' ? 'Умный' : 'Smart'}
                   </Badge>
                 </div>
               </div>
             </div>
 
-            {/* Center Panel - Goals & Features */}
-            <div className="p-8 space-y-6 overflow-y-auto">
+            {/* Center Panel - Contact & CTA */}
+            <div className="p-8 space-y-6 overflow-y-auto bg-card/30 backdrop-blur-sm">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Users className="h-6 w-6 text-primary" />
+                  <h2 className="text-2xl font-bold text-foreground">
+                    {locale === 'ru' ? 'Свяжитесь с нами' : 'Get Started'}
+                  </h2>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {locale === 'ru' ? 'Контакт' : 'Contact'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">afanasieffivan@gmail.com</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {locale === 'ru' ? 'Телефон' : 'Phone'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">+375 44 508-85-75</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {locale === 'ru' ? 'Школа' : 'School'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Гимназия №1, Брест</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Globe className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {locale === 'ru' ? 'Веб-сайт' : 'Website'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">wikiai.by</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground text-center">
+                  {locale === 'ru' ? 'Сканируйте для начала' : 'Scan to Get Started'}
+                </h3>
+                <div className="flex flex-col items-center space-y-3">
+                  <div className=" rounded-lg border-2 border-dashed border-border">
+                    <div className="text-center space-y-2">
+                        <img src="qr-code.png" alt="QR Code" />
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground text-center">
+                    {locale === 'ru' 
+                      ? 'Отсканируйте QR-код чтобы узнать побольше' 
+                      : 'Scan QR code for free demo'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Panel - Goals & Features */}
+            <div className="p-8 space-y-6 overflow-y-auto bg-card/30 backdrop-blur-sm">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Target className="h-6 w-6 text-primary" />
@@ -914,96 +1103,65 @@ export default function LeafletPage() {
                 </div>
               </div>
             </div>
-
-            {/* Right Panel - Contact & CTA */}
-            <div className="p-8 space-y-6 overflow-y-auto">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-6 w-6 text-primary" />
-                  <h2 className="text-2xl font-bold text-foreground">
-                    {locale === 'ru' ? 'Начните сейчас' : 'Get Started'}
-                  </h2>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-semibold text-foreground">
-                        {locale === 'ru' ? 'Контакт' : 'Contact'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">afanasieffivan@gmail.com</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-semibold text-foreground">
-                        {locale === 'ru' ? 'Телефон' : 'Phone'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">+375 44 508-85-75</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-semibold text-foreground">
-                        {locale === 'ru' ? 'Школа' : 'School'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Гимназия №1, Брест</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Globe className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-semibold text-foreground">
-                        {locale === 'ru' ? 'Веб-сайт' : 'Website'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">www.wikiai.by</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground text-center">
-                  {locale === 'ru' ? 'Сканируйте для начала' : 'Scan to Get Started'}
-                </h3>
-                <div className="flex flex-col items-center space-y-3">
-                  <div className=" rounded-lg border-2 border-dashed border-border">
-                    <div className="text-center space-y-2">
-                        <img src="qr-code.png" alt="QR Code" />
-                    </div>
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground text-center">
-                    {locale === 'ru' 
-                      ? 'Отсканируйте QR-код чтобы узнать побольше' 
-                      : 'Scan QR code for free demo'
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* A4 Horizontal Slide 2 - Back */}
         <div 
-          className="leaflet-slide bg-card border border-border rounded-lg shadow-xl overflow-hidden print:shadow-none print:rounded-none print:border-0" 
+          className="leaflet-slide border border-border rounded-lg shadow-xl overflow-hidden print:shadow-none print:rounded-none print:border-0 relative" 
           style={{
             width: '1122px', 
             height: '794px', 
             margin: '0 auto', 
-            backgroundColor: theme === 'dark' ? '#0c0d0f' : '#f8fafc', 
-            borderColor: theme === 'dark' ? '#334155' : '#e2e8f0'
+            borderColor: theme === 'dark' ? '#334155' : '#e2e8f0',
+            background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(59, 130, 246, 0.06) 50%, rgba(236, 72, 153, 0.08) 100%)',
+            position: 'relative'
           }}
         >
-          <div className="grid grid-cols-3 h-full divide-x divide-border" style={{borderColor: theme === 'dark' ? '#334155' : '#e2e8f0'}}>
+          {/* Additional blur circles hardcoded */}
+          <div 
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: '25%',
+              width: '384px',
+              height: '384px',
+              background: 'rgba(147, 51, 234, 0.08)',
+              borderRadius: '50%',
+              filter: 'blur(96px)',
+              pointerEvents: 'none'
+            }}
+          />
+          <div 
+            style={{
+              position: 'absolute',
+              bottom: '0',
+              right: '25%',
+              width: '384px',
+              height: '384px',
+              background: 'rgba(59, 130, 246, 0.08)',
+              borderRadius: '50%',
+              filter: 'blur(96px)',
+              pointerEvents: 'none'
+            }}
+          />
+          <div 
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '384px',
+              height: '384px',
+              background: 'rgba(236, 72, 153, 0.2)',
+              borderRadius: '50%',
+              filter: 'blur(96px)',
+              pointerEvents: 'none'
+            }}
+          />
+          <div className="grid grid-cols-3 h-full divide-x divide-border relative z-10" style={{borderColor: theme === 'dark' ? '#334155' : '#e2e8f0'}}>
             {/* Left Panel - Diploma 1 */}
-            <div className="p-8 space-y-6 overflow-y-auto">
+            <div className="p-8 space-y-6 overflow-y-auto bg-card/30 backdrop-blur-sm">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Award className="h-6 w-6 text-primary" />
@@ -1026,7 +1184,7 @@ export default function LeafletPage() {
                   <div className="hidden text-center space-y-2">
                     <Award className="h-16 w-16 text-muted-foreground mx-auto" />
                     <p className="text-muted-foreground text-sm">
-                      {locale === 'ru' ? 'Диплом 1-й степени международного конкурса научно-технического конкурса' : '1st degree diploma of the international scientific and technical competition'}
+                      {locale === 'ru' ? 'Диплом 1-й степени международного научно-технического конкурса' : '1st degree diploma of the international scientific and technical competition'}
                     </p>
                   </div>
                 </div>
@@ -1034,7 +1192,7 @@ export default function LeafletPage() {
                 <div className="text-center space-y-2">
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {locale === 'ru' 
-                      ? 'Диплом 1-й степени международного конкурса научно-технического конкурса'
+                      ? 'Диплом 1-й степени международного научно-технического конкурса'
                       : '1st degree diploma of the international scientific and technical competition'
                     }
                   </p>
@@ -1046,7 +1204,7 @@ export default function LeafletPage() {
             </div>
 
             {/* Center Panel - Diploma 2 */}
-            <div className="p-8 space-y-6 overflow-y-auto">
+            <div className="p-8 space-y-6 overflow-y-auto bg-card/30 backdrop-blur-sm">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Award className="h-6 w-6 text-primary" />
@@ -1057,8 +1215,8 @@ export default function LeafletPage() {
                 
                 <div className="min-h-[350px] border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center bg-muted/50">
                   <img 
-                    src="/science-diploma.jpg" 
-                    alt="Science Diploma"
+                    src="/first-step-diploma.jpg" 
+                    alt="First Step Diploma"
                     className="w-full h-full object-contain rounded-lg shadow-lg"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
@@ -1069,7 +1227,7 @@ export default function LeafletPage() {
                   <div className="hidden text-center space-y-2">
                     <Award className="h-16 w-16 text-muted-foreground mx-auto" />
                     <p className="text-muted-foreground text-sm">
-                      {locale === 'ru' ? 'Диплом 1-й степени научной конференции при НАН Беларуси "Первый шаг в науку"' : '1st degree diploma of the scientific conference at the NAS of Belarus "First Step in Science"'}
+                      {locale === 'ru' ? 'Диплом 1-й степени республиканской научной конференции при НАН Беларуси "Первый шаг в науку"' : '1st degree diploma of the scientific conference at the NAS of Belarus "First Step in Science"'}
                     </p>
                   </div>
                 </div>
@@ -1077,7 +1235,7 @@ export default function LeafletPage() {
                 <div className="text-center space-y-2">
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {locale === 'ru' 
-                      ? 'Диплом 1-й степени научной конференции при НАН Беларуси "Первый шаг в науку"'
+                      ? 'Диплом 1-й степени республиканской научной конференции при НАН Беларуси "Первый шаг в науку"'
                       : '1st degree diploma of the scientific conference at the NAS of Belarus "First Step in Science"'
                     }
                   </p>
@@ -1089,7 +1247,7 @@ export default function LeafletPage() {
             </div>
 
             {/* Right Panel - Review */}
-            <div className="p-8 space-y-6 overflow-y-auto">
+            <div className="p-8 space-y-6 overflow-y-auto bg-card/30 backdrop-blur-sm">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Star className="h-6 w-6 text-primary" />
@@ -1133,6 +1291,9 @@ export default function LeafletPage() {
           </div>
         </div>
 
+        {/* Empty spacing below trifold */}
+        <div className="h-2 print:hidden"></div>
+        
         {/* Footer - Hidden when printing */}
         <div className="text-center text-muted-foreground text-sm print:hidden">
           <p>

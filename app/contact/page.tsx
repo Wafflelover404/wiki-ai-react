@@ -18,8 +18,11 @@ import {
   ArrowRight,
   CheckCircle
 } from "lucide-react"
+import { useTranslation } from '@/src/i18n'
+import LandingHeader from '@/components/landing-header'
 
 export default function ContactPage() {
+  const { t } = useTranslation()
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -41,41 +44,41 @@ export default function ContactPage() {
   const contactOptions = [
     {
       icon: <MessageSquare className="w-6 h-6" />,
-      title: "Email Support",
-      description: "Get help with your account, billing, or general questions",
+      title: t('contact.options.emailSupport.title'),
+      description: t('contact.options.emailSupport.description'),
       email: "info.wikiai@gmail.com",
       phone: null,
-      hours: "24/7 Support"
+      hours: t('contact.options.emailSupport.hours')
     },
     {
       icon: <Phone className="w-6 h-6" />,
-      title: "Phone Support",
-      description: "Speak directly with our support team",
+      title: t('contact.options.phoneSupport.title'),
+      description: t('contact.options.phoneSupport.description'),
       email: null,
       phone: "+375 297 345 682",
-      hours: "Mon-Fri, 9AM-6PM EST"
+      hours: t('contact.options.phoneSupport.hours')
     },
     {
       icon: <Users className="w-6 h-6" />,
-      title: "Telegram Support",
-      description: "Join our Telegram community for quick help",
+      title: t('contact.options.telegramSupport.title'),
+      description: t('contact.options.telegramSupport.description'),
       email: null,
       phone: null,
-      hours: "Community Support",
+      hours: t('contact.options.telegramSupport.hours'),
       telegram: "https://t.me/vikigolubeva"
     }
   ]
 
   const offices = [
     {
-      city: "Global Support",
-      address: "Serving customers worldwide\n24/7 Email Support",
+      city: t('contact.companyInfo.globalSupport.title'),
+      address: t('contact.companyInfo.globalSupport.address'),
       phone: "+375 297 345 682",
       isHQ: true
     },
     {
-      city: "Community",
-      address: "Join our Telegram community\nGet help from other users",
+      city: t('contact.companyInfo.community.title'),
+      address: t('contact.companyInfo.community.description'),
       phone: null,
       telegram: "https://t.me/vikigolubeva",
       isHQ: false
@@ -90,12 +93,12 @@ export default function ContactPage() {
             <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Message Sent!</h2>
+            <h2 className="text-2xl font-bold mb-2">{t('contact.success.title')}</h2>
             <p className="text-muted-foreground mb-6">
-              Thank you for reaching out. We'll get back to you within 24 hours.
+              {t('contact.success.subtitle')}
             </p>
             <Button onClick={() => setIsSubmitted(false)}>
-              Send Another Message
+              {t('contact.success.sendAnother')}
             </Button>
           </CardContent>
         </Card>
@@ -105,17 +108,18 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <LandingHeader />
       {/* Hero Section */}
       <section className="relative px-6 pt-20 pb-16">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple/5" />
         <div className="relative max-w-6xl mx-auto text-center">
-          <Badge variant="secondary" className="mb-4">Contact Us</Badge>
+          <Badge variant="secondary" className="mb-4">{t('contact.hero.badge')}</Badge>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Get in
-            <span className="text-primary"> Touch</span>
+            {t('contact.hero.title')}
+            <span className="text-primary">{t('contact.hero.titleHighlight')}</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Have questions about WikiAI? We're here to help. Reach out to our team and we'll get back to you as soon as possible.
+            {t('contact.hero.subtitle')}
           </p>
         </div>
       </section>
@@ -175,52 +179,52 @@ export default function ContactPage() {
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Contact Form */}
             <div>
-              <h2 className="text-3xl font-bold mb-6">Send us a Message</h2>
+              <h2 className="text-3xl font-bold mb-6">{t('contact.form.title')}</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Name *</label>
+                    <label className="block text-sm font-medium mb-2">{t('contact.form.name')} *</label>
                     <Input
                       required
                       value={formData.name}
                       onChange={(e) => handleInputChange("name", e.target.value)}
-                      placeholder="John Doe"
+                      placeholder={t('contact.form.namePlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Email *</label>
+                    <label className="block text-sm font-medium mb-2">{t('contact.form.email')} *</label>
                     <Input
                       type="email"
                       required
                       value={formData.email}
                       onChange={(e) => handleInputChange("email", e.target.value)}
-                      placeholder="john@example.com"
+                      placeholder={t('contact.form.emailPlaceholder')}
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Company</label>
+                  <label className="block text-sm font-medium mb-2">{t('contact.form.company')}</label>
                   <Input
                     value={formData.company}
                     onChange={(e) => handleInputChange("company", e.target.value)}
-                    placeholder="Acme Corp"
+                    placeholder={t('contact.form.companyPlaceholder')}
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Message *</label>
+                  <label className="block text-sm font-medium mb-2">{t('contact.form.message')} *</label>
                   <Textarea
                     required
                     rows={6}
                     value={formData.message}
                     onChange={(e) => handleInputChange("message", e.target.value)}
-                    placeholder="Tell us how we can help you..."
+                    placeholder={t('contact.form.messagePlaceholder')}
                   />
                 </div>
                 
                 <Button type="submit" size="lg" className="w-full">
-                  Send Message
+                  {t('contact.form.sendMessage')}
                   <Send className="w-4 h-4 ml-2" />
                 </Button>
               </form>
@@ -228,16 +232,16 @@ export default function ContactPage() {
 
             {/* Company Info */}
             <div>
-              <h2 className="text-3xl font-bold mb-6">WikiAI Inc.</h2>
+              <h2 className="text-3xl font-bold mb-6">{t('contact.companyInfo.title')}</h2>
               <div className="space-y-6">
                 <Card className="border-0 shadow-sm">
                   <CardContent className="p-6">
                     <h3 className="font-semibold mb-4 flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-primary" />
-                      Global Support
+                      {t('contact.companyInfo.globalSupport.title')}
                     </h3>
                     <div className="space-y-2 text-muted-foreground">
-                      <p>Serving customers worldwide</p>
+                      <p>{t('contact.companyInfo.globalSupport.address')}</p>
                       <p><a href="mailto:info.wikiai@gmail.com" className="text-primary hover:underline">info.wikiai@gmail.com</a></p>
                     </div>
                   </CardContent>
@@ -247,11 +251,11 @@ export default function ContactPage() {
                   <CardContent className="p-6">
                     <h3 className="font-semibold mb-4 flex items-center gap-2">
                       <Phone className="w-5 h-5 text-primary" />
-                      Phone Support
+                      {t('contact.companyInfo.phoneSupport.title')}
                     </h3>
                     <div className="space-y-2">
                       <p><a href="tel:+375297345682" className="text-primary hover:underline">+375 297 345 682</a></p>
-                      <p className="text-sm text-muted-foreground">Mon-Fri, 9AM-6PM EST</p>
+                      <p className="text-sm text-muted-foreground">{t('contact.companyInfo.phoneSupport.hours')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -260,11 +264,11 @@ export default function ContactPage() {
                   <CardContent className="p-6">
                     <h3 className="font-semibold mb-4 flex items-center gap-2">
                       <Users className="w-5 h-5 text-primary" />
-                      Community
+                      {t('contact.companyInfo.community.title')}
                     </h3>
                     <div className="space-y-2">
                       <p><a href="https://t.me/vikigolubeva" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Join our Telegram</a></p>
-                      <p className="text-sm text-muted-foreground">Get help from our community</p>
+                      <p className="text-sm text-muted-foreground">{t('contact.companyInfo.community.description')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -278,9 +282,9 @@ export default function ContactPage() {
       <section className="px-6 py-16">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Our Offices</h2>
+            <h2 className="text-3xl font-bold mb-4">{t('contact.offices.title')}</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Find us around the world. We're always happy to connect in person.
+              {t('contact.offices.subtitle')}
             </p>
           </div>
           
@@ -291,7 +295,7 @@ export default function ContactPage() {
                   <div className="flex items-start justify-between mb-4">
                     <h3 className="text-xl font-semibold">{office.city}</h3>
                     {office.isHQ && (
-                      <Badge variant="secondary">HQ</Badge>
+                      <Badge variant="secondary">{t('contact.offices.hq')}</Badge>
                     )}
                   </div>
                   <div className="space-y-3">
@@ -328,12 +332,12 @@ export default function ContactPage() {
       {/* FAQ Link */}
       <section className="px-6 py-16 bg-primary/5">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Have Questions?</h2>
+          <h2 className="text-3xl font-bold mb-4">{t('contact.faq.title')}</h2>
           <p className="text-muted-foreground text-lg mb-8">
-            Check out our FAQ section for quick answers to common questions.
+            {t('contact.faq.subtitle')}
           </p>
           <Button size="lg">
-            View FAQ
+            {t('contact.faq.viewFaq')}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>

@@ -197,10 +197,10 @@ export default function UserDashboard() {
         <div className="space-y-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              Welcome back, {user?.username}
+              {t('common.welcome')} back, {user?.username}
             </h1>
             <p className="text-muted-foreground">
-              Manage your documents and explore the knowledge base
+              {t('dashboard2.manageYourDocumentsAndExploreTheKnowledgeBase')}
             </p>
           </div>
         </div>
@@ -209,45 +209,45 @@ export default function UserDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('dashboard2.totalDocuments')}</CardTitle>
               <HardDrive className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalFiles}</div>
-              <p className="text-xs text-muted-foreground">In your knowledge base</p>
+              <p className="text-xs text-muted-foreground">{t('dashboard2.inYourKnowledgeBase')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Recent Uploads</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('dashboard2.recentUploads')}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.recentUploads}</div>
-              <p className="text-xs text-muted-foreground">Last 7 days</p>
+              <p className="text-xs text-muted-foreground">{t('dashboard2.last7Days')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Queries Made</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('dashboard2.queriesMade')}</CardTitle>
               <Search className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalQueries}</div>
-              <p className="text-xs text-muted-foreground">Total searches</p>
+              <p className="text-xs text-muted-foreground">{t('dashboard2.totalSearches')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Response Time</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('dashboard2.responseTime')}</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.avgResponseTime.toFixed(1)}s</div>
-              <p className="text-xs text-muted-foreground">Average query time</p>
+              <p className="text-xs text-muted-foreground">{t('dashboard2.averageQueryTime')}</p>
             </CardContent>
           </Card>
         </div>
@@ -262,8 +262,8 @@ export default function UserDashboard() {
                     <Search className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <p className="font-semibold">Search Knowledge</p>
-                    <p className="text-sm text-muted-foreground">Query your documents</p>
+                    <p className="font-semibold">{t('userDashboard.searchKnowledge')}</p>
+                    <p className="text-sm text-muted-foreground">{t('userDashboard.queryYourDocuments')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -278,8 +278,8 @@ export default function UserDashboard() {
                     <FileText className="w-6 h-6 text-accent" />
                   </div>
                   <div>
-                    <p className="font-semibold">Browse Files</p>
-                    <p className="text-sm text-muted-foreground">View all documents</p>
+                    <p className="font-semibold">{t('dashboard2.browseFiles')}</p>
+                    <p className="text-sm text-muted-foreground">{t('dashboard2.viewAllDocuments')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -294,8 +294,8 @@ export default function UserDashboard() {
                     <Grid3X3 className="w-6 h-6 text-chart-3" />
                   </div>
                   <div>
-                    <p className="font-semibold">Catalogs</p>
-                    <p className="text-sm text-muted-foreground">Product search</p>
+                    <p className="font-semibold">{t('userDashboard.catalogs')}</p>
+                    <p className="text-sm text-muted-foreground">{t('userDashboard.productSearch')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -308,8 +308,8 @@ export default function UserDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Recent Documents</CardTitle>
-                <CardDescription>Your latest uploaded files</CardDescription>
+                <CardTitle>{t('dashboard2.recentDocuments')}</CardTitle>
+                <CardDescription>{t('dashboard2.yourLatestUploadedFiles')}</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -320,7 +320,7 @@ export default function UserDashboard() {
                   {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
                 </Button>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/app/files">View All</Link>
+                  <Link href="/app/files">{t('dashboard2.viewAll')}</Link>
                 </Button>
               </div>
             </div>
@@ -332,7 +332,7 @@ export default function UserDashboard() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search documents..."
+                  placeholder={t('files.searchFiles')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border rounded-md bg-background"
@@ -364,14 +364,14 @@ export default function UserDashboard() {
             ) : filteredFiles.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No documents found</h3>
+                <h3 className="text-lg font-semibold mb-2">{t('dashboard2.noDocumentsFound')}</h3>
                 <p className="text-muted-foreground mb-4">
                   {searchQuery ? t('dashboard.noDocumentsMatchYourSearch') : t('dashboard.noDocumentsUploadedYet')}
                 </p>
                 <Button asChild>
                   <Link href="/app/files">
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload Documents
+                    {t('dashboard2.uploadDocuments')}
                   </Link>
                 </Button>
               </div>

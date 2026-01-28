@@ -52,7 +52,7 @@ import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
 
 // Enhanced File Viewer Component (reused from files page with search highlighting)
-function FileViewerModal({ isOpen, onClose, document, searchChunk }: { isOpen: boolean; onClose: () => void; document: any; searchChunk?: string }) {
+function FileViewerModal({ isOpen, onClose, document, searchChunk, t }: { isOpen: boolean; onClose: () => void; document: any; searchChunk?: string; t: any }) {
   const [fileContent, setFileContent] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const { token } = useAuth()
@@ -131,7 +131,7 @@ function FileViewerModal({ isOpen, onClose, document, searchChunk }: { isOpen: b
             <FileText className="w-5 h-5" />
             <span className="truncate">{document.title}</span>
           </DialogTitle>
-          <DialogDescription>Document preview with search highlighting</DialogDescription>
+          <DialogDescription>{t('search.documentPreviewWithSearchHighlighting')}</DialogDescription>
         </DialogHeader>
         
         <div className="flex-1 min-h-[500px] max-h-[60vh]">
@@ -139,20 +139,20 @@ function FileViewerModal({ isOpen, onClose, document, searchChunk }: { isOpen: b
             <div className="flex items-center justify-center h-96">
               <div className="text-center">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Loading document...</p>
+                <p className="text-sm text-muted-foreground">{t('search.loadingDocument2')}</p>
               </div>
             </div>
           ) : (
             <div className="h-full">
               {isPdf ? (
                 <div className="text-center p-8">
-                  <p className="text-muted-foreground">PDF preview not available in search results</p>
-                  <p className="text-sm text-muted-foreground mt-2">Please open this file from the Files page for full viewing</p>
+                  <p className="text-muted-foreground">{t('search.pdfPreviewNotAvailable')}</p>
+                  <p className="text-sm text-muted-foreground mt-2">{t('search.pleaseOpenThisFileFromTheFilesPageForFullViewing2')}</p>
                 </div>
               ) : isWord ? (
                 <div className="text-center p-8">
-                  <p className="text-muted-foreground">Word document preview not available in search results</p>
-                  <p className="text-sm text-muted-foreground mt-2">Please open this file from the Files page for full viewing</p>
+                  <p className="text-muted-foreground">{t('search.wordDocumentPreviewNotAvailable2')}</p>
+                  <p className="text-sm text-muted-foreground mt-2">{t('search.pleaseOpenThisFileFromTheFilesPageForFullViewing2')}</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[60vh] rounded-md border p-4">
@@ -173,7 +173,7 @@ function FileViewerModal({ isOpen, onClose, document, searchChunk }: { isOpen: b
         <DialogFooter className="flex flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             <X className="w-4 h-4 mr-2" />
-            Close
+            {t('search.close')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -320,12 +320,12 @@ export default function SearchPage() {
     // Handle immediate search results (sources/snippets)
     if (data.type === 'immediate') {
       // Remove the "Searching..." message
-      setMessages(prev => prev.filter(msg => msg.content !== "Searching across your Knowledge Base..."))
+      setMessages(prev => prev.filter(msg => msg.content !== t('search.searchingAcrossYourKnowledgeBase')))
       
       const sourcesMessage: Message = {
         id: crypto.randomUUID(),
         role: "sources",
-        content: `Found ${data.files?.length || 0} relevant sources:`,
+        content: t('search.foundRelevantSources', { count: data.files?.length || 0 }),
         sources: data.files || [],
         searchResults: data.snippets?.map((snippet: any, index: number) => ({
           id: `doc-${index}`,
@@ -343,7 +343,7 @@ export default function SearchPage() {
         const overviewLoadingMessage: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: "Generating AI overview...",
+          content: t('search.generatingAiOverview'),
           timestamp: new Date(Date.now()),
         }
         setMessages(prev => [...prev, overviewLoadingMessage])
@@ -354,7 +354,7 @@ export default function SearchPage() {
     if (data.type === 'overview') {
       // Remove the "Generating..." message and add the actual overview
       setMessages(prev => {
-        const filtered = prev.filter(msg => msg.content !== "Generating AI overview...")
+        const filtered = prev.filter(msg => msg.content !== t('search.generatingAiOverview'))
         return [...filtered, {
           id: crypto.randomUUID(),
           role: "overview",
@@ -399,7 +399,7 @@ export default function SearchPage() {
       const errorMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: "Sorry, I encountered an error while searching. Please try again.",
+        content: t('search.sorryIEncounteredAnErrorWhileSearchingPleaseTryAgain'),
         timestamp: new Date(Date.now()),
       }
       setMessages((prev) => [...prev, errorMessage])
@@ -467,7 +467,7 @@ export default function SearchPage() {
                   const sourcesMessage: Message = {
                     id: crypto.randomUUID(),
                     role: "sources",
-                    content: `Found ${message.data.snippets.length} relevant sources:`,
+                    content: t('search.foundRelevantSources', { count: message.data.snippets.length }),
                     sources: message.data.files || [],
                     searchResults: message.data.snippets.map((snippet: any, index: number) => ({
                       id: `doc-${index}`,
@@ -485,7 +485,7 @@ export default function SearchPage() {
                     const overviewLoadingMessage: Message = {
                       id: crypto.randomUUID(),
                       role: "assistant",
-                      content: "Generating AI overview...",
+                      content: t('search.generatingAiOverview'),
                       timestamp: new Date(Date.now()),
                     }
                     setMessages(prev => [...prev, overviewLoadingMessage])
@@ -498,7 +498,7 @@ export default function SearchPage() {
                 overviewReceived = true
                 setIsLoading(false) // Ensure loading is stopped
                 setMessages(prev => {
-                  const filtered = prev.filter(msg => msg.content !== "Generating AI overview...")
+                  const filtered = prev.filter(msg => msg.content !== t('search.generatingAiOverview'))
                   return [...filtered, {
                     id: crypto.randomUUID(),
                     role: "overview",
@@ -577,7 +577,7 @@ export default function SearchPage() {
         const sourcesMessage: Message = {
           id: crypto.randomUUID(),
           role: "sources",
-          content: `Found ${files.length} relevant sources:`,
+          content: t('search.foundRelevantSources', { count: files.length }),
           sources: files,
           searchResults: snippets.map((snippet: any, index: number) => ({
             id: `doc-${index}`,
@@ -1167,6 +1167,7 @@ export default function SearchPage() {
         }}
         document={selectedDocument || {}}
         searchChunk={selectedDocument?.content}
+        t={t}
       />
     </>
   )
