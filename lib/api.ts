@@ -43,8 +43,15 @@ export async function apiRequest<T = unknown>({
     headers["Authorization"] = `Bearer ${token}`
   }
 
+  // Handle absolute URLs (for landing pages API)
+  let fullUrl: string
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    fullUrl = url
+  } else {
+    fullUrl = getApiUrl(url)
+  }
+
   // Add query params
-  let fullUrl = getApiUrl(url)
   if (params && Object.keys(params).length > 0) {
     const query = new URLSearchParams(params).toString()
     fullUrl += (fullUrl.includes("?") ? "&" : "?") + query
@@ -1002,6 +1009,344 @@ export const aiAgentApi = {
     }),
 }
 
+// Landing Pages API endpoints
+export const landingPagesApi = {
+  // Blog endpoints
+  getBlogPosts: async (params?: { 
+    category?: string; 
+    featured?: boolean; 
+    limit?: number; 
+    offset?: number; 
+    search?: string 
+  }) => {
+    const headers: Record<string, string> = {
+      "ngrok-skip-browser-warning": "true",
+      "Content-Type": "application/json"
+    }
+
+    // Handle absolute URLs (for landing pages API)
+    let url = "http://127.0.0.1:8000/api/blog/posts"
+    
+    // Add query params
+    if (params && Object.keys(params).length > 0) {
+      const queryParams = new URLSearchParams()
+      if (params.search) queryParams.append('search', params.search)
+      if (params.category) queryParams.append('category', params.category)
+      if (params.featured) queryParams.append('featured', params.featured.toString())
+      if (params.limit) queryParams.append('limit', params.limit.toString())
+      if (params.offset) queryParams.append('offset', params.offset.toString())
+      url += `?${queryParams.toString()}`
+    }
+
+    try {
+      const response = await fetch(url, { headers })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      return await response.json() as Array<{
+        id: number
+        title: string
+        slug: string
+        excerpt?: string
+        content: string
+        author: string
+        category: string
+        featured: boolean
+        tags: string[]
+        image_url?: string
+        read_time?: string
+        status: string
+        views: number
+        created_at: string
+        updated_at: string
+      }>
+    } catch (error) {
+      console.error('Error fetching blog posts:', error)
+      return []
+    }
+  },
+
+  getBlogPost: async (slug: string) => {
+    const headers: Record<string, string> = {
+      "ngrok-skip-browser-warning": "true",
+      "Content-Type": "application/json"
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/blog/posts/slug/${slug}`, { headers })
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null
+        }
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      // Check if the response contains an error message
+      if (data.detail === "Blog post not found") {
+        return null
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Error fetching blog post:', error)
+      return null
+    }
+  },
+
+  getBlogCategories: async () => {
+    const headers: Record<string, string> = {
+      "ngrok-skip-browser-warning": "true",
+      "Content-Type": "application/json"
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/blog/categories", { headers })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      return await response.json() as Array<{
+        name: string
+        slug: string
+        description: string
+        color: string
+      }>
+    } catch (error) {
+      console.error('Error fetching blog categories:', error)
+      return []
+    }
+  },
+
+  subscribeNewsletter: async (email: string, preferences?: Record<string, any>) => {
+    const headers: Record<string, string> = {
+      "ngrok-skip-browser-warning": "true",
+      "Content-Type": "application/json"
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.0:8000/api/blog/subscribe", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ email, preferences }),
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      return await response.json()
+    } catch (error) {
+      console.error('Error subscribing to newsletter:', error)
+      return { status: "error", message: "Failed to subscribe" }
+    }
+  },
+
+  // Contact endpoints
+  submitContact: (data: {
+    name: string
+    email: string
+    company?: string
+    phone?: string
+    message: string
+    inquiry_type?: string
+  }) =>
+    apiRequest({
+      url: "http://127.0.0.1:8000/api/contact/submit",
+      method: "POST",
+      data,
+    }),
+
+  getContactOptions: () =>
+    apiRequest<{
+      email_support: { title: string; description: string; email: string; hours: string; response_time: string }
+      phone_support: { title: string; description: string; phone: string; hours: string; response_time: string }
+      telegram_support: { title: string; description: string; telegram: string; hours: string; response_time: string }
+    }>({
+      url: "http://127.0.0.1:8000/api/contact/options",
+    }),
+
+  // Sales endpoints
+  submitDemoRequest: (data: {
+    name: string
+    email: string
+    company: string
+    phone?: string
+    job_title?: string
+    company_size?: string
+    industry?: string
+    preferred_time?: string
+    preferred_date?: string
+    message?: string
+  }) =>
+    apiRequest({
+      url: "http://127.0.0.1:8000/api/sales/demo-request",
+      method: "POST",
+      data,
+    }),
+
+  submitQuoteRequest: (data: {
+    company_name: string
+    contact_email: string
+    contact_name?: string
+    phone?: string
+    requirements?: string
+    user_count?: number
+    current_solution?: string
+    budget_range?: string
+    timeline?: string
+  }) =>
+    apiRequest({
+      url: "http://127.0.0.1:8000/api/sales/quote-request",
+      method: "POST",
+      data,
+    }),
+
+  // Status endpoints
+  getServiceStatus: () =>
+    apiRequest<Array<{
+      id: number
+      name: string
+      description: string
+      status: string
+      uptime_percentage: number
+      last_checked: string
+      created_at: string
+      updated_at: string
+    }>>({
+      url: "http://127.0.0.1:8000/api/status/services",
+    }),
+
+  getSystemOverview: () =>
+    apiRequest<{
+      overall_status: string
+      overall_message: string
+      services: Array<{
+        id: number
+        name: string
+        description: string
+        status: string
+        uptime_percentage: number
+        last_checked: string
+      }>
+      active_incidents: Array<{
+        id: number
+        title: string
+        description: string
+        severity: string
+        status: string
+        start_time: string
+        end_time?: string
+        affected_services: string[]
+      }>
+      last_updated: string
+    }>({
+      url: "http://127.0.0.1:8000/api/status/overview",
+    }),
+
+  // Help Center endpoints
+  getHelpArticles: (params?: { category?: string; difficulty?: string; limit?: number; offset?: number; search?: string }) =>
+    apiRequest<Array<{
+      id: number
+      title: string
+      slug: string
+      description: string
+      content: string
+      category: string
+      views: number
+      helpful_count: number
+      total_votes: number
+      read_time?: string
+      difficulty: string
+      order_index: number
+      status: string
+      created_at: string
+      updated_at: string
+    }>>({
+      url: "http://127.0.0.1:8000/api/help/articles",
+      params: params as Record<string, string>,
+    }),
+
+  getHelpCategories: () =>
+    apiRequest<Array<{
+      id: number
+      name: string
+      slug: string
+      description?: string
+      icon?: string
+      order_index: number
+      created_at: string
+    }>>({
+      url: "http://127.0.0.1:8000/api/help/categories",
+    }),
+
+  markArticleHelpful: (articleId: number, helpful: boolean) =>
+    apiRequest({
+      url: `http://127.0.0.1:8000/api/help/articles/${articleId}/helpful`,
+      method: "POST",
+      data: { helpful },
+    }),
+
+  // Documentation endpoints
+  getDocumentation: (params?: { category?: string; difficulty?: string; limit?: number; offset?: number; search?: string }) =>
+    apiRequest<Array<{
+      id: number
+      title: string
+      slug: string
+      content: string
+      category: string
+      difficulty: string
+      read_time?: string
+      order_index: number
+      status: string
+      created_at: string
+      updated_at: string
+    }>>({
+      url: "http://127.0.0.1:8000/api/docs",
+      params: params as Record<string, string>,
+    }),
+
+  getDocumentationCategories: () =>
+    apiRequest<Array<{
+      name: string
+      slug: string
+      description: string
+    }>>({
+      url: "http://127.0.0.1:8000/api/docs/categories",
+    }),
+
+  // Analytics endpoints
+  trackVisit: (data: {
+    page: string
+    session_id?: string
+    ip_address?: string
+    user_agent?: string
+    referrer?: string
+    utm_source?: string
+    utm_medium?: string
+    utm_campaign?: string
+  }) =>
+    apiRequest({
+      url: "http://127.0.0.1:8000/api/analytics/track-visit",
+      method: "POST",
+      data,
+    }),
+
+  trackEvent: (data: {
+    event_type: string
+    page?: string
+    user_id?: string
+    session_id?: string
+    metadata?: Record<string, any>
+  }) =>
+    apiRequest({
+      url: "http://127.0.0.1:8000/api/analytics/track-event",
+      method: "POST",
+      data,
+    }),
+}
+
 // Enhanced dashboard endpoints
 export const dashboardApi = {
   getEmployeeData: (token: string, since: string = "24h") =>
@@ -1383,4 +1728,127 @@ export const dashboardApi = {
       token,
     })
   },
+
+  // Messaging endpoints
+  messagingApi: {
+    getMessageThreads: async (token: string) => {
+      return apiRequest<{
+        threads: Array<{
+          id: string
+          organization_id: string
+          subject: string
+          status: string
+          created_at: string
+          updated_at: string
+          last_message_at: string
+          organization_name: string
+          organization_slug: string
+        }>
+      }>({
+        url: "/messages/threads",
+        method: "GET",
+        token,
+      })
+    },
+
+    getThreadMessages: async (threadId: string, token: string) => {
+      return apiRequest<{
+        messages: Array<{
+          id: string
+          thread_id: string
+          organization_id: string
+          sender_type: string
+          sender_name: string
+          sender_email: string
+          message: string
+          message_type: string
+          status: string
+          created_at: string
+          updated_at: string
+        }>
+      }>({
+        url: `/messages/threads/${threadId}/messages`,
+        method: "GET",
+        token,
+      })
+    },
+
+    createMessageThread: async (data: {
+      organization_id: string
+      subject: string
+      sender_name: string
+      sender_email: string
+      message: string
+      message_type?: string
+    }, token: string) => {
+      return apiRequest<{
+        thread_id: string
+      }>({
+        url: "/messages/threads",
+        method: "POST",
+        token,
+        data: data,
+      })
+    },
+
+    addMessageToThread: async (threadId: string, data: {
+      sender_name: string
+      sender_email?: string
+      message: string
+      message_type?: string
+    }, token: string) => {
+      return apiRequest<{
+        message_id: string
+      }>({
+        url: `/messages/threads/${threadId}/messages`,
+        method: "POST",
+        token,
+        data: data,
+      })
+    },
+
+    markMessageAsRead: async (messageId: string, token: string) => {
+      return apiRequest<{}>({
+        url: `/messages/${messageId}/read`,
+        method: "POST",
+        token,
+      })
+    },
+
+    getUnreadCount: async (token: string) => {
+      return apiRequest<{
+        unread_count: number
+      }>({
+        url: "/messages/unread-count",
+        method: "GET",
+        token,
+      })
+    },
+
+    approveOrganization: async (orgId: string, token: string) => {
+      return apiRequest<{}>({
+        url: `/organizations/approve/${orgId}`,
+        method: "POST",
+        token,
+      })
+    },
+
+    getPendingOrganizations: async (token: string) => {
+      return apiRequest<{
+        pending_organizations: Array<{
+          id: string
+          name: string
+          slug: string
+          status: string
+          created_at: string
+          admin_user_id: string
+          description?: string
+        }>
+      }>({
+        url: "/organizations/pending",
+        method: "GET",
+        token,
+      })
+    },
+  }
 }
