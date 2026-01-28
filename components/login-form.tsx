@@ -47,7 +47,14 @@ export function LoginForm() {
       toast.success(t('login.loginSuccessful'))
       router.push("/app")
     } else {
-      toast.error(result.error || t('login.loginFailed'))
+      // Check if the error is about pending organization approval
+      if (result.error && (result.error.includes("pending approval") || result.error === t('login.organizationPendingApproval'))) {
+        // Redirect to review status page
+        const reviewUrl = `/review-status?email=${encodeURIComponent(username)}`
+        window.location.href = reviewUrl
+      } else {
+        toast.error(result.error || t('login.loginFailed'))
+      }
     }
   }
 
@@ -68,14 +75,10 @@ export function LoginForm() {
 
       if (result.status === "success") {
         toast.success(t('login.organizationCreatedSuccessfully'))
-        // Switch to login tab and populate username
-        setUsername(adminUsername)
-        setPassword("")
-        // Reset organization form
-        setOrgName("")
-        setOrgSlug("")
-        setAdminUsername("")
-        setAdminPassword("")
+        
+        // Redirect to review status page
+        const reviewUrl = `/review-status?org=${encodeURIComponent(orgName)}&email=${encodeURIComponent(adminUsername)}`
+        window.location.href = reviewUrl
       } else {
         toast.error(result.message || t('login.failedToCreateOrganization'))
       }
