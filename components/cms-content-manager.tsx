@@ -14,6 +14,7 @@ import {
   FileText, Users, MessageSquare, TrendingUp,
   Search, Filter, RefreshCw, Building
 } from "lucide-react"
+import { getCmsEndpointUrl } from "@/lib/config"
 import CMSOrganizations from "./cms-organizations"
 
 interface CMSContentManagerProps {
@@ -79,12 +80,10 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
   // Sales state
   const [salesLeads, setSalesLeads] = useState<SalesLead[]>([])
 
-  const API_BASE = "http://127.0.0.1:8000"
-
   // Fetch data
   const fetchBlogPosts = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/cms/blog/posts`, {
+      const response = await fetch(getCmsEndpointUrl("/blog/posts"), {
         headers: { "Authorization": `Bearer ${token}` }
       })
       if (response.ok) {
@@ -98,7 +97,7 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
 
   const fetchContactSubmissions = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/contact/submissions`, {
+      const response = await fetch(getCmsEndpointUrl("/contact/submissions"), {
         headers: { "Authorization": `Bearer ${token}` }
       })
       if (response.ok) {
@@ -112,7 +111,7 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
 
   const fetchSalesLeads = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/sales/leads`, {
+      const response = await fetch(getCmsEndpointUrl("/sales/leads"), {
         headers: { "Authorization": `Bearer ${token}` }
       })
       if (response.ok) {
@@ -128,7 +127,7 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
   const createBlogPost = async (postData: Partial<BlogPost>) => {
     setLoading(true)
     try {
-      const response = await fetch(`${API_BASE}/api/cms/blog/posts`, {
+      const response = await fetch(getCmsEndpointUrl("/blog/posts"), {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -154,7 +153,7 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
   const updateBlogPost = async (id: number, postData: Partial<BlogPost>) => {
     setLoading(true)
     try {
-      const response = await fetch(`${API_BASE}/api/cms/blog/posts/${id}`, {
+      const response = await fetch(getCmsEndpointUrl(`/blog/posts/${id}`), {
         method: "PUT",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -181,7 +180,7 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
     
     setLoading(true)
     try {
-      const response = await fetch(`${API_BASE}/api/cms/blog/posts/${id}`, {
+      const response = await fetch(getCmsEndpointUrl(`/blog/posts/${id}`), {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       })
