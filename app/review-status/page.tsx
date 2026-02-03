@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import { useTranslation } from '@/src/i18n'
 
-export default function ReviewStatusPage() {
+function ReviewStatusContent() {
   const { t } = useTranslation()
   const searchParams = useSearchParams()
   const [organizationData, setOrganizationData] = useState<any>(null)
@@ -261,5 +261,20 @@ export default function ReviewStatusPage() {
         )}
       </main>
     </div>
+  )
+}
+
+export default function ReviewStatusPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <ReviewStatusContent />
+    </Suspense>
   )
 }
