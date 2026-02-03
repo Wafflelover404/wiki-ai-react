@@ -1,4 +1,4 @@
-import { API_CONFIG, getApiUrl, getWsUrl } from "./config"
+import { API_CONFIG, getApiUrl, getWsUrl, getCmsEndpointUrl } from "./config"
 
 // Unified API configuration - all requests use localhost:9001
 
@@ -1024,8 +1024,8 @@ export const landingPagesApi = {
       "Content-Type": "application/json"
     }
 
-    // Handle absolute URLs (for landing pages API)
-    let url = "http://127.0.0.1:8000/api/blog/posts"
+    // Handle absolute URLs (for CMS API - now unified with main API on port 9001)
+    let url = getCmsEndpointUrl("/blog/posts")
     
     // Add query params
     if (params && Object.keys(params).length > 0) {
@@ -1073,7 +1073,7 @@ export const landingPagesApi = {
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/blog/posts/slug/${slug}`, { headers })
+      const response = await fetch(getCmsEndpointUrl(`/blog/posts/slug/${slug}`), { headers })
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -1103,7 +1103,7 @@ export const landingPagesApi = {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/blog/categories", { headers })
+      const response = await fetch(getCmsEndpointUrl("/blog/categories"), { headers })
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -1126,7 +1126,7 @@ export const landingPagesApi = {
     }
 
     try {
-      const response = await fetch("http://127.0.0.0:8000/api/blog/subscribe", {
+      const response = await fetch(getCmsEndpointUrl("/blog/subscribe"), {
         method: "POST",
         headers,
         body: JSON.stringify({ email, preferences }),
@@ -1153,7 +1153,7 @@ export const landingPagesApi = {
     inquiry_type?: string
   }) =>
     apiRequest({
-      url: "http://127.0.0.1:8000/api/contact/submit",
+      url: getCmsEndpointUrl("/contact/submit"),
       method: "POST",
       data,
     }),
@@ -1164,7 +1164,7 @@ export const landingPagesApi = {
       phone_support: { title: string; description: string; phone: string; hours: string; response_time: string }
       telegram_support: { title: string; description: string; telegram: string; hours: string; response_time: string }
     }>({
-      url: "http://127.0.0.1:8000/api/contact/options",
+      url: getCmsEndpointUrl("/contact/options"),
     }),
 
   // Sales endpoints
@@ -1181,7 +1181,7 @@ export const landingPagesApi = {
     message?: string
   }) =>
     apiRequest({
-      url: "http://127.0.0.1:8000/api/sales/demo-request",
+      url: getCmsEndpointUrl("/sales/demo-request"),
       method: "POST",
       data,
     }),
@@ -1198,7 +1198,7 @@ export const landingPagesApi = {
     timeline?: string
   }) =>
     apiRequest({
-      url: "http://127.0.0.1:8000/api/sales/quote-request",
+      url: getCmsEndpointUrl("/sales/quote-request"),
       method: "POST",
       data,
     }),
@@ -1215,7 +1215,7 @@ export const landingPagesApi = {
       created_at: string
       updated_at: string
     }>>({
-      url: "http://127.0.0.1:8000/api/status/services",
+      url: getCmsEndpointUrl("/status/services"),
     }),
 
   getSystemOverview: () =>
@@ -1242,7 +1242,7 @@ export const landingPagesApi = {
       }>
       last_updated: string
     }>({
-      url: "http://127.0.0.1:8000/api/status/overview",
+      url: getCmsEndpointUrl("/status/overview"),
     }),
 
   // Help Center endpoints
@@ -1264,7 +1264,7 @@ export const landingPagesApi = {
       created_at: string
       updated_at: string
     }>>({
-      url: "http://127.0.0.1:8000/api/help/articles",
+      url: getCmsEndpointUrl("/help/articles"),
       params: params as Record<string, string>,
     }),
 
@@ -1278,12 +1278,12 @@ export const landingPagesApi = {
       order_index: number
       created_at: string
     }>>({
-      url: "http://127.0.0.1:8000/api/help/categories",
+      url: getCmsEndpointUrl("/help/categories"),
     }),
 
   markArticleHelpful: (articleId: number, helpful: boolean) =>
     apiRequest({
-      url: `http://127.0.0.1:8000/api/help/articles/${articleId}/helpful`,
+      url: getCmsEndpointUrl(`/help/articles/${articleId}/helpful`),
       method: "POST",
       data: { helpful },
     }),
@@ -1303,7 +1303,7 @@ export const landingPagesApi = {
       created_at: string
       updated_at: string
     }>>({
-      url: "http://127.0.0.1:8000/api/docs",
+      url: getCmsEndpointUrl("/docs"),
       params: params as Record<string, string>,
     }),
 
@@ -1313,7 +1313,7 @@ export const landingPagesApi = {
       slug: string
       description: string
     }>>({
-      url: "http://127.0.0.1:8000/api/docs/categories",
+      url: getCmsEndpointUrl("/docs/categories"),
     }),
 
   // Analytics endpoints
@@ -1328,7 +1328,7 @@ export const landingPagesApi = {
     utm_campaign?: string
   }) =>
     apiRequest({
-      url: "http://127.0.0.1:8000/api/analytics/track-visit",
+      url: getCmsEndpointUrl("/analytics/track-visit"),
       method: "POST",
       data,
     }),
@@ -1341,7 +1341,7 @@ export const landingPagesApi = {
     metadata?: Record<string, any>
   }) =>
     apiRequest({
-      url: "http://127.0.0.1:8000/api/analytics/track-event",
+      url: getCmsEndpointUrl("/analytics/track-event"),
       method: "POST",
       data,
     }),
@@ -1830,6 +1830,24 @@ export const dashboardApi = {
         url: `/organizations/approve/${orgId}`,
         method: "POST",
         token,
+      })
+    },
+
+    rejectOrganization: async (orgId: string, token: string, reason?: string) => {
+      return apiRequest<{}>({
+        url: `/organizations/reject/${orgId}`,
+        method: "POST",
+        token,
+        data: reason ? { reason } : undefined,
+      })
+    },
+
+    changeOrganizationStatus: async (orgId: string, token: string, newStatus: string) => {
+      return apiRequest<{}>({
+        url: `/organizations/change-status/${orgId}`,
+        method: "POST",
+        token,
+        data: { status: newStatus },
       })
     },
 
