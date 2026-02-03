@@ -414,8 +414,10 @@ export default function SearchPage() {
     return new Promise((resolve, reject) => {
       try {
         // Use the same API base URL from config for WebSocket
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = `${wsProtocol}//localhost:9001/ws/query?token=${encodeURIComponent(token || '')}`
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
+        const wsProtocol = apiUrl.startsWith('https://') ? 'wss:' : 'ws:'
+        const wsHost = apiUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+        const wsUrl = `${wsProtocol}//${wsHost}/ws/query?token=${encodeURIComponent(token || '')}`
         
         console.log('Connecting to WebSocket:', wsUrl)
         
