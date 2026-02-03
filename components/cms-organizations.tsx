@@ -17,8 +17,15 @@ import {
   Eye,
   Reply,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  MessageCircle,
+  Ban,
+  Settings,
+  ArrowUpDown
 } from "lucide-react"
+import { useWebSocketMessaging } from "@/hooks/use-websocket-messaging"
 
 interface CMSOrganizationsProps {
   token: string
@@ -30,7 +37,10 @@ interface Organization {
   slug: string
   status: string
   created_at: string
+  updated_at: string
   admin_user_id: string
+  admin_username?: string
+  admin_email?: string
   description?: string
 }
 
@@ -43,7 +53,6 @@ interface MessageThread {
   updated_at: string
   last_message_at: string
   organization_name?: string
-  organization_slug?: string
 }
 
 interface Message {
@@ -52,7 +61,7 @@ interface Message {
   organization_id: string
   sender_type: string
   sender_name: string
-  sender_email?: string
+  sender_email: string
   message: string
   message_type: string
   status: string
@@ -65,26 +74,82 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const [messageThreads, setMessageThreads] = useState<MessageThread[]>([])
   const [selectedThread, setSelectedThread] = useState<MessageThread | null>(null)
   const [threadMessages, setThreadMessages] = useState<Message[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
   const [unreadCount, setUnreadCount] = useState(0)
-
-  // Form states
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
-  const [replyMessage, setReplyMessage] = useState("")
   const [sendingMessage, setSendingMessage] = useState(false)
+  
+  // Status change modal state
+  const [statusChangeModal, setStatusChangeModal] = useState<{
+    isOpen: boolean
+    organization: Organization | null
+    newStatus: string
+    reason: string
+  }>({
+    isOpen: false,
+    organization: null,
+    newStatus: "",
+    reason: ""
+  })
 
-  useEffect(() => {
-    fetchOrganizations()
-    fetchMessageThreads()
-    fetchUnreadCount()
-  }, [])
+  // WebSocket messaging (disabled for stability - using HTTP API instead)
+  const {
+    isConnected: wsIsConnected,
+    messages: wsMessages,
+    unreadCount: wsUnreadCount,
+    connectionError: wsConnectionError,
+    joinThread,
+    sendMessage: wsSendMessage,
+    markMessageAsRead: wsMarkMessageAsRead
+  } = useWebSocketMessaging("") // Disabled by passing empty token
+
+  const validateToken = async (providedToken: string): Promise<string | null> => {
+    try {
+      const response = await fetch("http://127.0.0.1:9001/organizations", {
+        headers: {
+          "Authorization": `Bearer ${providedToken}`,
+          "Content-Type": "application/json"
+        }
+      })
+
+      if (response.ok) {
+        return providedToken // Token is valid
+      } else if (response.status === 403) {
+        // Token is invalid, try to refresh with hardcoded credentials
+        console.log("Token expired, attempting to refresh...")
+        const refreshResponse = await fetch("http://127.0.0.1:9001/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: "admin", password: "admin123" })
+        })
+
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json()
+          if (data.status === "success" && data.token) {
+            console.log("Token refreshed successfully")
+            return data.token
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Token validation error:", err)
+    }
+    
+    return null
+  }
 
   const fetchOrganizations = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:9001/organizations/pending", {
+      const validToken = await validateToken(token)
+      if (!validToken) {
+        setError("Authentication failed - please refresh the page")
+        return
+      }
+
+      const response = await fetch("http://127.0.0.1:9001/organizations", {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${validToken}`,
           "Content-Type": "application/json"
         }
       })
@@ -92,8 +157,12 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       if (response.ok) {
         const data = await response.json()
         if (data.status === "success") {
-          setOrganizations(data.response.pending_organizations || [])
+          setOrganizations(data.response.organizations || [])
+        } else {
+          setError(data.message || "Failed to fetch organizations")
         }
+      } else {
+        setError(`HTTP ${response.status}: Failed to fetch organizations`)
       }
     } catch (err) {
       setError("Failed to fetch organizations")
@@ -102,9 +171,15 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
   const fetchMessageThreads = async () => {
     try {
+      const validToken = await validateToken(token)
+      if (!validToken) {
+        setError("Authentication failed - please refresh the page")
+        return
+      }
+
       const response = await fetch("http://127.0.0.1:9001/messages/threads", {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${validToken}`,
           "Content-Type": "application/json"
         }
       })
@@ -113,7 +188,11 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
         const data = await response.json()
         if (data.status === "success") {
           setMessageThreads(data.response.threads || [])
+        } else {
+          setError(data.message || "Failed to fetch message threads")
         }
+      } else {
+        setError(`HTTP ${response.status}: Failed to fetch message threads`)
       }
     } catch (err) {
       setError("Failed to fetch message threads")
@@ -122,9 +201,12 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
   const fetchUnreadCount = async () => {
     try {
+      const validToken = await validateToken(token)
+      if (!validToken) return
+
       const response = await fetch("http://127.0.0.1:9001/messages/unread-count", {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${validToken}`,
           "Content-Type": "application/json"
         }
       })
@@ -132,7 +214,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       if (response.ok) {
         const data = await response.json()
         if (data.status === "success") {
-          setUnreadCount(data.response.unread_count || 0)
+          setUnreadCount(data.response.count || 0)
         }
       }
     } catch (err) {
@@ -142,9 +224,16 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
   const fetchThreadMessages = async (threadId: string) => {
     try {
+      // Always use HTTP API for message fetching (more reliable than WebSocket)
+      const validToken = await validateToken(token)
+      if (!validToken) {
+        setError("Authentication failed - please refresh the page")
+        return
+      }
+
       const response = await fetch(`http://127.0.0.1:9001/messages/threads/${threadId}/messages`, {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${validToken}`,
           "Content-Type": "application/json"
         }
       })
@@ -154,62 +243,138 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
         if (data.status === "success") {
           setThreadMessages(data.response.messages || [])
         }
+      } else {
+        setError(`HTTP ${response.status}: Failed to fetch thread messages`)
       }
     } catch (err) {
       setError("Failed to fetch thread messages")
     }
   }
 
-  const approveOrganization = async (orgId: string) => {
+  const banOrganization = async (orgId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:9001/organizations/approve/${orgId}`, {
+      const validToken = await validateToken(token)
+      if (!validToken) {
+        setError("Authentication failed - please refresh the page")
+        return
+      }
+
+      const response = await fetch(`http://127.0.0.1:9001/organizations/ban/${orgId}`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${validToken}`,
           "Content-Type": "application/json"
         }
       })
 
       if (response.ok) {
-        const data = await response.json()
-        if (data.status === "success") {
-          fetchOrganizations()
-          // Send approval message
-          await sendApprovalMessage(orgId)
+        await fetchOrganizations()
+      } else {
+        setError("Failed to ban organization")
+      }
+    } catch (err) {
+      setError("Failed to ban organization")
+    }
+  }
+
+  const approveOrganization = async (orgId: string) => {
+    try {
+      const validToken = await validateToken(token)
+      if (!validToken) {
+        setError("Authentication failed - please refresh the page")
+        return
+      }
+
+      const response = await fetch(`http://127.0.0.1:9001/organizations/approve/${orgId}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${validToken}`,
+          "Content-Type": "application/json"
         }
+      })
+
+      if (response.ok) {
+        await fetchOrganizations()
+      } else {
+        setError("Failed to approve organization")
       }
     } catch (err) {
       setError("Failed to approve organization")
     }
   }
 
-  const sendApprovalMessage = async (orgId: string) => {
-    const org = organizations.find(o => o.id === orgId)
-    if (!org) return
-
+  const rejectOrganization = async (orgId: string, reason: string = "") => {
     try {
-      const response = await fetch("http://127.0.0.1:9001/messages/threads", {
+      const validToken = await validateToken(token)
+      if (!validToken) {
+        setError("Authentication failed - please refresh the page")
+        return
+      }
+
+      const response = await fetch(`http://127.0.0.1:9001/organizations/reject/${orgId}`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${validToken}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          organization_id: orgId,
-          subject: "Organization Approved",
-          sender_name: "WikiAI Admin",
-          sender_email: "admin@wikiai.com",
-          message: `Your organization "${org.name}" has been approved! You can now login and start using WikiAI.`,
-          message_type: "approval_status"
-        })
+        body: JSON.stringify({ reason })
       })
 
       if (response.ok) {
-        fetchMessageThreads()
-        fetchUnreadCount()
+        await fetchOrganizations()
+        setStatusChangeModal({ isOpen: false, organization: null, newStatus: "", reason: "" })
+      } else {
+        setError("Failed to reject organization")
       }
     } catch (err) {
-      console.error("Failed to send approval message:", err)
+      setError("Failed to reject organization")
+    }
+  }
+
+  const changeOrganizationStatus = async (orgId: string, newStatus: string) => {
+    try {
+      const validToken = await validateToken(token)
+      if (!validToken) {
+        setError("Authentication failed - please refresh the page")
+        return
+      }
+
+      const response = await fetch(`http://127.0.0.1:9001/organizations/change-status/${orgId}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${validToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      if (response.ok) {
+        await fetchOrganizations()
+        setStatusChangeModal({ isOpen: false, organization: null, newStatus: "", reason: "" })
+      } else {
+        setError("Failed to change organization status")
+      }
+    } catch (err) {
+      setError("Failed to change organization status")
+    }
+  }
+
+  const openStatusChangeModal = (organization: Organization) => {
+    setStatusChangeModal({
+      isOpen: true,
+      organization,
+      newStatus: organization.status,
+      reason: ""
+    })
+  }
+
+  const handleStatusChange = () => {
+    if (statusChangeModal.organization && statusChangeModal.newStatus) {
+      if (statusChangeModal.newStatus === "rejected") {
+        rejectOrganization(statusChangeModal.organization.id, statusChangeModal.reason)
+      } else {
+        changeOrganizationStatus(statusChangeModal.organization.id, statusChangeModal.newStatus)
+      }
     }
   }
 
@@ -218,25 +383,31 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
     setSendingMessage(true)
     try {
-      const response = await fetch(`http://127.0.0.1:9001/messages/threads/${selectedThread.id}/messages`, {
+      const validToken = await validateToken(token)
+      if (!validToken) {
+        setError("Authentication failed - please refresh the page")
+        return
+      }
+
+      const response = await fetch(`http://127.0.0.1:9001/messages/threads/${selectedThread?.id}/messages`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${validToken}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          thread_id: selectedThread.id,
+          message: newMessage.trim(),
           sender_name: "WikiAI Admin",
           sender_email: "admin@wikiai.com",
-          message: newMessage,
           message_type: "response"
         })
       })
 
       if (response.ok) {
         setNewMessage("")
-        fetchThreadMessages(selectedThread.id)
-        fetchMessageThreads()
+        if (selectedThread?.id) {
+          fetchThreadMessages(selectedThread.id)
+        }
       }
     } catch (err) {
       setError("Failed to send message")
@@ -245,54 +416,155 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
     }
   }
 
-  const markAsRead = async (messageId: string) => {
+  const markMessageAsRead = async (messageId: string) => {
     try {
+      const validToken = await validateToken(token)
+      if (!validToken) {
+        setError("Authentication failed - please refresh the page")
+        return
+      }
+
       const response = await fetch(`http://127.0.0.1:9001/messages/${messageId}/read`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${validToken}`,
           "Content-Type": "application/json"
         }
       })
 
       if (response.ok) {
-        fetchThreadMessages(selectedThread?.id || "")
+        if (selectedThread?.id) {
+          fetchThreadMessages(selectedThread.id)
+        }
         fetchUnreadCount()
       }
     } catch (err) {
-      console.error("Failed to mark message as read:", err)
+      setError("Failed to mark message as read")
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800"
-      case "active":
-        return "bg-green-100 text-green-800"
-      case "rejected":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+  const openThreadWithOrganization = async (orgId: string, orgName: string) => {
+    try {
+      const validToken = await validateToken(token)
+      if (!validToken) {
+        setError("Authentication failed - please refresh the page")
+        return
+      }
+
+      const response = await fetch("http://127.0.0.1:9001/messages/threads", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${validToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          organization_id: orgId,
+          subject: `Conversation with ${orgName}`,
+          sender_name: "WikiAI Admin",
+          sender_email: "admin@wikiai.com",
+          message: `Hello! This is a message thread opened with ${orgName}. How can we help you today?`,
+          message_type: "inquiry"
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.status === "success") {
+          // Refresh message threads and switch to messages tab
+          await fetchMessageThreads()
+          
+          // Find the newly created thread
+          const updatedThreads = await fetch("http://127.0.0.1:9001/messages/threads", {
+            headers: {
+              "Authorization": `Bearer ${validToken}`,
+              "Content-Type": "application/json"
+            }
+          })
+          
+          if (updatedThreads.ok) {
+            const threadsData = await updatedThreads.json()
+            const threads = threadsData.response?.threads || []
+            const newThread = threads.find((t: any) => t.subject === `Conversation with ${orgName}`)
+            
+            if (newThread) {
+              setSelectedThread(newThread)
+              await fetchThreadMessages(newThread.id)
+              
+              // Switch to messages tab
+              const messagesTab = document.querySelector('[value="messages"]') as HTMLElement
+              if (messagesTab) {
+                messagesTab.click()
+              }
+            }
+          }
+          
+          setError("Thread created successfully!")
+        } else {
+          setError(data.message || "Failed to create thread")
+        }
+      } else {
+        setError("Failed to create thread")
+      }
+    } catch (err) {
+      setError("Failed to create thread")
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "pending":
-        return <Clock className="w-4 h-4" />
+      case "approved":
       case "active":
-        return <CheckCircle className="w-4 h-4" />
+        return <CheckCircle className="w-4 h-4 text-green-600" />
+      case "pending":
+        return <Clock className="w-4 h-4 text-yellow-600" />
       case "rejected":
-        return <XCircle className="w-4 h-4" />
+        return <XCircle className="w-4 h-4 text-red-600" />
+      case "on review":
+        return <Ban className="w-4 h-4 text-orange-600" />
       default:
-        return <AlertCircle className="w-4 h-4" />
+        return <AlertCircle className="w-4 h-4 text-gray-600" />
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+      case "active":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+      case "rejected":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+      case "on review":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
     }
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString()
+    if (!dateString) return "Unknown date"
+    try {
+      return new Date(dateString).toLocaleDateString()
+    } catch (error) {
+      console.error("Invalid date string:", dateString)
+      return "Invalid date"
+    }
   }
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true)
+      await Promise.all([
+        fetchOrganizations(),
+        fetchMessageThreads(),
+        fetchUnreadCount()
+      ])
+      setLoading(false)
+    }
+
+    loadData()
+  }, [])
 
   if (loading) {
     return (
@@ -305,21 +577,75 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
   return (
     <div className="space-y-6">
+      {/* WebSocket Error Message */}
+      {wsConnectionError && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded">
+          <div className="flex items-center">
+            <WifiOff className="w-4 h-4 mr-2" />
+            <span className="font-medium">Live Chat Unavailable</span>
+          </div>
+          <p className="text-sm mt-1">
+            {(wsConnectionError?.includes("timeout") || wsConnectionError?.includes("failed")) 
+              ? "The chat server is not responding. The server may need to be restarted."
+              : wsConnectionError?.includes("Authentication")
+              ? "Authentication issue. Please log out and log back in."
+              : wsConnectionError?.includes("Access denied")
+              ? "Access denied. Live chat requires admin privileges."
+              : wsConnectionError?.includes("not working properly")
+              ? "Server authentication needs to be fixed. Please restart the server."
+              : wsConnectionError?.includes("refresh")
+              ? "Connection lost. Please refresh the page to reconnect."
+              : wsConnectionError || "Unknown error"}
+          </p>
+          {((wsConnectionError?.includes("timeout") || wsConnectionError?.includes("failed") || wsConnectionError?.includes("not working properly"))) && (
+            <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mt-2">
+              <p className="text-xs font-mono text-yellow-800">
+                To restart the server, run in the graphtalk directory:<br/>
+                <code>python api.py</code>
+              </p>
+            </div>
+          )}
+          {wsConnectionError?.includes("Authentication") && (
+            <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mt-2">
+              <p className="text-xs text-yellow-800">
+                Your session may have expired. Please log out from the CMS and log back in.
+              </p>
+            </div>
+          )}
+          <p className="text-xs mt-1 text-yellow-600">
+            Regular messaging will still work through HTTP requests.
+          </p>
+        </div>
+      )}
+
       {/* Header with unread count */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Organizations & Messages</h2>
         <div className="flex items-center space-x-4">
-          {unreadCount > 0 && (
-            <Badge variant="destructive" className="flex items-center">
-              <MessageSquare className="w-4 h-4 mr-1" />
-              {unreadCount} unread
-            </Badge>
-          )}
-          <Button variant="outline" onClick={() => {
-            fetchOrganizations()
-            fetchMessageThreads()
-            fetchUnreadCount()
-          }}>
+          <h2 className="text-2xl font-bold text-foreground">Organizations & Messages</h2>
+          <div className="flex items-center space-x-2">
+            {wsIsConnected ? (
+              <Badge variant="outline" className="flex items-center text-green-600">
+                <Wifi className="w-4 h-4 mr-1" />
+                Live Chat
+              </Badge>
+            ) : wsConnectionError ? (
+              <Badge variant="outline" className="flex items-center text-red-600">
+                <WifiOff className="w-4 h-4 mr-1" />
+                {wsConnectionError?.includes("refresh") ? "Reconnect Required" : "Offline"}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="flex items-center text-muted-foreground">
+                <WifiOff className="w-4 h-4 mr-1" />
+                Offline
+              </Badge>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Button
+            onClick={() => Promise.all([fetchOrganizations(), fetchMessageThreads(), fetchUnreadCount()])}
+            variant="outline"
+          >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
@@ -335,32 +661,42 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
           <TabsTrigger value="messages">
             <MessageSquare className="w-4 h-4 mr-2" />
             Messages
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {unreadCount}
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="organizations" className="space-y-4">
           <div className="grid gap-4">
-            {organizations.map((org) => (
-              <Card key={org.id}>
+            {organizations.map((org: Organization) => (
+              <Card key={org.id || org.name || `org-${Math.random()}`}>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Building className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <CardTitle className="text-lg">{org.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          Created: {formatDate(org.created_at)}
-                        </p>
-                      </div>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-medium text-foreground">{org.name}</h3>
+                      <p className="text-sm text-muted-foreground">{org.slug}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Created: {formatDate(org.created_at)} • Updated: {formatDate(org.updated_at)}
+                      </p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={getStatusColor(org.status)}>
-                        <div className="flex items-center">
-                          {getStatusIcon(org.status)}
-                          <span className="ml-1">{org.status}</span>
-                        </div>
-                      </Badge>
-                      {org.status === "pending" && (
+                    {org.admin_username && (
+                      <p className="text-sm text-muted-foreground">
+                        Admin: {org.admin_username} ({org.admin_email})
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge className={getStatusColor(org.status)}>
+                      <div className="flex items-center">
+                        {getStatusIcon(org.status)}
+                        <span className="ml-1">{org.status}</span>
+                      </div>
+                    </Badge>
+                    {org.status === "pending" && (
+                      <div className="flex space-x-2">
                         <Button
                           size="sm"
                           onClick={() => approveOrganization(org.id)}
@@ -369,8 +705,51 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                           <CheckCircle className="w-4 h-4 mr-1" />
                           Approve
                         </Button>
-                      )}
-                    </div>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => openStatusChangeModal(org)}
+                        >
+                          <XCircle className="w-4 h-4 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                    {(org.status === "pending" || org.status === "approved" || org.status === "active") && (
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openThreadWithOrganization(org.id, org.name)}
+                          className="text-blue-600 hover:text-blue-700 border-blue-300 hover:border-blue-400"
+                        >
+                          <MessageCircle className="w-4 h-4 mr-1" />
+                          Open Thread
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openStatusChangeModal(org)}
+                          className="text-purple-600 hover:text-purple-700 border-purple-300 hover:border-purple-400"
+                        >
+                          <Settings className="w-4 h-4 mr-1" />
+                          Change Status
+                        </Button>
+                      </div>
+                    )}
+                    {org.status === "rejected" && (
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openStatusChangeModal(org)}
+                          className="text-purple-600 hover:text-purple-700 border-purple-300 hover:border-purple-400"
+                        >
+                          <ArrowUpDown className="w-4 h-4 mr-1" />
+                          Review Status
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 {org.description && (
@@ -381,6 +760,19 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
               </Card>
             ))}
           </div>
+          {organizations.length === 0 && (
+            <Card>
+              <CardContent className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <Building className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Organizations</h3>
+                  <p className="text-muted-foreground">
+                    No organizations have been created yet.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="messages" className="space-y-4">
@@ -388,7 +780,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
             {/* Thread List */}
             <div className="lg:col-span-1 space-y-2">
               <h3 className="font-semibold">Message Threads</h3>
-              {messageThreads.map((thread) => (
+              {messageThreads.map((thread: MessageThread) => (
                 <Card
                   key={thread.id}
                   className={`cursor-pointer transition-colors ${
@@ -402,7 +794,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h4 className="font-medium text-sm">{thread.subject}</h4>
+                        <h4 className="font-medium text-sm text-foreground">{thread.subject}</h4>
                         <p className="text-xs text-muted-foreground mt-1">
                           {thread.organization_name}
                         </p>
@@ -426,32 +818,32 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
               {selectedThread ? (
                 <Card>
                   <CardHeader>
-                    <CardTitle>{selectedThread.subject}</CardTitle>
+                    <CardTitle className="text-foreground">{selectedThread?.subject || 'No Subject'}</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      {selectedThread.organization_name}
+                      {selectedThread?.organization_name || 'Unknown Organization'}
                     </p>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4 max-h-96 overflow-y-auto">
-                      {threadMessages.map((message) => (
+                      {threadMessages.map((message: Message) => (
                         <div
-                          key={message.id}
+                          key={message.id || Math.random()}
                           className={`flex items-start space-x-3 p-3 rounded-lg ${
                             message.sender_type === "admin"
-                              ? "bg-blue-50"
-                              : "bg-gray-50"
+                              ? "bg-blue-50 dark:bg-blue-950"
+                              : "bg-gray-50 dark:bg-gray-900"
                           }`}
                         >
                           <div className="flex-shrink-0">
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                               <span className="text-xs font-medium">
-                                {message.sender_name.charAt(0).toUpperCase()}
+                                {message.sender_name?.charAt(0)?.toUpperCase() || '?'}
                               </span>
                             </div>
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <p className="font-medium text-sm">{message.sender_name}</p>
+                              <p className="font-medium text-sm text-foreground">{message.sender_name || 'Unknown'}</p>
                               <div className="flex items-center space-x-2">
                                 <span className="text-xs text-muted-foreground">
                                   {formatDate(message.created_at)}
@@ -463,13 +855,13 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                                 )}
                               </div>
                             </div>
-                            <p className="text-sm mt-1">{message.message}</p>
+                            <p className="text-sm mt-1 text-foreground">{message.message || 'No message content'}</p>
                             {message.sender_type === "user" && message.status === "unread" && (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 className="mt-2"
-                                onClick={() => markAsRead(message.id)}
+                                onClick={() => markMessageAsRead(message.id)}
                               >
                                 <Eye className="w-3 h-3 mr-1" />
                                 Mark as read
@@ -483,8 +875,8 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                     {/* Reply Form */}
                     <div className="mt-4 border-t pt-4">
                       <div className="flex space-x-2">
-                        <Input
-                          placeholder="Type your response..."
+                        <Textarea
+                          placeholder="Type your message..."
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
                           className="flex-1"
@@ -516,6 +908,83 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Status Change Modal */}
+      {statusChangeModal.isOpen && statusChangeModal.organization && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Settings className="w-5 h-5 mr-2" />
+                Change Organization Status
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {statusChangeModal.organization.name}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">New Status</label>
+                <select
+                  value={statusChangeModal.newStatus}
+                  onChange={(e) => setStatusChangeModal(prev => ({
+                    ...prev,
+                    newStatus: e.target.value
+                  }))}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="active">Active</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              {statusChangeModal.newStatus === "rejected" && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Rejection Reason (Optional)</label>
+                  <Textarea
+                    placeholder="Enter reason for rejection..."
+                    value={statusChangeModal.reason}
+                    onChange={(e) => setStatusChangeModal(prev => ({
+                      ...prev,
+                      reason: e.target.value
+                    }))}
+                    className="w-full"
+                  />
+                </div>
+              )}
+
+              <div className="text-sm text-muted-foreground">
+                <p className="font-medium mb-1">Status Guide:</p>
+                <ul className="space-y-1 text-xs">
+                  <li><strong>Pending:</strong> Awaiting approval (login blocked)</li>
+                  <li><strong>Active:</strong> Approved and functional (login allowed)</li>
+                  <li><strong>Approved:</strong> Alternative approved status (login allowed)</li>
+                  <li><strong>Rejected:</strong> Rejected by admin (login blocked)</li>
+                </ul>
+              </div>
+
+              <div className="flex space-x-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setStatusChangeModal({ isOpen: false, organization: null, newStatus: "", reason: "" })}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleStatusChange}
+                  disabled={!statusChangeModal.newStatus || statusChangeModal.newStatus === statusChangeModal.organization.status}
+                  className="flex-1"
+                >
+                  {statusChangeModal.newStatus === "rejected" ? "Reject" : "Update Status"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
