@@ -11,6 +11,7 @@ import {
   TrendingUp,
   LogOut
 } from "lucide-react"
+import { getCmsEndpointUrl } from "@/lib/config"
 import CMSContentManager from "./cms-content-manager"
 
 interface CMSDashboardProps {
@@ -55,7 +56,7 @@ export default function CMSDashboard({ token, onLogout }: CMSDashboardProps) {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/cms/content/stats", {
+      const response = await fetch(getCmsEndpointUrl("/content/stats"), {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
