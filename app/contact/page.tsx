@@ -30,11 +30,38 @@ export default function ContactPage() {
     message: ""
   })
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitted(true)
-    // Handle form submission here
+    setIsSubmitting(true)
+    setError("")
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/contact/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ...formData,
+          inquiry_type: "general",
+          priority: "normal"
+        })
+      })
+
+      if (response.ok) {
+        setIsSubmitted(true)
+        setFormData({ name: "", email: "", company: "", message: "" })
+      } else {
+        setError("Failed to submit form. Please try again.")
+      }
+    } catch (err) {
+      setError("Network error. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleInputChange = (field: string, value: string) => {
@@ -223,9 +250,24 @@ export default function ContactPage() {
                   />
                 </div>
                 
-                <Button type="submit" size="lg" className="w-full">
-                  {t('contact.form.sendMessage')}
-                  <Send className="w-4 h-4 ml-2" />
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                    {error}
+                  </div>
+                )}
+                
+                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      {t('contact.form.sendMessage')}
+                      <Send className="w-4 h-4 ml-2" />
+                    </>
+                  )}
                 </Button>
               </form>
             </div>
