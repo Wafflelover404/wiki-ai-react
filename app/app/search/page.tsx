@@ -4,13 +4,13 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { filesApi, queryApi, pluginsApi, catalogsApi } from "@/lib/api"
-import { useWebSocket } from "@/lib/use-websocket"
+import { queryApi, pluginsApi, catalogsApi } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { UnifiedFileReader } from "@/components/ui/file-reader"
 import {
   Dialog,
   DialogContent,
@@ -26,12 +26,11 @@ import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { useTranslation } from "@/src/i18n"
-import { 
-  Search, 
+import {
+  Search,
   Settings,
   FileText,
   ExternalLink,
-  Star,
   MessageSquare,
   ThumbsUp,
   ThumbsDown,
@@ -44,7 +43,6 @@ import {
   ShoppingCart,
   Eye,
   Globe,
-  Wifi,
   Brain,
   Copy,
 } from "lucide-react"
@@ -53,131 +51,32 @@ import ReactMarkdown from "react-markdown"
 
 // Enhanced File Viewer Component (reused from files page with search highlighting)
 function FileViewerModal({ isOpen, onClose, document, searchChunk, t }: { isOpen: boolean; onClose: () => void; document: any; searchChunk?: string; t: any }) {
-  const [fileContent, setFileContent] = useState<string>('')
-  const [isLoading, setIsLoading] = useState(false)
   const { token } = useAuth()
 
-  useEffect(() => {
-    if (isOpen && document.title && token) {
-      fetchFullContent()
-    }
-  }, [isOpen, document.title, token])
-
-  const fetchFullContent = async () => {
-    setIsLoading(true)
-    try {
-      // The search results show clean names (without temp_), but files in backend still have temp_ prefix
-      // Try both clean name and temp_ prefixed name
-      let result
-      
-      try {
-        // First try with clean name
-        result = await filesApi.getContent(token!, document.title)
-      } catch (error) {
-        // If that fails, try with temp_ prefix
-        const tempFileName = `temp_${document.title}`
-        result = await filesApi.getContent(token!, tempFileName)
-      }
-      
-      if (result.status === 'success' && result.response) {
-        let content = ''
-        
-        if (result.response.content) {
-          if (result.response.content.startsWith('data:') || result.response.content.includes('base64')) {
-            const base64Content = result.response.content.split(',')[1] || result.response.content
-            content = atob(base64Content)
-          } else {
-            content = result.response.content
-          }
-        }
-        
-        setFileContent(content)
-      } else {
-        console.error('API returned error:', result)
-        setFileContent('Content not available')
-      }
-    } catch (error) {
-      console.error('Error fetching file content:', error)
-      setFileContent('Error loading content')
-    } finally {
-      setIsLoading(false)
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose()
     }
   }
 
-  const highlightSearchChunk = (content: string, chunk?: string) => {
-    if (!chunk) return content
-    
-    const regex = new RegExp(`(${chunk.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-    return content.replace(regex, '<mark>$1</mark>')
+  if (!document) return null
+
+  const fileItem = {
+    filename: document.title || '',
+    size: 0,
+    upload_date: '',
+    content_type: document.content_type || 'application/octet-stream',
+    metadata: undefined,
+    indexed: true,
   }
-
-  const getFileExtension = (filename: string) => {
-    const parts = filename.split('.')
-    return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : ''
-  }
-
-  if (!isOpen) return null
-
-  const fileExt = getFileExtension(document.title)
-  const isPdf = fileExt === 'pdf'
-  const isWord = fileExt === 'doc' || fileExt === 'docx'
-  const highlightedContent = searchChunk ? highlightSearchChunk(fileContent, searchChunk) : fileContent
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] md:max-w-5xl max-h-[90vh] w-full">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <FileText className="w-5 h-5" />
-            <span className="truncate">{document.title}</span>
-          </DialogTitle>
-          <DialogDescription>{t('search.documentPreviewWithSearchHighlighting')}</DialogDescription>
-        </DialogHeader>
-        
-        <div className="flex-1 min-h-[500px] max-h-[60vh]">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-96">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">{t('search.loadingDocument2')}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="h-full">
-              {isPdf ? (
-                <div className="text-center p-8">
-                  <p className="text-muted-foreground">{t('search.pdfPreviewNotAvailable')}</p>
-                  <p className="text-sm text-muted-foreground mt-2">{t('search.pleaseOpenThisFileFromTheFilesPageForFullViewing2')}</p>
-                </div>
-              ) : isWord ? (
-                <div className="text-center p-8">
-                  <p className="text-muted-foreground">{t('search.wordDocumentPreviewNotAvailable2')}</p>
-                  <p className="text-sm text-muted-foreground mt-2">{t('search.pleaseOpenThisFileFromTheFilesPageForFullViewing2')}</p>
-                </div>
-              ) : (
-                <ScrollArea className="h-[60vh] rounded-md border p-4">
-                  {searchChunk ? (
-                    <div 
-                      className="text-sm font-mono whitespace-pre-wrap break-words"
-                      dangerouslySetInnerHTML={{ __html: highlightedContent }}
-                    />
-                  ) : (
-                    <pre className="text-sm font-mono whitespace-pre-wrap break-words">{fileContent}</pre>
-                  )}
-                </ScrollArea>
-              )}
-            </div>
-          )}
-        </div>
-        
-        <DialogFooter className="flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
-            <X className="w-4 h-4 mr-2" />
-            {t('search.close')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <UnifiedFileReader
+      file={fileItem}
+      token={token}
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+    />
   )
 }
 
@@ -889,15 +788,7 @@ export default function SearchPage() {
                       <Settings className="w-4 h-4" />
                       Settings
                     </Button>
-                    
-                    {/* WebSocket Connection Status (hidden if not available) */}
-                    {false && ( // Temporarily hide WebSocket status indicator
-                      <div className="flex items-center gap-1 text-xs">
-                        <Wifi className="w-3 h-3 text-green-500" />
-                        <span className="text-green-600">Real-time Search</span>
-                      </div>
-                    )}
-                    
+
                     <div className="flex-1" />
                     <div className="text-xs text-muted-foreground">
                       {searchType === 'all' ? 'All' : searchType === 'documents' ? 'Documents' : 'Products'}
