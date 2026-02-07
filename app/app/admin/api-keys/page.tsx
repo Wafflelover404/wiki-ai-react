@@ -42,6 +42,7 @@ interface ApiKey {
   last_used: string
   is_active: boolean
   expires_at?: string
+  created_by?: string
 }
 
 export default function ApiKeysPage() {
@@ -74,7 +75,8 @@ export default function ApiKeysPage() {
           created_at: key.created_at,
           last_used: key.last_used || "",
           is_active: key.is_active !== false,
-          expires_at: key.expires_at
+          expires_at: key.expires_at,
+          created_by: key.created_by
         }))
         setApiKeys(mappedKeys)
       }
@@ -134,20 +136,26 @@ export default function ApiKeysPage() {
 
   const handleDeleteKey = async () => {
     if (!token || !deleteKeyId) return
-
     setIsDeleting(true)
+    
+    console.log("🗑️ Delete button clicked for key:", deleteKeyId)
+    
     try {
       const result = await apiKeysApi.delete(token, deleteKeyId)
-
+      console.log("📤 API delete response:", result)
+      
       if (result.status === "success") {
+        console.log("✅ Delete successful, calling fetchKeys()")
         toast.success(t('apiKeys.apiKeyDeletedSuccessfully') || 'API key deleted successfully')
         setDeleteKeyId(null)
+        console.log("🔄 Calling fetchKeys() to refresh list...")
         fetchKeys()
       } else {
+        console.log("❌ Delete failed:", result.message)
         toast.error(result.message || t('apiKeys.failedToDelete') || 'Failed to delete API key')
       }
     } catch (error) {
-      console.error("Delete key error:", error)
+      console.error("❌ Delete key error:", error)
       toast.error(t('apiKeys.failedToDelete') || 'Failed to delete API key')
     } finally {
       setIsDeleting(false)
@@ -333,6 +341,7 @@ export default function ApiKeysPage() {
                     <TableHead>{t('apiKeys.keyName')}</TableHead>
                     <TableHead>{t('apiKeys.permissions')}</TableHead>
                     <TableHead>{t('apiKeys.created')}</TableHead>
+                    <TableHead>{t('apiKeys.createdBy')}</TableHead>
                     <TableHead>{t('apiKeys.lastUsed')}</TableHead>
                     <TableHead>{t('apiKeys.status')}</TableHead>
                     <TableHead className="w-[80px]">{t('apiKeys.actions')}</TableHead>
@@ -369,6 +378,9 @@ export default function ApiKeysPage() {
                           <Clock className="w-3 h-3" />
                           {new Date(key.created_at).toLocaleDateString()}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {key.created_by || "-"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {key.last_used ? new Date(key.last_used).toLocaleDateString() : t('apiKeys.never')}
