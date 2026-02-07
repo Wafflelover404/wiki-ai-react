@@ -416,6 +416,7 @@
     "createApiKey": "Создать ключ API",
     "apiKeys": "Ключи API",
     "created": "Создан",
+    "createdBy": "Создал",
     "lastUsed": "Последнее использование",
     "status": "Статус",
     "actions": "Действия",
