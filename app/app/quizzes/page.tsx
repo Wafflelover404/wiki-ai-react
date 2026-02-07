@@ -322,7 +322,7 @@ export default function QuizzesPage() {
   if (!selectedQuiz) {
     return (
       <>
-        <AppHeader breadcrumbs={[{ label: t('nav.quizzes') }]} />
+        <AppHeader breadcrumbs={[{ label: t('navigation.quizzes') }]} />
         <main className="flex-1 p-6 space-y-6">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight">{t('quizzes.title')}</h1>
@@ -344,7 +344,7 @@ export default function QuizzesPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">{t('quizzes.completed')}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('quizzes.quizzesFinished')}</CardTitle>
                 <CheckCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -460,7 +460,7 @@ export default function QuizzesPage() {
 
     return (
       <>
-        <AppHeader breadcrumbs={[{ label: t('nav.quizzes') }]} />
+        <AppHeader breadcrumbs={[{ label: t('navigation.quizzes') }]} />
         <main className="flex-1 h-screen overflow-hidden">
           <div className="h-full flex">
             {/* Left Section - Header */}
