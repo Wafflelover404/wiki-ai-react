@@ -25,6 +25,9 @@ import {
   X,
   FileSpreadsheet,
 } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism"
 
 interface FileItem {
   filename: string
@@ -617,63 +620,33 @@ const ImageViewer: React.FC<{ filename: string; content: string }> = ({ filename
 
 // Markdown Viewer Component with optimization for large files
 const MarkdownViewer: React.FC<{ content: string }> = ({ content }) => {
-  const [visibleContent, setVisibleContent] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
-  const [showMore, setShowMore] = useState(false)
-  const contentRef = useRef<HTMLDivElement>(null)
-  
-  const CHUNK_SIZE = 5000 // characters per chunk
-  const INITIAL_CHUNK_SIZE = 2000 // initial load size
-  
+  const [showFull, setShowFull] = useState(false)
+  const [fontSize, setFontSize] = useState <'sm' | 'base' | 'lg' | 'xl'>('base')
+  const CHUNK_SIZE = 5000
+  const INITIAL_CHUNK_SIZE = 2000
+
   useEffect(() => {
-    const loadContent = () => {
-      if (!content) {
-        setVisibleContent("")
-        setIsLoading(false)
-        return
-      }
-      
-      // For small files, load everything at once
-      if (content.length <= INITIAL_CHUNK_SIZE) {
-        setVisibleContent(content)
-        setIsLoading(false)
-        setShowMore(false)
-        return
-      }
-      
-      // For large files, load in chunks
-      const initialChunk = content.substring(0, INITIAL_CHUNK_SIZE)
-      setVisibleContent(initialChunk)
-      setIsLoading(false)
-      setShowMore(true)
-    }
-    
-    // Use requestAnimationFrame to prevent blocking
-    requestAnimationFrame(loadContent)
+    setIsLoading(false)
   }, [content])
-  
-  const loadMore = () => {
-    if (!content) return
-    
-    const currentLength = visibleContent.length
-    const nextChunk = content.substring(currentLength, currentLength + CHUNK_SIZE)
-    
-    if (nextChunk) {
-      setVisibleContent(prev => prev + nextChunk)
-      
-      // Check if there's more content to load
-      if (currentLength + CHUNK_SIZE >= content.length) {
-        setShowMore(false)
-      }
-    }
+
+  const displayContent = showFull ? content : content.substring(0, INITIAL_CHUNK_SIZE)
+  const hasMore = content.length > displayContent.length
+
+  const fontSizeClasses = {
+    sm: 'prose-sm',
+    base: 'prose-base',
+    lg: 'prose-lg',
+    xl: 'prose-xl',
   }
-  
-  const loadAll = () => {
-    if (!content) return
-    setVisibleContent(content)
-    setShowMore(false)
+
+  const fontSizeStyles = {
+    sm: { fontSize: '0.875rem' },
+    base: { fontSize: '1rem' },
+    lg: { fontSize: '1.125rem' },
+    xl: { fontSize: '1.25rem' },
   }
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -681,55 +654,103 @@ const MarkdownViewer: React.FC<{ content: string }> = ({ content }) => {
       </div>
     )
   }
-  
+
   return (
-    <div className="h-full flex flex-col">
-      <ScrollArea className="flex-1 rounded-md border p-4">
-        <div 
-          ref={contentRef}
-          className="prose prose-sm max-w-none dark:prose-invert"
-          dangerouslySetInnerHTML={{ 
-            __html: visibleContent
-              .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mb-4">$1</h1>')
-              .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold mb-3">$1</h2>')
-              .replace(/^### (.*$)/gim, '<h3 class="text-lg font-medium mb-2">$1</h3>')
-              .replace(/^\* (.*$)/gim, '<li class="ml-4">• $1</li>')
-              .replace(/^\- (.*$)/gim, '<li class="ml-4">• $1</li>')
-              .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal">$1</li>')
-              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-              .replace(/\*(.*?)\*/g, '<em>$1</em>')
-              .replace(/`(.*?)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-sm">$1</code>')
-              .replace(/```([\s\S]*?)```/g, '<pre class="bg-muted p-3 rounded-md overflow-x-auto text-sm"><code>$1</code></pre>')
-              .replace(/\n\n/g, '</p><p class="mb-4">')
-              .replace(/^(.*)$/gm, '<p class="mb-2">$1</p>')
-              .replace(/<p><\/p>/g, '')
-              .replace(/<p class="mb-2"><h/g, '<h')
-              .replace(/<\/h[1-6]><\/p>/g, '</h$1>')
-              .replace(/<p class="mb-2"><li/g, '<li')
-              .replace(/<\/li><\/p>/g, '</li>')
-              .replace(/<p class="mb-2"><pre/g, '<pre')
-              .replace(/<\/pre><\/p>/g, '</pre>')
-          }}
-        />
+    <div className="h-full flex flex-col max-h-full">
+      <div className="flex items-center justify-between p-2 border-b bg-muted/30">
+        <span className="text-xs text-muted-foreground">Markdown Preview</span>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground mr-1">Font:</span>
+          {(['sm', 'base', 'lg', 'xl'] as const).map((size) => (
+            <Button
+              key={size}
+              variant={fontSize === size ? 'default' : 'ghost'}
+              onClick={() => setFontSize(size)}
+              className="h-6 px-2 text-xs"
+            >
+              {size === 'sm' ? 'S' : size === 'base' ? 'M' : size === 'lg' ? 'L' : 'XL'}
+            </Button>
+          ))}
+        </div>
+      </div>
+      <ScrollArea className="flex-1 rounded-md border-t-0 p-4 max-h-[50vh] md:max-h-[60vh] overflow-auto">
+        <div
+          className={`prose ${fontSizeClasses[fontSize]} max-w-3xl dark:prose-invert prose-headings:scroll-mt-2 prose-headings:font-semibold prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline prose-blockquote:border-l-4 prose-blockquote:border-primary/30 prose-blockquote:bg-muted/20 prose-blockquote:pl-4 prose-blockquote:py-1 prose-blockquote:rounded-r prose-code:text-pink-600 dark:prose-code:text-pink-400 prose-code:before:content-none prose-code:after:content-none prose-pre:bg-muted prose-pre:text-foreground prose-pre:max-w-full prose-pre:overflow-x-auto prose-li:marker:text-muted-foreground prose-th:bg-muted prose-th:font-medium prose-td:border-muted/50`}
+          style={fontSizeStyles[fontSize]}
+        >
+          <ReactMarkdown
+            components={{
+              a({ node, href, children, ...props }) {
+                const isExternal = href?.startsWith('http://') || href?.startsWith('https://')
+                return (
+                  <a
+                    href={href}
+                    target={isExternal ? '_blank' : undefined}
+                    rel={isExternal ? 'noopener noreferrer' : undefined}
+                    className="text-blue-600 dark:text-blue-400 underline-offset-2 hover:underline"
+                    {...props}
+                  >
+                    {isExternal && (
+                      <svg className="inline w-3 h-3 ml-0.5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    )}
+                    {children}
+                  </a>
+                )
+              },
+              code({ node, inline, className, children, ...props }: any) {
+                const match = /language-(\w+)/.exec(className || '')
+                return !inline && match ? (
+                  <SyntaxHighlighter
+                    style={oneDark}
+                    language={match[1]}
+                    PreTag="div"
+                    className="rounded-md !bg-muted !p-4 !my-4 text-sm"
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                ) : (
+                  <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-medium" {...props}>
+                    {children}
+                  </code>
+                )
+              },
+              img({ node, ...props }) {
+                return (
+                  <img
+                    className="rounded-lg border max-h-64 object-contain"
+                    {...props}
+                  />
+                )
+              },
+              table({ node, ...props }) {
+                return (
+                  <div className="overflow-x-auto rounded-lg border">
+                    <table className="w-full text-sm" {...props} />
+                  </div>
+                )
+              },
+              hr({ node }) {
+                return <hr className="my-6 border-t border-muted" />
+              },
+            }}
+          >
+            {displayContent}
+          </ReactMarkdown>
+        </div>
       </ScrollArea>
-      
-      {showMore && (
+
+      {hasMore && (
         <div className="flex gap-2 p-4 border-t bg-muted/50">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={loadMore}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFull(true)}
             className="flex-1"
           >
-            Load More
-          </Button>
-          <Button 
-            variant="default" 
-            size="sm" 
-            onClick={loadAll}
-            className="flex-1"
-          >
-            Load All ({Math.ceil((content.length - visibleContent.length) / 1000)}k more chars)
+            Show Full Content
           </Button>
         </div>
       )}
@@ -740,7 +761,7 @@ const MarkdownViewer: React.FC<{ content: string }> = ({ content }) => {
 // Text/Code Viewer Component
 const TextViewer: React.FC<{ content: string }> = ({ content }) => {
   return (
-    <ScrollArea className="h-full rounded-md border p-4">
+    <ScrollArea className="h-full rounded-md border p-4 max-h-[50vh] md:max-h-[60vh] overflow-auto">
       <pre className="text-sm font-mono whitespace-pre-wrap break-words">{content}</pre>
     </ScrollArea>
   )
