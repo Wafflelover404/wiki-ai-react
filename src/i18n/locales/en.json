@@ -297,6 +297,7 @@
     "createApiKey": "Create API Key",
     "apiKeys": "API Keys",
     "created": "Created",
+    "createdBy": "Created By",
     "lastUsed": "Last Used",
     "status": "Status",
     "actions": "Actions",
