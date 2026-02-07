@@ -293,7 +293,7 @@ export function QuizResults({ result, quiz, onRetake, onBack }: QuizResultsProps
     <div className="space-y-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">{t('quizzes.completed')}</CardTitle>
+          <CardTitle className="text-2xl">{t('quizzes.quizCompleted')}</CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <div className="text-6xl font-bold">
