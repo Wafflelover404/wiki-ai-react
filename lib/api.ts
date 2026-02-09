@@ -831,7 +831,7 @@ export const opencartApi = {
 // API Keys endpoints
 export const apiKeysApi = {
   list: (token: string) =>
-    apiRequest<{ keys: Array<{ id: string; name: string; created_at: string; last_used?: string }> }>({
+    apiRequest<{ keys: Array<{ id: string; key_id: string; name: string; description?: string; permissions: string[]; is_active: boolean; created_at: string; last_used?: string }> }>({
       url: "/api-keys/list",
       token,
     }),
@@ -1488,7 +1488,7 @@ export const dashboardApi = {
     description: string
     category: string
     difficulty: "easy" | "medium" | "hard"
-    time_limit: number
+    time_limit: number  
     passing_score: number
     questions: Array<{
       id: string
@@ -1512,8 +1512,8 @@ export const dashboardApi = {
           type: q.type,
           question: q.question,
           options: q.options || [],
-          correct_answer: typeof q.correct_answer === 'number' && q.options ? 
-            q.options[q.correct_answer] : 
+          answer: typeof q.correct_answer === 'number' && q.options ?
+            q.options[q.correct_answer] :
             q.correct_answer.toString(),
           explanation: q.explanation,
           points: q.points
@@ -1570,8 +1570,8 @@ export const dashboardApi = {
         type: q.type,
         question: q.question,
         options: q.options || [],
-        correct_answer: typeof q.correct_answer === 'number' && q.options ? 
-          q.options[q.correct_answer] : 
+        answer: typeof q.correct_answer === 'number' && q.options ?
+          q.options[q.correct_answer] :
           q.correct_answer.toString(),
         explanation: q.explanation,
         points: q.points

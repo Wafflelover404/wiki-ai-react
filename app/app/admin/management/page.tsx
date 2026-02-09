@@ -73,6 +73,7 @@ interface File {
 
 interface ApiKey {
   id: string
+  key_id: string
   name: string
   created_at: string
   last_used?: string
@@ -800,7 +801,7 @@ export default function AdminManagementPage() {
                 <ScrollArea className="h-[400px]">
                   <div className="space-y-3">
                     {apiKeys.map((key) => (
-                      <div key={key.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={`${key.key_id}-${key.id}`} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
                             <Key className="w-5 h-5 text-red-600" />
@@ -830,7 +831,7 @@ export default function AdminManagementPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive"
-                              onClick={() => handleDeleteApiKey(key.id)}
+                              onClick={() => handleDeleteApiKey(key.key_id)}
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
                               Delete

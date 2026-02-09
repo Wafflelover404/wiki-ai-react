@@ -22,10 +22,6 @@ export function safeBase64Decode(base64String: string): string | null {
     // Remove all whitespace (newlines, tabs, spaces)
     content = content.replace(/\s/g, '')
 
-    // Convert URL-safe base64 variants to standard base64
-    // Some backends return base64url ('-' and '_' instead of '+' and '/')
-    content = content.replace(/-/g, '+').replace(/_/g, '/')
-
     // If content is empty after cleaning, return null
     if (!content) return null
 
