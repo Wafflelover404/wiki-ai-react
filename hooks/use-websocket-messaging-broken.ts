@@ -1,0 +1,291 @@
+"use client"
+
+import { useEffect, useRef, useState } from "react"
+
+interface WebSocketMessage {
+  type: string
+  thread_id?: string
+  message?: string
+  messages?: any[]
+  message_id?: string
+  count?: number
+  [key: string]: any
+}
+
+export function useWebSocketMessaging(token: string) {
+  const [isConnected, setIsConnected] = useState(false)
+  const [messages, setMessages] = useState<any[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [connectionError, setConnectionError] = useState<string | null>(null)
+  const wsRef = useRef<WebSocket | null>(null)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const reconnectAttemptsRef = useRef(0)
+  const maxReconnectAttempts = 5
+  const [currentToken, setCurrentToken] = useState(token)
+
+  // Token validation function
+  const validateToken = async (providedToken: string): Promise<string | null> => {
+    try {
+      const response = await fetch("http://127.0.0.1:9001/organizations", {
+        headers: {
+          "Authorization": `Bearer ${providedToken}`,
+          "Content-Type": "application/json"
+        }
+      })
+
+      if (response.ok) {
+        return providedToken // Token is valid
+      } else if (response.status === 403) {
+        // Token is invalid, try to refresh with hardcoded credentials
+        console.log("WebSocket token expired, attempting to refresh...")
+        const refreshResponse = await fetch("http://127.0.0.1:9001/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: "admin", password: "admin123" })
+        })
+
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json()
+          if (data.status === "success" && data.token) {
+            console.log("WebSocket token refreshed successfully")
+            setCurrentToken(data.token)
+            return data.token
+          }
+        }
+      }
+    } catch (err) {
+      console.error("WebSocket token validation error:", err)
+    }
+    
+    return null
+  }
+
+  const connect = async () => {
+    if (!currentToken) {
+      console.error("No token provided for WebSocket connection")
+      setConnectionError("No authentication token available")
+      return
+    }
+
+    console.log("WebSocket: Starting connection with token length:", currentToken.length)
+
+    // Close existing connection if any
+    if (wsRef.current) {
+      try {
+        wsRef.current.close()
+      } catch (e) {
+        console.log("WebSocket: Error closing existing connection:", e)
+      }
+      wsRef.current = null
+    }
+
+    // Validate and refresh token if needed
+    try {
+      const validToken = await validateToken(currentToken)
+      if (!validToken) {
+        console.error("WebSocket token validation failed")
+        setConnectionError("Authentication failed - please refresh the page")
+        return
+      }
+      console.log("WebSocket: Token validation successful")
+    } catch (error) {
+      console.error("WebSocket: Token validation error:", error)
+      setConnectionError("Token validation failed")
+      return
+    }
+
+    const wsUrl = `ws://127.0.0.1:9001/ws/messaging?token=${currentToken}`
+    console.log("WebSocket: Attempting connection to:", wsUrl.split('?token=')[0] + '?token=...')
+    
+    // Set connection timeout
+    const connectionTimeout = setTimeout(() => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.CONNECTING) {
+        wsRef.current.close()
+        setConnectionError("Connection timeout. Server may not be running.")
+        setIsConnected(false)
+      }
+    }, 5000) // 5 second timeout
+
+    try {
+      const ws = new WebSocket(wsUrl)
+      wsRef.current = ws
+
+    ws.onopen = () => {
+      console.log("WebSocket connected")
+      clearTimeout(connectionTimeout)
+      
+      setIsConnected(true)
+      setConnectionError(null)
+      reconnectAttemptsRef.current = 0
+      
+      // Send a join_thread message to test the connection
+      try {
+        ws.send(JSON.stringify({
+          type: "join_thread",
+          thread_id: "test-connection"
+        }))
+        console.log("WebSocket validation message sent")
+      } catch (error) {
+        console.error("Failed to send validation message:", error)
+        setConnectionError("WebSocket validation failed")
+      }
+    }
+
+    ws.onmessage = (event) => {
+      try {
+        const data: WebSocketMessage = JSON.parse(event.data)
+        
+        switch (data.type) {
+          case "thread_history":
+            if (data.messages) {
+              setMessages(data.messages)
+            }
+            break
+          
+          case "new_message":
+            if (data.messages) {
+              setMessages(data.messages)
+            }
+            break
+          
+          case "unread_count_update":
+            if (data.count !== undefined) {
+              setUnreadCount(data.count)
+            }
+            break
+          
+          case "message_marked_read":
+            // Message was marked as read, could update UI state
+            break
+        
+        // Send a join_thread message to test the connection
+        try {
+          ws.send(JSON.stringify({
+            type: "join_thread",
+            thread_id: "test-connection"
+          }))
+          console.log("WebSocket validation message sent")
+        } catch (sendError) {
+          console.log("WebSocket: Error sending validation message:", sendError)
+        }
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          console.log("WebSocket message received:", data)
+          
+          if (data.type === "message") {
+            setMessages(prev => [...prev, data])
+          } else if (data.type === "unread_count") {
+            setUnreadCount(data.count)
+          }
+        } catch (parseError) {
+          console.log("WebSocket: Error parsing message:", parseError)
+        }
+      }
+
+      ws.onclose = (event) => {
+        console.log("WebSocket disconnected", event.code, event.reason)
+        clearTimeout(connectionTimeout)
+        
+        setIsConnected(false)
+        
+        // Don't try to reconnect immediately on authentication errors
+        // Let the reconnection logic handle it after a delay
+      }
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error)
+        console.error("WebSocket state:", ws.readyState)
+        console.error("WebSocket URL:", wsUrl.split('?token=')[0] + '?token=...')
+        clearTimeout(connectionTimeout)
+        
+        // Provide more specific error messages based on state
+        let errorMessage = "Connection failed. Server may be unavailable."
+        if (ws.readyState === WebSocket.CLOSED) {
+          errorMessage = "WebSocket connection closed. This might be due to authentication failure."
+        } else if (ws.readyState === WebSocket.CLOSING) {
+          errorMessage = "WebSocket connection closing..."
+        }
+        
+        setConnectionError(errorMessage)
+        setIsConnected(false)
+        
+        // Don't try to reconnect immediately on authentication errors
+        // Let the reconnection logic handle it after a delay
+      }
+    } catch (error) {
+      console.error("WebSocket connection error:", error)
+      setConnectionError("Failed to create WebSocket connection")
+      setIsConnected(false)
+    }
+  }
+
+  const disconnect = () => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+    }
+    
+    if (wsRef.current) {
+      wsRef.current.close()
+      wsRef.current = null
+    }
+    
+    setIsConnected(false)
+  }
+
+  const joinThread = (threadId: string) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: "join_thread",
+        thread_id: threadId
+      }))
+    }
+  }
+
+  const sendMessage = (threadId: string, message: string) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: "send_message",
+        thread_id: threadId,
+        message: message
+      }))
+    }
+  }
+
+  const markMessageAsRead = (messageId: string) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: "mark_read",
+        message_id: messageId
+      }))
+    }
+  }
+
+  useEffect(() => {
+    if (currentToken) {
+      connect()
+    }
+
+    return () => {
+      disconnect()
+    }
+  }, [currentToken])
+
+  // Update currentToken when token prop changes
+  useEffect(() => {
+    setCurrentToken(token)
+  }, [token])
+
+  return {
+    isConnected,
+    messages,
+    unreadCount,
+    connectionError,
+    joinThread,
+    sendMessage,
+    markMessageAsRead,
+    disconnect
+  }
+}

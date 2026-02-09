@@ -35,6 +35,7 @@ import {
 
 interface ApiKey {
   id: string
+  key_id: string
   name: string
   description?: string
   permissions: string[]
@@ -67,17 +68,21 @@ export default function ApiKeysPage() {
       const result = await apiKeysApi.list(token)
       if (result.status === "success" && result.response) {
         // Map backend response to frontend interface
-        const mappedKeys = (result.response.keys || []).map((key: any) => ({
-          id: key.id,
-          name: key.name,
-          description: key.description,
-          permissions: key.permissions || [],
-          created_at: key.created_at,
-          last_used: key.last_used || "",
-          is_active: key.is_active !== false,
-          expires_at: key.expires_at,
-          created_by: key.created_by
-        }))
+        const mappedKeys = (result.response.keys || []).map((key: any) => {
+          console.log("🔍 Mapping API key:", key)
+          return {
+            id: key.id,
+            key_id: key.key_id,
+            name: key.name,
+            description: key.description,
+            permissions: key.permissions || [],
+            created_at: key.created_at,
+            last_used: key.last_used || "",
+            is_active: key.is_active !== false,
+            expires_at: key.expires_at,
+            created_by: key.created_by
+          }
+        })
         setApiKeys(mappedKeys)
       }
     } catch (error) {
@@ -135,24 +140,27 @@ export default function ApiKeysPage() {
   }
 
   const handleDeleteKey = async () => {
-    if (!token || !deleteKeyId) return
+    if (!token || !deleteKeyId) {
+      console.log("❌ Cannot delete - missing token or deleteKeyId:", { token: !!token, deleteKeyId })
+      return
+    }
     setIsDeleting(true)
     
-    console.log("🗑️ Delete button clicked for key:", deleteKeyId)
+    console.log("🗑️ Starting deletion for key:", deleteKeyId)
     
     try {
       const result = await apiKeysApi.delete(token, deleteKeyId)
       console.log("📤 API delete response:", result)
       
-      if (result.status === "success") {
+      if (result && (result.status === "success" || result.success)) {
         console.log("✅ Delete successful, calling fetchKeys()")
         toast.success(t('apiKeys.apiKeyDeletedSuccessfully') || 'API key deleted successfully')
         setDeleteKeyId(null)
         console.log("🔄 Calling fetchKeys() to refresh list...")
-        fetchKeys()
+        setTimeout(() => fetchKeys(), 100)
       } else {
-        console.log("❌ Delete failed:", result.message)
-        toast.error(result.message || t('apiKeys.failedToDelete') || 'Failed to delete API key')
+        console.log("❌ Delete failed:", result?.message || result)
+        toast.error(result?.message || t('apiKeys.failedToDelete') || 'Failed to delete API key')
       }
     } catch (error) {
       console.error("❌ Delete key error:", error)
@@ -349,7 +357,7 @@ export default function ApiKeysPage() {
                 </TableHeader>
                 <TableBody>
                   {apiKeys.map((key) => (
-                    <TableRow key={key.id}>
+                    <TableRow key={`${key.key_id}-${key.id}`}>
                       <TableCell className="font-medium">
                         <div>
                           <div className="flex items-center gap-2">
@@ -398,7 +406,10 @@ export default function ApiKeysPage() {
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => setDeleteKeyId(key.id)}
+                          onClick={() => {
+                            console.log("🗑️ Trash button clicked for key:", { key_id: key.key_id, id: key.id, key })
+                            setDeleteKeyId(key.key_id || key.id)
+                          }}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -422,7 +433,10 @@ export default function ApiKeysPage() {
         </Card>
 
         {/* Delete Confirmation */}
-        <AlertDialog open={!!deleteKeyId} onOpenChange={() => setDeleteKeyId(null)}>
+        <AlertDialog open={!!deleteKeyId} onOpenChange={(open) => {
+          console.log("🔄 AlertDialog open state changed:", { open, deleteKeyId })
+          if (!open) setDeleteKeyId(null)
+        }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t('apiKeys.deleteApiKey') || 'Delete API Key'}</AlertDialogTitle>
@@ -432,11 +446,12 @@ export default function ApiKeysPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isDeleting}>{t('apiKeys.cancel') || 'Cancel'}</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteKey}
-                disabled={isDeleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
+              <AlertDialogAction asChild>
+                <Button
+                  onClick={handleDeleteKey}
+                  disabled={isDeleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
                 {isDeleting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -444,7 +459,8 @@ export default function ApiKeysPage() {
                   </>
                 ) : (
                   t('apiKeys.deleteKey') || 'Delete Key'
-                )}
+                  )}
+                </Button>
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
