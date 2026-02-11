@@ -928,8 +928,10 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
             blob = new Blob([processedContent], { type: mimeType })
           }
         } else if (token) {
+          // Import API_CONFIG dynamically to avoid circular dependencies
+          const { API_CONFIG } = await import("@/lib/config")
           // Fallback to API endpoint if no content provided
-          const response = await fetch(`/files/content/${file.filename}`, {
+          const response = await fetch(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(file.filename)}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
@@ -973,13 +975,13 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
         // Fallback to opening in new tab if we have a token (this will likely also fail, but provides user feedback)
         if (token) {
           try {
-            window.open(`/files/content/${file.filename}`, '_blank')
+            const { API_CONFIG } = await import("@/lib/config")
+            window.open(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(file.filename)}`, '_blank')
           } catch (fallbackErr) {
             console.error('Fallback open also failed:', fallbackErr)
           }
         }
       }
-    }
   }
 
   return (
