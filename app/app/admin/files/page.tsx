@@ -4,7 +4,8 @@ import type React from "react"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { filesApi } from "@/lib/api"
+import { filesApi, apiRequest } from "@/lib/api"
+import { getApiUrl } from "@/lib/config"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -590,7 +591,93 @@ export default function AdminFilesPage() {
                             <Eye className="h-4 w-4 mr-2" />
                             View
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => window.open(`/api/files/download/${file.filename}`, "_blank")}>
+                          <DropdownMenuItem onClick={async () => {
+                            try {
+                              const contentResult = await filesApi.getContent(token || '', file.filename)
+                              if (contentResult.status === 'success' && contentResult.response) {
+                                const { content, isBinary } = contentResult.response
+                                
+                                if (isBinary) {
+                                  // Handle binary files (base64 content)
+                                  const binaryData = atob(content)
+                                  const bytes = new Uint8Array(binaryData.length)
+                                  for (let i = 0; i < binaryData.length; i++) {
+                                    bytes[i] = binaryData.charCodeAt(i)
+                                  }
+                                  // Get proper MIME type based on filename
+                                  const getContentType = (filename: string): string => {
+                                    const ext = filename.split('.').pop()?.toLowerCase()
+                                    switch (ext) {
+                                      case 'pdf': return 'application/pdf'
+                                      case 'doc': return 'application/msword'
+                                      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                                      case 'xls': return 'application/vnd.ms-excel'
+                                      case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                                      case 'png': return 'image/png'
+                                      case 'jpg':
+                                      case 'jpeg': return 'image/jpeg'
+                                      case 'gif': return 'image/gif'
+                                      case 'webp': return 'image/webp'
+                                      case 'svg': return 'image/svg+xml'
+                                      case 'txt': return 'text/plain'
+                                      case 'md': return 'text/markdown'
+                                      case 'html': return 'text/html'
+                                      case 'json': return 'application/json'
+                                      case 'xml': return 'application/xml'
+                                      case 'csv': return 'text/csv'
+                                      default: return 'application/octet-stream'
+                                    }
+                                  }
+                                  const blob = new Blob([bytes], { type: getContentType(file.filename) })
+                                  const url = window.URL.createObjectURL(blob)
+                                  const link = document.createElement('a')
+                                  link.href = url
+                                  link.download = file.filename
+                                  document.body.appendChild(link)
+                                  link.click()
+                                  document.body.removeChild(link)
+                                  window.URL.revokeObjectURL(url)
+                                } else {
+                                  // Handle text files
+                                  // Handle text files with proper MIME type
+                                  const getContentType = (filename: string): string => {
+                                    const ext = filename.split('.').pop()?.toLowerCase()
+                                    switch (ext) {
+                                      case 'pdf': return 'application/pdf'
+                                      case 'doc': return 'application/msword'
+                                      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                                      case 'xls': return 'application/vnd.ms-excel'
+                                      case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                                      case 'png': return 'image/png'
+                                      case 'jpg':
+                                      case 'jpeg': return 'image/jpeg'
+                                      case 'gif': return 'image/gif'
+                                      case 'webp': return 'image/webp'
+                                      case 'svg': return 'image/svg+xml'
+                                      case 'txt': return 'text/plain'
+                                      case 'md': return 'text/markdown'
+                                      case 'html': return 'text/html'
+                                      case 'json': return 'application/json'
+                                      case 'xml': return 'application/xml'
+                                      case 'csv': return 'text/csv'
+                                      default: return 'application/octet-stream'
+                                    }
+                                  }
+                                  const blob = new Blob([content], { type: getContentType(file.filename) })
+                                  const url = window.URL.createObjectURL(blob)
+                                  const link = document.createElement('a')
+                                  link.href = url
+                                  link.download = file.filename
+                                  document.body.appendChild(link)
+                                  link.click()
+                                  document.body.removeChild(link)
+                                  window.URL.revokeObjectURL(url)
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Download failed:', error)
+                            }
+                          }}>
                             <Download className="h-4 w-4 mr-2" />
                             Download
                           </DropdownMenuItem>

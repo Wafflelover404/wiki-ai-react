@@ -6,6 +6,7 @@ import { useTranslation } from '@/src/i18n'
 import { useUserFiles } from '@/hooks/useUserData'
 import { useUserStore } from '@/lib/store/user-store'
 import { useDashboardStore } from '@/lib/store/dashboard-store'
+import { getApiUrl } from '@/lib/config'
 import {
   Card,
   CardContent,
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { apiRequest, filesApi } from '@/lib/api'
 import {
   AlertCircle,
   Plus,
@@ -119,8 +121,95 @@ export function UserDashboard() {
     }
   }
 
-  const handleDownload = (filename: string) => {
-    addNotification(`${t('files.downloadFile')} "${filename}" ${t('status.info')}`, 'info')
+  const handleDownload = async (filename: string) => {
+    try {
+      const contentResult = await filesApi.getContent(token || '', filename)
+      
+      if (contentResult.status === 'success' && contentResult.response) {
+        const { content, isBinary } = contentResult.response
+        
+        if (isBinary) {
+          // Handle binary files (base64 content)
+          const binaryData = atob(content)
+          const bytes = new Uint8Array(binaryData.length)
+          for (let i = 0; i < binaryData.length; i++) {
+            bytes[i] = binaryData.charCodeAt(i)
+          }
+          // Get proper MIME type based on filename
+          const getContentType = (filename: string): string => {
+            const ext = filename.split('.').pop()?.toLowerCase()
+            switch (ext) {
+              case 'pdf': return 'application/pdf'
+              case 'doc': return 'application/msword'
+              case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+              case 'xls': return 'application/vnd.ms-excel'
+              case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+              case 'png': return 'image/png'
+              case 'jpg':
+              case 'jpeg': return 'image/jpeg'
+              case 'gif': return 'image/gif'
+              case 'webp': return 'image/webp'
+              case 'svg': return 'image/svg+xml'
+              case 'txt': return 'text/plain'
+              case 'md': return 'text/markdown'
+              case 'html': return 'text/html'
+              case 'json': return 'application/json'
+              case 'xml': return 'application/xml'
+              case 'csv': return 'text/csv'
+              default: return 'application/octet-stream'
+            }
+          }
+          const blob = new Blob([bytes], { type: getContentType(filename) })
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = filename
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(url)
+        } else {
+          // Handle text files
+          // Get proper MIME type based on filename
+          const getContentType = (filename: string): string => {
+            const ext = filename.split('.').pop()?.toLowerCase()
+            switch (ext) {
+              case 'pdf': return 'application/pdf'
+              case 'doc': return 'application/msword'
+              case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+              case 'xls': return 'application/vnd.ms-excel'
+              case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+              case 'png': return 'image/png'
+              case 'jpg':
+              case 'jpeg': return 'image/jpeg'
+              case 'gif': return 'image/gif'
+              case 'webp': return 'image/webp'
+              case 'svg': return 'image/svg+xml'
+              case 'txt': return 'text/plain'
+              case 'md': return 'text/markdown'
+              case 'html': return 'text/html'
+              case 'json': return 'application/json'
+              case 'xml': return 'application/xml'
+              case 'csv': return 'text/csv'
+              default: return 'application/octet-stream'
+            }
+          }
+          const blob = new Blob([content], { type: getContentType(filename) })
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = filename
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(url)
+        }
+        addNotification(`${t('files.downloadFile')} "${filename}" ${t('status.info')}`, 'info')
+      }
+    } catch (error) {
+      console.error('Download failed:', error)
+      addNotification(`Failed to download "${filename}"`, 'error')
+    }
   }
 
   return (

@@ -5,7 +5,8 @@ import type React from "react"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useTranslation } from "@/src/i18n"
-import { filesApi } from "@/lib/api"
+import { filesApi, apiRequest } from "@/lib/api"
+import { getApiUrl } from "@/lib/config"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -923,7 +924,46 @@ export default function FilesPage() {
                                   {t("files.edit")}
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={async () => {
+                                try {
+                                  const contentResult = await filesApi.getContent(token || '', file.name)
+                                  if (contentResult.status === 'success' && contentResult.response) {
+                                    const { content, isBinary } = contentResult.response
+                                    
+                                    if (isBinary) {
+                                      // Handle binary files (base64 content)
+                                      const binaryData = atob(content)
+                                      const bytes = new Uint8Array(binaryData.length)
+                                      for (let i = 0; i < binaryData.length; i++) {
+                                        bytes[i] = binaryData.charCodeAt(i)
+                                      }
+                                      const blob = new Blob([bytes], { type: getContentType(file.name) })
+                                      const url = window.URL.createObjectURL(blob)
+                                      const link = document.createElement('a')
+                                      link.href = url
+                                      link.download = file.name
+                                      document.body.appendChild(link)
+                                      link.click()
+                                      document.body.removeChild(link)
+                                      window.URL.revokeObjectURL(url)
+                                    } else {
+                                      // Handle text files
+                                      const blob = new Blob([content], { type: getContentType(file.name) })
+                                      const url = window.URL.createObjectURL(blob)
+                                      const link = document.createElement('a')
+                                      link.href = url
+                                      link.download = file.name
+                                      document.body.appendChild(link)
+                                      link.click()
+                                      document.body.removeChild(link)
+                                      window.URL.revokeObjectURL(url)
+                                    }
+                                  }
+                                } catch (error) {
+                                  console.error('Download failed:', error)
+                                  toast.error('Failed to download file')
+                                }
+                              }}>
                                 <Download className="w-3 h-3 mr-2" />
                                 {t("files.download")}
                               </DropdownMenuItem>
@@ -998,7 +1038,46 @@ export default function FilesPage() {
                                     {t("files.edit")}
                                   </DropdownMenuItem>
                                 )}
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={async () => {
+                                  try {
+                                    const contentResult = await filesApi.getContent(token || '', file.name)
+                                    if (contentResult.status === 'success' && contentResult.response) {
+                                      const { content, isBinary } = contentResult.response
+                                      
+                                      if (isBinary) {
+                                        // Handle binary files (base64 content)
+                                        const binaryData = atob(content)
+                                        const bytes = new Uint8Array(binaryData.length)
+                                        for (let i = 0; i < binaryData.length; i++) {
+                                          bytes[i] = binaryData.charCodeAt(i)
+                                        }
+                                      const blob = new Blob([bytes], { type: getContentType(file.name) })
+                                        const url = window.URL.createObjectURL(blob)
+                                        const link = document.createElement('a')
+                                        link.href = url
+                                        link.download = file.name
+                                        document.body.appendChild(link)
+                                        link.click()
+                                        document.body.removeChild(link)
+                                        window.URL.revokeObjectURL(url)
+                                      } else {
+                                      // Handle text files
+                                      const blob = new Blob([content], { type: getContentType(file.name) })
+                                        const url = window.URL.createObjectURL(blob)
+                                        const link = document.createElement('a')
+                                        link.href = url
+                                        link.download = file.name
+                                        document.body.appendChild(link)
+                                        link.click()
+                                        document.body.removeChild(link)
+                                        window.URL.revokeObjectURL(url)
+                                      }
+                                    }
+                                  } catch (error) {
+                                    console.error('Download failed:', error)
+                                    toast.error('Failed to download file')
+                                  }
+                                }}>
                                   <Download className="w-3 h-3 mr-2" />
                                   {t("files.download")}
                                 </DropdownMenuItem>
@@ -1033,6 +1112,7 @@ export default function FilesPage() {
           token={token}
           open={isViewOpen}
           onOpenChange={setIsViewOpen}
+          content={fileContent}
         />
 
         {/* Edit File Dialog */}

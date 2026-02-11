@@ -45,6 +45,7 @@ interface FileReaderProps {
   onOpenChange: (open: boolean) => void
   showDownload?: boolean
   className?: string
+  content?: string | null
 }
 
 const getContentType = (filename: string): string => {
@@ -780,7 +781,7 @@ const FileContentViewer: React.FC<FileViewerContentProps> = ({ file, token }) =>
 
   useEffect(() => {
     const loadContent = async () => {
-      if (!token) return
+      if (!token || !file.filename) return
       
       try {
         // Import filesApi dynamically to avoid circular dependencies
@@ -794,16 +795,36 @@ const FileContentViewer: React.FC<FileViewerContentProps> = ({ file, token }) =>
         }
       } catch (err) {
         console.error("Failed to load file content:", err)
-        setContent("Error loading file content")
+        // Provide more specific error messages based on the error
+        let errorMessage = "Error loading file content"
+        if (err instanceof Error) {
+          if (err.message.includes('404') || err.message.includes('Not Found')) {
+            errorMessage = "File not found on server"
+          } else if (err.message.includes('403') || err.message.includes('Unauthorized')) {
+            errorMessage = "Access denied - you don't have permission to view this file"
+          } else if (err.message.includes('500')) {
+            errorMessage = "Server error - please try again later"
+          } else {
+            errorMessage = `Error loading file: ${err.message}`
+          }
+        }
+        setContent(errorMessage)
       } finally {
         setLoading(false)
       }
     }
 
-    if (file.filename && token) {
+    // Only try to load content if no content prop was provided and we have a token and filename
+    if (!content && file.filename && token) {
       loadContent()
+    } else if (content) {
+      // Content is already provided as prop, no need to fetch
+      setContent(content)
+      setLoading(false)
+    } else {
+      setLoading(false)
     }
-  }, [file.filename, token])
+  }, [file.filename, token, content])
 
   if (loading) {
     return (
@@ -852,8 +873,9 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
   token, 
   open, 
   onOpenChange, 
-  showDownload = true,
-  className 
+  showDownload = true, 
+  className = "",
+  content 
 }) => {
   const getFileIcon = (contentType: string, filename?: string) => {
     if (contentType.startsWith("image/")) return <Image className="h-4 w-4" />
@@ -867,21 +889,62 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
   }
 
   const handleDownload = async () => {
-    if (file && token) {
+    if (!file) {
+      console.error('Cannot download: No file provided')
+      return
+    }
       try {
-        // Fetch the file as a blob for proper download
-        const response = await fetch(`/files/content/${file.filename}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'ngrok-skip-browser-warning': 'true'
-          }
-        })
+        let blob: Blob
         
-        if (!response.ok) {
-          throw new Error(`Download failed: ${response.statusText}`)
+        if (content) {
+          // Use provided content to create blob
+          const mimeType = file.content_type || getContentType(file.filename) || 'application/octet-stream'
+          
+          // Handle base64 content
+          let processedContent = content
+          if (content.startsWith('data:')) {
+            // Remove data URL prefix if present
+            const base64Content = content.split(',')[1] || content
+            processedContent = base64Content
+          }
+          
+          // Check if content is base64 encoded
+          try {
+            const isBase64 = /^[A-Za-z0-9+/]*={0,2}$/.test(processedContent)
+            if (isBase64 && processedContent.length % 4 === 0) {
+              // Decode base64 to binary
+              const binaryString = atob(processedContent)
+              const bytes = new Uint8Array(binaryString.length)
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i)
+              }
+              blob = new Blob([bytes], { type: mimeType })
+            } else {
+              // Use content as text
+              blob = new Blob([processedContent], { type: mimeType })
+            }
+          } catch {
+            // If base64 decoding fails, treat as text
+            blob = new Blob([processedContent], { type: mimeType })
+          }
+        } else if (token) {
+          // Fallback to API endpoint if no content provided
+          const response = await fetch(`/files/content/${file.filename}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'ngrok-skip-browser-warning': 'true'
+            }
+          })
+          
+          if (!response.ok) {
+            throw new Error(`Download failed: ${response.statusText}`)
+          }
+          
+          blob = await response.blob()
+        } else {
+          throw new Error('No content or token available for download')
         }
         
-        const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
         
         // Create download link
@@ -896,8 +959,25 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
         window.URL.revokeObjectURL(url)
       } catch (err) {
         console.error('Download failed:', err)
-        // Fallback to opening in new tab
-        window.open(`/files/content/${file.filename}`, '_blank')
+        // Provide user-friendly error messages
+        if (err instanceof Error) {
+          if (err.message.includes('404') || err.message.includes('Not Found')) {
+            console.error('File not found on server')
+          } else if (err.message.includes('403') || err.message.includes('Unauthorized')) {
+            console.error('Access denied - insufficient permissions')
+          } else {
+            console.error(`Download error: ${err.message}`)
+          }
+        }
+        
+        // Fallback to opening in new tab if we have a token (this will likely also fail, but provides user feedback)
+        if (token) {
+          try {
+            window.open(`/files/content/${file.filename}`, '_blank')
+          } catch (fallbackErr) {
+            console.error('Fallback open also failed:', fallbackErr)
+          }
+        }
       }
     }
   }
