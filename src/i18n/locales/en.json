@@ -689,6 +689,7 @@
     "file": "File"
   },
   "settings": {
+    "title": "Settings",
     "description": "Manage your account and application preferences",
     "accountInformation": "Account Information",
     "accountDescription": "Your account details",
