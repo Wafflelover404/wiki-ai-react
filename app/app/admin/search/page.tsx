@@ -443,6 +443,8 @@ export default function AdminSearchPage() {
         let connectionTimeout: NodeJS.Timeout
         let immediateReceived = false
         let overviewReceived = false
+        let loadingMessageAdded = false
+        let lastToken = ''
         
         // Set connection timeout
         connectionTimeout = setTimeout(() => {
@@ -548,7 +550,8 @@ export default function AdminSearchPage() {
                   setMessages(prev => [...prev, sourcesMessage])
                   
                   // Add "Generating AI overview" message if overview is expected
-                  if (showAiOverview) {
+                  if (showAiOverview && !loadingMessageAdded) {
+                    loadingMessageAdded = true
                     const overviewLoadingMessage: Message = {
                       id: crypto.randomUUID(),
                       role: "assistant",
@@ -560,8 +563,51 @@ export default function AdminSearchPage() {
                 }
                 break
                 
+              case 'stream_start':
+                // Start streaming - replace "Generating..." with empty message that will be filled with tokens
+                loadingMessageAdded = false // Reset flag
+                lastToken = '' // Reset token deduplication
+                setMessages(prev => {
+                  const filtered = prev.filter(msg => 
+                    msg.content !== "Generating AI overview..." && 
+                    msg.content !== "🤖 AI Agent generating enhanced analysis..."
+                  )
+                  return [...filtered, {
+                    id: crypto.randomUUID(),
+                    role: "overview",
+                    content: "",
+                    timestamp: new Date(Date.now()),
+                  }]
+                })
+                break
+                
+              case 'stream_token':
+                // Append streaming token to the last overview message (with deduplication)
+                if (message.token && message.token !== lastToken) {
+                  lastToken = message.token
+                  setMessages(prev => {
+                    const updated = [...prev]
+                    const lastMessage = updated[updated.length - 1]
+                    if (lastMessage && lastMessage.role === "overview") {
+                      // Create a new message object to ensure React re-renders
+                      updated[updated.length - 1] = {
+                        ...lastMessage,
+                        content: lastMessage.content + message.token
+                      }
+                    }
+                    return updated
+                  })
+                }
+                break
+                
+              case 'stream_end':
+                // Streaming completed
+                overviewReceived = true
+                setIsLoading(false)
+                break
+                
               case 'overview':
-                // Replace "Generating..." with actual overview (same as Vue)
+                // Replace "Generating..." with actual overview (same as Vue) - fallback for non-streaming
                 overviewReceived = true
                 setIsLoading(false) // Ensure loading is stopped
                 

@@ -1007,6 +1007,14 @@ export const aiAgentApi = {
       token,
       data: { query },
     }),
+
+  batchOverviews: (token: string, queries: string[], results: any[]) =>
+    apiRequest<{ overviews: string[] }>({
+      url: "/query/batch-overview",
+      method: "POST",
+      token,
+      data: { queries, results },
+    }),
 }
 
 // Landing Pages API endpoints
