@@ -828,16 +828,52 @@ export const opencartApi = {
     }),
 }
 
-// API Keys endpoints
+// API Keys endpoints - Enhanced with rate limiting, LLM control, and analytics
 export const apiKeysApi = {
   list: (token: string) =>
-    apiRequest<{ keys: Array<{ id: string; key_id: string; name: string; description?: string; permissions: string[]; is_active: boolean; created_at: string; last_used?: string }> }>({
+    apiRequest<{ 
+      keys: Array<{ 
+        id: string; 
+        key_id: string; 
+        name: string; 
+        description?: string; 
+        permissions: string[]; 
+        is_active: boolean; 
+        created_at: string; 
+        last_used?: string;
+        status?: string;
+        priority_tier?: string;
+        rate_limit_requests?: number;
+        current_usage?: number;
+        llm_enabled?: boolean;
+        max_tokens_per_day?: number;
+        current_llm_tokens_used?: number;
+        expires_at?: string;
+      }> 
+    }>({
       url: "/api-keys/list",
       token,
     }),
 
-  create: (token: string, data: { name: string; description?: string; permissions: string[]; expires_in_days?: number }) =>
-    apiRequest<{ key: string; key_id: string; id: string; full_key: string }>({
+  create: (token: string, data: { 
+    name: string; 
+    description?: string; 
+    permissions: string[]; 
+    expires_in_days?: number;
+    priority_tier?: string;
+    rate_limit_requests?: number;
+    rate_limit_period?: string;
+    llm_enabled?: boolean;
+    max_tokens_per_day?: number;
+    llm_cost_limit?: number;
+  }) =>
+    apiRequest<{ 
+      key?: string; 
+      key_id: string; 
+      id: string; 
+      full_key: string;
+      tier?: string;
+    }>({
       url: "/api-keys/create",
       method: "POST",
       token,
@@ -848,6 +884,137 @@ export const apiKeysApi = {
     apiRequest({
       url: `/api-keys/${keyId}`,
       method: "DELETE",
+      token,
+    }),
+
+  get: (token: string, keyId: string) =>
+    apiRequest<{
+      id: string;
+      key_id: string;
+      name: string;
+      description?: string;
+      permissions: string[];
+      is_active: boolean;
+      created_at: string;
+      last_used?: string;
+      expires_at?: string;
+      status: string;
+      priority_tier: string;
+      rate_limit_requests: number;
+      current_usage: number;
+      llm_enabled: boolean;
+      max_tokens_per_day: number;
+      current_llm_tokens_used: number;
+      llm_cost_limit: number;
+      current_llm_cost: number;
+    }>({
+      url: `/api-keys/${keyId}`,
+      token,
+    }),
+
+  update: (token: string, keyId: string, data: {
+    name?: string;
+    permissions?: string[];
+    rate_limit_requests?: number;
+    llm_enabled?: boolean;
+    max_tokens_per_day?: number;
+    expires_at?: string;
+    priority_tier?: string;
+  }) =>
+    apiRequest({
+      url: `/api-keys/${keyId}`,
+      method: "PUT",
+      token,
+      data,
+    }),
+
+  revoke: (token: string, keyId: string) =>
+    apiRequest({
+      url: `/api-keys/${keyId}/revoke`,
+      method: "POST",
+      token,
+    }),
+
+  // Analytics endpoints
+  getQuota: (token: string, keyId: string) =>
+    apiRequest<{
+      current_usage: number;
+      limit: number;
+      usage_percent: number;
+      warning_threshold: number;
+      is_warning: boolean;
+      reset_time: string;
+    }>({
+      url: `/api-keys/${keyId}/quota`,
+      token,
+    }),
+
+  getUsageStats: (token: string, keyId: string, days: number = 7) =>
+    apiRequest<{
+      total_requests: number;
+      avg_response_time_ms: number;
+      error_count: number;
+      total_llm_tokens: number;
+      total_request_bytes: number;
+      total_response_bytes: number;
+      period_days: number;
+    }>({
+      url: `/api-keys/${keyId}/usage-stats`,
+      token,
+      params: { days: String(days) },
+    }),
+
+  getAuditLog: (token: string, keyId: string, limit: number = 50, offset: number = 0) =>
+    apiRequest<{
+      events: Array<{
+        id: number;
+        event_type: string;
+        changes?: Record<string, any>;
+        changed_by?: string;
+        timestamp: string;
+        reason?: string;
+      }>;
+    }>({
+      url: `/api-keys/${keyId}/audit-log`,
+      token,
+      params: { limit: String(limit), offset: String(offset) },
+    }),
+
+  getLlmControl: (token: string, keyId: string) =>
+    apiRequest<{
+      llm_enabled: boolean;
+      models_allowed: string[];
+      tokens_remaining: number;
+      tokens_used: number;
+      tokens_limit: number;
+      cost_remaining: number;
+      current_cost: number;
+      cost_limit: number;
+      can_afford: boolean;
+    }>({
+      url: `/api-keys/${keyId}/llm-control`,
+      token,
+    }),
+
+  updateLlmControl: (token: string, keyId: string, data: {
+    llm_enabled?: boolean;
+    llm_models_allowed?: string[];
+    max_tokens_per_day?: number;
+    llm_cost_limit?: number;
+  }) =>
+    apiRequest({
+      url: `/api-keys/${keyId}/llm-control`,
+      method: "PUT",
+      token,
+      data,
+    }),
+
+  getPermissions: (token: string) =>
+    apiRequest<{
+      permissions: Record<string, string>;
+      total: number;
+    }>({
+      url: "/api-keys/permissions/list",
       token,
     }),
 }
