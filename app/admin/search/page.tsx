@@ -72,8 +72,73 @@ export default function AdminSearchPage() {
   const [aiAgentInput, setAiAgentInput] = useState("")
   const [aiAgentOutput, setAiAgentOutput] = useState("")
   const [isAiAgentLoading, setIsAiAgentLoading] = useState(false)
+  const [activeAnalysis, setActiveAnalysis] = useState<{
+    type: 'loading' | 'streaming';
+    content: string;
+  } | null>(null)
   const [showAiAgentHelp, setShowAiAgentHelp] = useState(false)
   const [availableFiles, setAvailableFiles] = useState<Array<{id: number, filename: string}>>([])
+
+  const [isBatchLoading, setIsBatchLoading] = useState(false)
+
+  const handleBatchOverview = async () => {
+    // Find all "sources" messages that don't have a following "overview" message
+    const sourcesToProcess: { index: number; message: Message }[] = []
+    
+    messages.forEach((msg, idx) => {
+      if (msg.role === 'sources' && msg.searchResults && msg.searchResults.length > 0) {
+        // Check if the next message is an overview for this specific source
+        const nextMsg = messages[idx + 1]
+        if (!nextMsg || nextMsg.role !== 'overview') {
+          sourcesToProcess.push({ index: idx, message: msg })
+        }
+      }
+    })
+
+    if (sourcesToProcess.length === 0) {
+      toast.info("No new search results to analyze")
+      return
+    }
+
+    setIsBatchLoading(true)
+    try {
+      if (!token) throw new Error("No token available")
+
+      const queries = sourcesToProcess.map(s => s.message.content)
+      const results = sourcesToProcess.map(s => s.message.searchResults)
+
+      const response = await aiAgentApi.batchOverviews(token, queries, results)
+
+      if (response.status === "success" && response.response?.overviews) {
+        const newMessages = [...messages]
+        const overviews = response.response.overviews
+
+        // Insert overviews after their respective source messages
+        // We do this in reverse to not mess up the indices
+        for (let i = sourcesToProcess.length - 1; i >= 0; i--) {
+          const { index } = sourcesToProcess[i]
+          const overviewMsg: Message = {
+            id: crypto.randomUUID(),
+            role: "overview",
+            content: aiAgentMode 
+              ? `🤖 **AI-Agent Analysis (Batch):** ${overviews[i]}`
+              : overviews[i],
+            timestamp: new Date()
+          }
+          newMessages.splice(index + 1, 0, overviewMsg)
+        }
+
+        setMessages(newMessages)
+        toast.success(`Generated ${overviews.length} overviews`)
+      } else {
+        toast.error(response.message || "Failed to generate batch overviews")
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Batch processing failed")
+    } finally {
+      setIsBatchLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -187,122 +252,121 @@ export default function AdminSearchPage() {
     if (!input.trim() || !token || isLoading) return
     
     setIsLoading(true)
-    setMessages([]) // Clear previous messages for new search
-    if (true) {
-      const overviewLoadingMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: aiAgentMode ? "🤖 AI Agent search processing..." : "Generating AI overview...",
-        timestamp: new Date(Date.now()),
-      }
-      setMessages(prev => [...prev, overviewLoadingMessage])
-    }
+    setMessages([])
+    setActiveAnalysis({
+      type: 'loading',
+      content: aiAgentMode ? "🤖 AI Agent search processing..." : "Generating AI overview..."
+    })
     
     try {
       const result = await queryApi.queryWebSocket(token, input, {
         session_id: sessionId,
         ai_agent_mode: aiAgentMode,
         onMessage: (message) => {
-          console.log('Search message received:', message)
+          console.log('WS Message:', message.type, message);
           
-          // Handle different message types
-          if (message.type === 'status') {
-            // Optional: Show status updates
-            console.log('Search status:', message.message)
-            
-            // Show AI agent specific status
-            if (aiAgentMode && message.message) {
-              const statusMessage: Message = {
+          switch (message.type) {
+            case 'status':
+              // Filter out the 'Processing query...' status from being added to messages if it's the first one
+              if (message.message && message.message !== "Processing query...") {
+                setMessages(prev => [...prev, {
+                  id: crypto.randomUUID(),
+                  role: "assistant",
+                  content: aiAgentMode ? `🤖 AI Agent: ${message.message}` : message.message,
+                  timestamp: new Date()
+                }])
+              }
+              break;
+
+            case 'immediate':
+              let searchResults: SearchResult[] = []
+              if (message.data && (message.data.snippets || message.data.results)) {
+                if (message.data.snippets) {
+                  message.data.snippets.forEach((snippet: any, index: number) => {
+                    searchResults.push({
+                      id: `doc-${index}`,
+                      type: 'document',
+                      title: snippet.source || `Document ${index + 1}`,
+                      content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
+                      source: snippet.source || 'Unknown',
+                      score: snippet.score || 0
+                    })
+                  })
+                }
+                if (message.data.results) {
+                  message.data.results.forEach((result: any, index: number) => {
+                    searchResults.push({
+                      id: `ai-${index}`,
+                      type: 'document',
+                      title: result.title || result.source || `AI Result ${index + 1}`,
+                      content: result.content || result.snippet || 'No content available',
+                      source: result.source || 'Unknown',
+                      score: result.score || 0,
+                      ai_ranked: result.ai_ranked || false,
+                      relevance: result.relevance || 'medium',
+                      enhanced_context: result.enhanced_context || false
+                    })
+                  })
+                }
+              }
+              setMessages(prev => [...prev, {
                 id: crypto.randomUUID(),
-                role: "assistant",
-                content: `🤖 AI Agent: ${message.message}`,
-                timestamp: new Date(Date.now())
-              }
-              setMessages(prev => [...prev, statusMessage])
-            }
-          } else if (message.type === 'immediate') {
-            // Show search results
-            let searchResults: SearchResult[] = []
-            
-            // Handle both response structures
-            if (message.data && (message.data.snippets || message.data.results)) {
-              // Handle original API structure (snippets)
-              if (message.data.snippets) {
-                message.data.snippets.forEach((snippet: any, index: number) => {
-                  searchResults.push({
-                    id: `doc-${index}`,
-                    type: 'document',
-                    title: snippet.source || `Document ${index + 1}`,
-                    content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
-                    source: snippet.source || 'Unknown',
-                    score: snippet.score || 0
-                  })
-                })
-              }
-              
-              // Handle AI Agent API structure (results)
-              if (message.data.results) {
-                message.data.results.forEach((result: any, index: number) => {
-                  // Check for AI-specific metadata
-                  const isAiRanked = result.ai_ranked || false
-                  const relevance = result.relevance || 'medium'
-                  const enhancedContext = result.enhanced_context || false
-                  
-                  searchResults.push({
-                    id: `ai-${index}`,
-                    type: 'document',
-                    title: result.title || result.source || `AI Result ${index + 1}`,
-                    content: result.content || result.snippet || 'No content available',
-                    source: result.source || 'Unknown',
-                    score: result.score || 0,
-                    ai_ranked: isAiRanked,
-                    relevance: relevance,
-                    enhanced_context: enhancedContext
-                  })
-                })
-              }
-            }
-            
-            const searchMessage: Message = {
-              id: crypto.randomUUID(),
-              role: "sources",
-              content: aiAgentMode 
-                ? `🤖 AI Agent found ${searchResults.length} enhanced sources`
-                : `Found ${searchResults.length} relevant sources`,
-              sources: searchResults.map(r => r.source),
-              searchResults: searchResults,
-              timestamp: new Date(Date.now())
-            }
-            
-            setMessages(prev => [...prev, searchMessage])
-          } else if (message.type === 'overview') {
-            // Show AI overview
-            const overviewContent = aiAgentMode 
-              ? `🤖 **AI-Agent Analysis:** ${message.data || "No overview available"}`
-              : message.data || "No overview available"
-              
-            const overviewMessage: Message = {
-              id: crypto.randomUUID(),
-              role: "overview",
-              content: overviewContent,
-              timestamp: new Date(Date.now())
-            }
-            
-            setMessages(prev => [...prev, overviewMessage])
-          } else if (message.type === 'complete') {
-            // Search completed
-            console.log('Search completed')
+                role: "sources",
+                content: aiAgentMode ? `🤖 AI Agent found ${searchResults.length} enhanced sources` : `Found ${searchResults.length} relevant sources`,
+                sources: searchResults.map(r => r.source),
+                searchResults: searchResults,
+                timestamp: new Date()
+              }])
+              break;
+
+            case 'stream_token':
+              console.log('Got token:', message.token); // Debug log
+              setActiveAnalysis(prev => {
+                if (!prev || prev.type === 'loading') {
+                  return {
+                    type: 'streaming',
+                    content: message.token
+                  };
+                }
+                return {
+                  ...prev,
+                  type: 'streaming',
+                  content: prev.content + message.token
+                };
+              });
+              break;
+
+            case 'overview':
+              const finalContent = aiAgentMode ? `🤖 **AI-Agent Analysis:** ${message.data}` : message.data;
+              setActiveAnalysis(null)
+              setMessages(prev => {
+                const filtered = prev.filter(msg => msg.role !== "overview")
+                return [...filtered, {
+                  id: crypto.randomUUID(),
+                  role: "overview",
+                  content: finalContent,
+                  timestamp: new Date()
+                }]
+              })
+              break;
+
+            case 'error':
+              setActiveAnalysis(null)
+              toast.error(message.message || "Search error")
+              break;
+
+            case 'complete':
+              setActiveAnalysis(null)
+              break;
           }
         }
       })
       
       if (result && (result as any).status === 'success') {
-        toast.success(aiAgentMode ? "AI Agent search completed successfully!" : "Search completed successfully!")
-      } else {
-        toast.error((result as any)?.message || "Search failed")
+        toast.success(aiAgentMode ? "AI Agent search completed!" : "Search completed!")
       }
     } catch (error) {
-      console.error('Search error:', error)
+      setActiveAnalysis(null)
       toast.error("Search failed")
     } finally {
       setIsLoading(false)
@@ -384,6 +448,28 @@ export default function AdminSearchPage() {
                         </>
                       )}
                     </Button>
+                    
+                    {messages.some(m => m.role === 'sources') && (
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={handleBatchOverview} 
+                        disabled={isBatchLoading} 
+                        className="w-full mt-2"
+                      >
+                        {isBatchLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Batch Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Generate Overviews for All
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </form>
                 </div>
 
@@ -540,6 +626,46 @@ export default function AdminSearchPage() {
                       </div>
                     </div>
                   ))}
+                  
+                  {activeAnalysis && activeAnalysis.type === 'loading' && (
+                    <div key="active-loading" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-100 dark:border-green-900 animate-pulse">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          <Bot className="w-5 h-5 mt-1 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-muted-foreground mb-1">
+                            Analyzing sources...
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>{activeAnalysis.content}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeAnalysis && activeAnalysis.type === 'streaming' && (
+                    <div key="active-streaming" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 shadow-sm transition-all duration-200">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          <Sparkles className="w-5 h-5 mt-1 text-purple-500 animate-pulse" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-purple-600 dark:text-purple-400 mb-1 flex items-center gap-2 text-[10px] uppercase tracking-wider">
+                            Live Analysis
+                            <span className="flex h-1.5 w-1.5 rounded-full bg-purple-500 animate-ping" />
+                          </div>
+                          <div className="prose prose-sm dark:prose-invert max-w-none text-foreground leading-relaxed">
+                            <ReactMarkdown>
+                              {activeAnalysis.content}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </ScrollArea>
               </CardContent>
             </Card>
