@@ -990,7 +990,11 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {file && getFileIcon(file.content_type, file.filename)}
-            <span className="truncate">{file?.filename}</span>
+            <span className="truncate max-w-[95vw]">
+                {file && file.filename && file.filename.length > 70
+                    ? file.filename.slice(0, 67) + '...' 
+                    : file?.filename}
+            </span>
           </DialogTitle>
           <DialogDescription>
             File content preview
