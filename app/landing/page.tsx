@@ -782,16 +782,16 @@ function SearchDemo() {
 
   const cur = QA[qi];
   return (
-    <div className="search-demo-wrap" style={{ maxWidth:580, margin:"0 auto", height:"auto", position:"relative" }}>
+    <div className="search-demo-wrap" style={{ width:580, maxWidth:"100%", margin:"0 auto", height:400, position:"relative" }}>
       {/* Search bar */}
-      <div style={{ display:"flex", alignItems:"center", gap:12, background:"var(--search-bg)", border:"1px solid rgba(59,130,246,0.2)", borderRadius:12, padding:"13px 18px", marginBottom:14, boxShadow:"0 20px 50px rgba(0,0,0,0.15)", position:"relative", zIndex:10 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, background:"var(--search-bg)", border:"1px solid rgba(59,130,246,0.2)", borderRadius:12, padding:"13px 18px", marginBottom:14, boxShadow:"0 20px 50px rgba(0,0,0,0.15)", position:"relative", zIndex:10, minHeight:48 }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <span style={{ flex:1, fontSize:13, color:"var(--search-text)", fontFamily:"'Geist Mono',monospace", lineHeight:1.5, minHeight:"1.5em", display:"flex", alignItems:"center" }}>
+        <span style={{ flex:1, fontSize:13, color:"var(--search-text)", fontFamily:"'Geist Mono',monospace", lineHeight:1.5, minHeight:"1.5em", display:"flex", alignItems:"center", wordWrap:"break-word", overflowWrap:"break-word", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
           {typed}<span style={{ animation:"blink .85s step-end infinite" }}>|</span>
         </span>
         {searching
           ? <div style={{ width:16,height:16,borderRadius:"50%",border:"2px solid rgba(59,130,246,0.3)",borderTopColor:"#3b82f6",animation:"spin .7s linear infinite" }} />
-          : <span style={{ fontSize:10, background:"rgba(59,130,246,0.1)", color:"#60a5fa", borderRadius:5, padding:"3px 8px", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".05em" }}>AI AGENT</span>
+          : <span style={{ fontSize:10, background:"rgba(59,130,246,0.1)", color:"#60a5fa", borderRadius:5, padding:"3px 8px", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".05em", whiteSpace:"nowrap" }}>AI AGENT</span>
         }
       </div>
       {/* Results — always rendered at fixed height to prevent layout shifts */}
@@ -799,12 +799,14 @@ function SearchDemo() {
         className="search-results-wrap"
         style={{
           display:"flex", flexDirection:"column", gap:9,
-          /* Reserve space for 2 result cards + extra space for longer queries */
-          minHeight:280,
+          /* Fixed height to prevent resizing */
+          height:380,
           opacity: resultsVisible ? 1 : 0,
           transition:"opacity 0.25s ease",
           /* Prevent layout shift during typing animations */
           position:"relative",
+          width:"100%",
+          overflow:"hidden"
         }}
       >
         {cur.results.map((r, i) => (
@@ -1062,18 +1064,8 @@ export default function WikiAILanding() {
         
         {/* Right Side Controls */}
         <div style={{ display:"flex",gap:10,alignItems:"center" }}>
-          {/* Theme Toggle */}
-          <button 
-            className="btn btn-outline" 
-            style={{ padding:"8px 12px",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center" }}
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            title="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-          
           {/* Language Dropdown */}
-          <div className="language-dropdown lang-btn-nav" style={{ position:"relative" }}>
+          <div className="language-dropdown" style={{ position:"relative" }}>
             <button 
               className="btn btn-outline" 
               style={{ padding:"8px 12px",fontSize:13,display:"flex",alignItems:"center",gap:6 }}
@@ -1109,6 +1101,16 @@ export default function WikiAILanding() {
               </div>
             )}
           </div>
+          
+          {/* Theme Toggle */}
+          <button 
+            className="btn btn-outline" 
+            style={{ padding:"8px 12px",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center" }}
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            title="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           
           <button 
             className="btn btn-blue hide-mobile" 
