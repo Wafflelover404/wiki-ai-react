@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,10 +18,12 @@ import {
   RefreshCw
 } from "lucide-react"
 import { useTranslation } from '@/src/i18n'
+import { adminApi } from "@/lib/api"
 
 function ReviewStatusContent() {
   const { t } = useTranslation()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [organizationData, setOrganizationData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -29,32 +32,78 @@ function ReviewStatusContent() {
   const adminEmail = searchParams.get('email')
 
   useEffect(() => {
-    // Simulate checking organization status
-    // In a real app, this would call an API to check the actual status
-    setTimeout(() => {
-      if (orgName && adminEmail) {
-        // Both org name and email provided (from organization creation)
-        setOrganizationData({
-          name: orgName,
-          status: "pending",
-          adminEmail: adminEmail,
-          submittedAt: new Date().toISOString(),
-          estimatedReviewTime: "1-2 business days"
-        })
-      } else if (adminEmail) {
-        // Only email provided (from login attempt)
-        // In a real app, you would fetch the organization info based on the user's email
-        setOrganizationData({
-          name: "Your Organization",
-          status: "pending",
-          adminEmail: adminEmail,
-          submittedAt: new Date().toISOString(),
-          estimatedReviewTime: "1-2 business days"
-        })
+    const checkOrganizationStatus = async () => {
+      try {
+        setLoading(true)
+        setError("")
+        
+        if (adminEmail) {
+          // Check real organization status by email
+          const response = await adminApi.getOrganizationStatusByEmail(adminEmail)
+          
+          if (response.status === "success" && response.response?.organization) {
+            const org = response.response.organization
+            setOrganizationData({
+              name: org.name,
+              status: org.status,
+              adminEmail: adminEmail,
+              submittedAt: org.created_at,
+              estimatedReviewTime: "1-2 business days"
+            })
+            
+            // If approved, redirect to /app
+            if (org.status === "approved") {
+              router.push("/app")
+              return
+            }
+          } else {
+            // No organization found or error
+            if (orgName) {
+              // Fallback to simulated data if org name provided
+              setOrganizationData({
+                name: orgName,
+                status: "pending",
+                adminEmail: adminEmail,
+                submittedAt: new Date().toISOString(),
+                estimatedReviewTime: "1-2 business days"
+              })
+            } else {
+              setError("No organization found for this email address")
+            }
+          }
+        } else if (orgName) {
+          // Fallback to simulated data if only org name provided
+          setOrganizationData({
+            name: orgName,
+            status: "pending",
+            adminEmail: adminEmail || "unknown",
+            submittedAt: new Date().toISOString(),
+            estimatedReviewTime: "1-2 business days"
+          })
+        } else {
+          setError("Missing organization information")
+        }
+      } catch (err) {
+        console.error("Error checking organization status:", err)
+        setError("Failed to check organization status")
+        
+        // Fallback to simulated data on error
+        if (orgName || adminEmail) {
+          setOrganizationData({
+            name: orgName || "Your Organization",
+            status: "pending",
+            adminEmail: adminEmail || "unknown",
+            submittedAt: new Date().toISOString(),
+            estimatedReviewTime: "1-2 business days"
+          })
+        }
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
-    }, 1000)
-  }, [orgName, adminEmail])
+    }
+
+    checkOrganizationStatus()
+  }, [orgName, adminEmail, router])
 
   const getStatusIcon = (status: string) => {
     switch (status) {

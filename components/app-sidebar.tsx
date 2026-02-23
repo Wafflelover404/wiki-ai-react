@@ -62,7 +62,7 @@ export function AppSidebar() {
     { title: t('navigation.userManagement'), url: "/app/admin/users", icon: Users },
     { title: t('navigation.apiKeys'), url: "/app/admin/api-keys", icon: Key },
     { title: t('navigation.fileManagement'), url: "/app/admin/files", icon: FileText },
-    { title: t('navigation.search'), url: "/app/admin/search", icon: Search },
+    { title: t('navigation.search'), url: "/app/search", icon: Search },
     { title: t('navigation.quizManagement'), url: "/app/admin/quizzes", icon: Brain },
     { title: t('navigation.quizzes'), url: "/app/quizzes", icon: Brain },
   ]
