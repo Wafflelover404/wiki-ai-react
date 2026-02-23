@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -80,45 +80,138 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
   // Sales state
   const [salesLeads, setSalesLeads] = useState<SalesLead[]>([])
 
+  // Track the current valid token (may be refreshed)
+  const currentTokenRef = useRef<string>(token)
+  
+  // Update token ref when prop changes
+  useEffect(() => {
+    currentTokenRef.current = token
+  }, [token])
+
+  // Token refresh helper
+  const refreshToken = async (): Promise<string | null> => {
+    try {
+      console.log("Attempting to refresh token with admin credentials...")
+      const cmsPassword = process.env.NEXT_PUBLIC_CMS_PASSWORD || "AdminTestPassword1423"
+      const response = await fetch("http://127.0.0.1:9001/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "admin", password: cmsPassword })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.status === "success" && data.token) {
+          console.log("Token refreshed successfully, updating local reference")
+          currentTokenRef.current = data.token
+          return data.token
+        }
+      }
+    } catch (err) {
+      console.error("Token refresh error:", err)
+    }
+    return null
+  }
+
+  // Make API request with automatic token refresh on 401/403
+  const makeAuthenticatedRequest = async (
+    url: string,
+    options: RequestInit = {}
+  ): Promise<Response> => {
+    try {
+      let currentToken = currentTokenRef.current
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          "Authorization": `Bearer ${currentToken}`,
+          "Content-Type": "application/json"
+        }
+      })
+
+      // If we get 401/403, try to refresh token and retry
+      if (response.status === 401 || response.status === 403) {
+        console.log("Token invalid, attempting refresh...")
+        const newToken = await refreshToken()
+        if (newToken && newToken !== currentToken) {
+          console.log("Retrying request with refreshed token")
+          // Retry with new token
+          return fetch(url, {
+            ...options,
+            headers: {
+              ...options.headers,
+              "Authorization": `Bearer ${newToken}`,
+              "Content-Type": "application/json"
+            }
+          })
+        }
+      }
+
+      return response
+    } catch (err) {
+      console.error("Request error:", err)
+      throw err
+    }
+  }
+
   // Fetch data
   const fetchBlogPosts = async () => {
     try {
-      const response = await fetch(getCmsEndpointUrl("/blog/posts"), {
-        headers: { "Authorization": `Bearer ${token}` }
+      console.log("Fetching blog posts...")
+      const response = await makeAuthenticatedRequest(getCmsEndpointUrl("/blog/posts"), {
+        method: "GET"
       })
       if (response.ok) {
         const posts = await response.json()
-        setBlogPosts(posts)
+        console.log("Blog posts fetched:", posts)
+        setBlogPosts(Array.isArray(posts) ? posts : posts.posts || [])
+        setError("")
+      } else {
+        console.error("Failed to fetch blog posts, status:", response.status)
+        setError(`Failed to fetch blog posts (${response.status})`)
       }
     } catch (err) {
+      console.error("Error fetching blog posts:", err)
       setError("Failed to fetch blog posts")
     }
   }
 
   const fetchContactSubmissions = async () => {
     try {
-      const response = await fetch(getCmsEndpointUrl("/contact/submissions"), {
-        headers: { "Authorization": `Bearer ${token}` }
+      const response = await makeAuthenticatedRequest(getCmsEndpointUrl("/contact/submissions"), {
+        method: "GET"
       })
       if (response.ok) {
         const submissions = await response.json()
-        setContactSubmissions(submissions)
+        console.log("Contact submissions fetched:", submissions)
+        setContactSubmissions(Array.isArray(submissions) ? submissions : submissions.submissions || [])
+        setError("")
+      } else {
+        console.error("Failed to fetch contact submissions, status:", response.status)
+        setError(`Failed to fetch contact submissions (${response.status})`)
       }
     } catch (err) {
+      console.error("Error fetching contact submissions:", err)
       setError("Failed to fetch contact submissions")
     }
   }
 
   const fetchSalesLeads = async () => {
     try {
-      const response = await fetch(getCmsEndpointUrl("/sales/leads"), {
-        headers: { "Authorization": `Bearer ${token}` }
+      const response = await makeAuthenticatedRequest(getCmsEndpointUrl("/sales/leads"), {
+        method: "GET"
       })
       if (response.ok) {
         const leads = await response.json()
-        setSalesLeads(leads)
+        console.log("Sales leads fetched:", leads)
+        setSalesLeads(Array.isArray(leads) ? leads : leads.leads || [])
+        setError("")
+      } else {
+        console.error("Failed to fetch sales leads, status:", response.status)
+        setError(`Failed to fetch sales leads (${response.status})`)
       }
     } catch (err) {
+      console.error("Error fetching sales leads:", err)
       setError("Failed to fetch sales leads")
     }
   }
@@ -127,12 +220,8 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
   const createBlogPost = async (postData: Partial<BlogPost>) => {
     setLoading(true)
     try {
-      const response = await fetch(getCmsEndpointUrl("/blog/posts"), {
+      const response = await makeAuthenticatedRequest(getCmsEndpointUrl("/blog/posts"), {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
         body: JSON.stringify(postData)
       })
       
@@ -140,10 +229,12 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
         await fetchBlogPosts()
         setIsCreatingPost(false)
         setEditingPost(null)
+        setError("")
       } else {
         setError("Failed to create blog post")
       }
     } catch (err) {
+      console.error("Error creating blog post:", err)
       setError("Failed to create blog post")
     } finally {
       setLoading(false)
@@ -153,22 +244,20 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
   const updateBlogPost = async (id: number, postData: Partial<BlogPost>) => {
     setLoading(true)
     try {
-      const response = await fetch(getCmsEndpointUrl(`/blog/posts/${id}`), {
+      const response = await makeAuthenticatedRequest(getCmsEndpointUrl(`/blog/posts/${id}`), {
         method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
         body: JSON.stringify(postData)
       })
       
       if (response.ok) {
         await fetchBlogPosts()
         setEditingPost(null)
+        setError("")
       } else {
         setError("Failed to update blog post")
       }
     } catch (err) {
+      console.error("Error updating blog post:", err)
       setError("Failed to update blog post")
     } finally {
       setLoading(false)
@@ -180,17 +269,18 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
     
     setLoading(true)
     try {
-      const response = await fetch(getCmsEndpointUrl(`/blog/posts/${id}`), {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${token}` }
+      const response = await makeAuthenticatedRequest(getCmsEndpointUrl(`/blog/posts/${id}`), {
+        method: "DELETE"
       })
       
       if (response.ok) {
         await fetchBlogPosts()
+        setError("")
       } else {
         setError("Failed to delete blog post")
       }
     } catch (err) {
+      console.error("Error deleting blog post:", err)
       setError("Failed to delete blog post")
     } finally {
       setLoading(false)
