@@ -290,7 +290,7 @@ const TERM = [
   { d:3300, c:"#f1f5f9", t:"  \"B2B clients with Enterprise tier receive 30-day" },
   { d:3400, c:"#f1f5f9", t:"   full refund window. See §4.2 of Contract Terms.\"" },
   { d:3900, c:"#94a3b8", t:"→ Sources: policy_manual.docx §4.2, crm_tier_rules.json" },
-  { d:4400, c:"#f59e0b", t:"⚡ Total response time: 0.9s" },
+  { d:4400, c:"#f59e0b", t:"⚡ Total response time: 0.4s" },
 ];
 
 function Terminal() {
@@ -580,7 +580,7 @@ const FEATURES = [
 const STATS = [
   { n:10, s:"x", label:"Faster answers", desc:"vs searching manually", dec:0 },
   { n:40, s:"%", label:"Less interruptions", desc:"colleagues stop asking each other", dec:0 },
-  { n:0.9, s:"s", label:"Avg response time", desc:"AI query to answer", dec:1 },
+  { n:0.4, s:"s", label:"Avg response time", desc:"AI query to answer", dec:1 },
   { n:99.9, s:"%", label:"Uptime SLA", desc:"enterprise reliability", dec:1 },
 ];
 
@@ -592,8 +592,8 @@ const USECASES = [
 ];
 
 const PLANS = [
-  { name:"Starter", price:"$79", per:"/mo", desc:"Small teams, single department", features:["1 department workspace","Up to 25 users","10 GB document storage","Standard AI search","1 external channel (Telegram/Web)","Basic analytics"], hi:false, cta:"Start Free" },
-  { name:"Business", price:"$249", per:"/mo", desc:"Growing companies, multiple sources", features:["5 department workspaces","Unlimited users","100 GB storage","AI Agent mode + commands","Bitrix24 & CRM integration","3 external channels","Advanced analytics","API access"], hi:true, cta:"Try Free 14 Days" },
+  { name:"Starter", price:"$N/A", per:"/mo", desc:"Small teams, single department", features:["1 department workspace","Up to 25 users","10 GB document storage","Standard AI search","1 external channel (Telegram/Web)","Basic analytics"], hi:false, cta:"Start Free" },
+  { name:"Business", price:"$N/A", per:"/mo", desc:"Growing companies, multiple sources", features:["5 department workspaces","Unlimited users","100 GB storage","AI Agent mode + commands","Bitrix24 & CRM integration","3 external channels","Advanced analytics","API access"], hi:true, cta:"Try Free 14 Days" },
   { name:"Enterprise", price:"Custom", per:"", desc:"Large-scale or self-hosted", features:["Unlimited workspaces","Any data source","Self-hosted option","SSO / SAML / LDAP","Custom LLM providers","Unlimited channels","White-label bot","SLA + Dedicated support"], hi:false, cta:"Talk to Us" },
 ];
 
@@ -705,7 +705,7 @@ export default function WikiAILanding() {
         </div>
         
         {/* Center Navigation Links */}
-        <div className="hide-mobile" style={{ display:"flex",gap:28,alignItems:"center",flex:1,justifyContent:"center" }}>
+        <div className="hide-mobile" style={{ position:"absolute",left:"50%",transform:"translateX(-50%)",display:"flex",gap:28,alignItems:"center" }}>
           {["Features","How It Works","Integrations","Pricing"].map(l => (
             <a key={l} href={`#${l.toLowerCase().replace(/\s+/g,"-")}`}
               style={{ color:"var(--text-muted)",textDecoration:"none",fontSize:14,fontWeight:500,transition:"color .2s" }}
@@ -829,8 +829,8 @@ export default function WikiAILanding() {
           {/* Social proof bar */}
           <div style={{ display:"flex",gap:0,justifyContent:"center",borderRadius:12,overflow:"hidden",border:"1px solid var(--border)",maxWidth:700,margin:"0 auto",background:"var(--card)" }}>
             {[
-              { n:"500+", label:"Companies" },
-              { n:"<1s", label:"AI Response" },
+              { n:"Ai", label:"Powered" },
+              { n:"<0.5s", label:"Search time" },
               { n:"10+", label:"Integrations" },
               { n:"99.9%", label:"Uptime" },
             ].map((s,i,arr)=>(
@@ -843,9 +843,9 @@ export default function WikiAILanding() {
         </div>
 
         {/* Scroll hint */}
-        <div style={{ position:"absolute",bottom:28,left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:5,opacity:.35,animation:"floatY 2.5s ease-in-out infinite" }}>
+        {/* <div style={{ position:"absolute",bottom:60,left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:5,opacity:.35,animation:"floatY 2.5s ease-in-out infinite" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-        </div>
+        </div> */}
       </section>
 
       {/* ── PROBLEM / VALUE PROP ─────────────────── */}
@@ -1101,14 +1101,14 @@ export default function WikiAILanding() {
                 className="btn btn-blue btn-lg"
                 onClick={() => router.push('/login')}
               >
-                🚀 Start Free — No Card Needed
+                🚀 Start Now
               </button>
-              <button 
+              {/* <button 
                 className="btn btn-outline btn-lg"
                 onClick={() => window.open('mailto:demo@wikiai.com?subject=WikiAI Demo Request', '_blank')}
               >
                 📅 Book a Demo
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
