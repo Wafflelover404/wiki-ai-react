@@ -726,6 +726,24 @@ export const adminApi = {
       method: "DELETE",
       token,
     }),
+
+  getOrganizationStatusByEmail: async (email: string) => {
+    return apiRequest<{
+      organization: {
+        id: string
+        name: string
+        slug: string
+        status: string
+        created_at: string
+        updated_at: string
+        admin_user_id: string
+        admin_email: string
+      }
+    }>({
+      url: `/organizations/status-by-email/${encodeURIComponent(email)}`,
+      method: "GET",
+    })
+  },
 }
 
 // Catalogs endpoints
