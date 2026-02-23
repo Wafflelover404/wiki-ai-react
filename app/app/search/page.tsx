@@ -4,13 +4,13 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { queryApi, pluginsApi, catalogsApi } from "@/lib/api"
+import { filesApi, queryApi, pluginsApi, catalogsApi } from "@/lib/api"
+import { useWebSocket } from "@/lib/use-websocket"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { UnifiedFileReader } from "@/components/ui/file-reader"
 import {
   Dialog,
   DialogContent,
@@ -24,13 +24,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
-import { useTranslation } from "@/src/i18n"
-import {
-  Search,
+import { 
+  Search, 
   Settings,
   FileText,
   ExternalLink,
+  Star,
   MessageSquare,
   ThumbsUp,
   ThumbsDown,
@@ -43,41 +42,38 @@ import {
   ShoppingCart,
   Eye,
   Globe,
+  Wifi,
   Brain,
   Copy,
 } from "lucide-react"
 import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
+import { useTranslation } from "@/src/i18n"
+import { UnifiedFileReader } from "@/components/ui/file-reader"
 
-// Enhanced File Viewer Component (reused from files page with search highlighting)
-function FileViewerModal({ isOpen, onClose, document, searchChunk, t }: { isOpen: boolean; onClose: () => void; document: any; searchChunk?: string; t: any }) {
-  const { token } = useAuth()
+interface SearchResult {
+  id: string
+  type: 'document' | 'product'
+  title: string
+  content: string
+  source: string
+  url?: string
+  price?: number | string
+  special_price?: number
+  shop_name?: string
+  score?: number
+  ai_ranked?: boolean
+  relevance?: 'high' | 'medium' | 'low'
+  enhanced_context?: boolean
+}
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      onClose()
-    }
-  }
-
-  if (!document) return null
-
-  const fileItem = {
-    filename: document.title || '',
-    size: 0,
-    upload_date: '',
-    content_type: document.content_type || 'application/octet-stream',
-    metadata: undefined,
-    indexed: true,
-  }
-
-  return (
-    <UnifiedFileReader
-      file={fileItem}
-      token={token}
-      open={isOpen}
-      onOpenChange={handleOpenChange}
-    />
-  )
+interface FileReaderItem {
+  filename: string
+  size: number
+  upload_date: string
+  content_type: string
+  metadata?: any
+  indexed: boolean
 }
 
 interface Message {
@@ -85,7 +81,7 @@ interface Message {
   role: "user" | "assistant" | "sources" | "overview"
   content: string
   sources?: string[]
-  searchResults?: any[]
+  searchResults?: SearchResult[]
   timestamp: Date
 }
 
@@ -95,7 +91,7 @@ interface Catalog {
   total_products: number
 }
 
-export default function SearchPage() {
+export default function AdminSearchPage() {
   const { token, user } = useAuth()
   const { t } = useTranslation()
   const [messages, setMessages] = useState<Message[]>([])
@@ -105,8 +101,9 @@ export default function SearchPage() {
   const [feedbackMessage, setFeedbackMessage] = useState<Message | null>(null)
   const [feedbackText, setFeedbackText] = useState("")
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
-  const [selectedDocument, setSelectedDocument] = useState<any | null>(null)
-  const [isDocumentViewerOpen, setIsDocumentViewerOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<FileReaderItem | null>(null)
+  const [isViewOpen, setIsViewOpen] = useState(false)
+  const [fileContent, setFileContent] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   
   // Settings states
@@ -121,6 +118,7 @@ export default function SearchPage() {
   const [loadingCatalogs, setLoadingCatalogs] = useState(false)
   const [selectedCatalogs, setSelectedCatalogs] = useState<string[]>([])
   const [showAiOverview, setShowAiOverview] = useState(true)
+  const [copilotMode, setCopilotMode] = useState(false)
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -195,21 +193,64 @@ export default function SearchPage() {
   }
 
   // Handle document click to open/view content
-  const handleDocumentClick = async (result: any) => {
+  const handleDocumentClick = async (result: SearchResult) => {
     if (!token) return
     
     try {
       if (result.type === 'document') {
-        // Open document viewer modal
-        setSelectedDocument(result)
-        setIsDocumentViewerOpen(true)
+        // Create a proper FileReaderItem with enhanced metadata
+        const fileItem: FileReaderItem = {
+          filename: result.title || result.source || '',
+          size: 0, // Will be determined by the file reader
+          upload_date: new Date().toISOString(),
+          content_type: getContentTypeFromFilename(result.title || result.source || ''),
+          metadata: {
+            source: result.source,
+            score: result.score,
+            ai_ranked: result.ai_ranked,
+            relevance: result.relevance,
+            enhanced_context: result.enhanced_context
+          },
+          indexed: true,
+        }
+        setSelectedFile(fileItem)
+        setIsViewOpen(true)
+        // Set content to be loaded by the file reader component
+        setFileContent(null) // Let the file reader fetch the content
       } else if (result.type === 'product' && result.url) {
-        // For products, open in new tab
         window.open(result.url, '_blank', 'noopener,noreferrer')
       }
     } catch (error) {
       console.error('Error opening document:', error)
       toast.error('Failed to open document')
+    }
+  }
+
+  // Helper function to determine content type from filename
+  const getContentTypeFromFilename = (filename: string): string => {
+    const ext = filename.split('.').pop()?.toLowerCase()
+    switch (ext) {
+      case 'pdf': return 'application/pdf'
+      case 'doc': return 'application/msword'
+      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      case 'xls': return 'application/vnd.ms-excel'
+      case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      case 'png': return 'image/png'
+      case 'jpg':
+      case 'jpeg': return 'image/jpeg'
+      case 'gif': return 'image/gif'
+      case 'webp': return 'image/webp'
+      case 'svg': return 'image/svg+xml'
+      case 'md':
+      case 'markdown': return 'text/markdown'
+      case 'txt': return 'text/plain'
+      case 'json': return 'application/json'
+      case 'js': return 'text/javascript'
+      case 'ts': return 'text/typescript'
+      case 'py': return 'text/x-python'
+      case 'html': return 'text/html'
+      case 'css': return 'text/css'
+      default: return 'application/octet-stream'
     }
   }
 
@@ -219,12 +260,12 @@ export default function SearchPage() {
     // Handle immediate search results (sources/snippets)
     if (data.type === 'immediate') {
       // Remove the "Searching..." message
-      setMessages(prev => prev.filter(msg => msg.content !== t('search.searchingAcrossYourKnowledgeBase')))
+      setMessages(prev => prev.filter(msg => msg.content !== "Searching across your Knowledge Base..."))
       
       const sourcesMessage: Message = {
         id: crypto.randomUUID(),
         role: "sources",
-        content: t('search.foundRelevantSources', { count: data.files?.length || 0 }),
+        content: `Found ${data.files?.length || 0} relevant sources:`,
         sources: data.files || [],
         searchResults: data.snippets?.map((snippet: any, index: number) => ({
           id: `doc-${index}`,
@@ -242,7 +283,7 @@ export default function SearchPage() {
         const overviewLoadingMessage: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: t('search.generatingAiOverview'),
+          content: "Generating AI overview...",
           timestamp: new Date(Date.now()),
         }
         setMessages(prev => [...prev, overviewLoadingMessage])
@@ -253,7 +294,7 @@ export default function SearchPage() {
     if (data.type === 'overview') {
       // Remove the "Generating..." message and add the actual overview
       setMessages(prev => {
-        const filtered = prev.filter(msg => msg.content !== t('search.generatingAiOverview'))
+        const filtered = prev.filter(msg => msg.content !== "Generating AI overview...")
         return [...filtered, {
           id: crypto.randomUUID(),
           role: "overview",
@@ -298,7 +339,7 @@ export default function SearchPage() {
       const errorMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: t('search.sorryIEncounteredAnErrorWhileSearchingPleaseTryAgain'),
+        content: "Sorry, I encountered an error while searching. Please try again.",
         timestamp: new Date(Date.now()),
       }
       setMessages((prev) => [...prev, errorMessage])
@@ -346,7 +387,8 @@ export default function SearchPage() {
             question: query,
             session_id: sessionId,
             model: null,
-            humanize: true
+            humanize: true,
+            ai_agent_mode: copilotMode
           }))
         }
         
@@ -359,6 +401,17 @@ export default function SearchPage() {
               case 'status':
                 // Processing status update (same as Vue)
                 console.log('Status:', message.message)
+                
+                // Show AI agent specific status
+                if (copilotMode && message.message) {
+                  const statusMessage: Message = {
+                    id: crypto.randomUUID(),
+                    role: "assistant",
+                    content: `🤖 AI Agent: ${message.message}`,
+                    timestamp: new Date(Date.now())
+                  }
+                  setMessages(prev => [...prev, statusMessage])
+                }
                 break
                 
               case 'immediate':
@@ -366,19 +419,55 @@ export default function SearchPage() {
                 immediateReceived = true
                 setIsLoading(false) // Stop showing the loading indicator
                 
-                if (message.data && message.data.snippets) {
+                if (message.data && (message.data.snippets || message.data.results)) {
+                  let searchResults: any[] = []
+                  let sources: string[] = []
+                  
+                  // Handle original API structure (snippets)
+                  if (message.data.snippets) {
+                    message.data.snippets.forEach((snippet: any, index: number) => {
+                      searchResults.push({
+                        id: `doc-${index}`,
+                        type: 'document',
+                        title: snippet.source || `Document ${index + 1}`,
+                        content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
+                        source: snippet.source || 'Unknown',
+                        score: snippet.score || 0
+                      })
+                    })
+                    sources = message.data.files || []
+                  }
+                  
+                  // Handle AI Agent API structure (results)
+                  if (message.data.results) {
+                    message.data.results.forEach((result: any, index: number) => {
+                      const isAiRanked = result.ai_ranked || false
+                      const relevance = result.relevance || 'medium'
+                      const enhancedContext = result.enhanced_context || false
+                      
+                      searchResults.push({
+                        id: `ai-${index}`,
+                        type: 'document',
+                        title: result.title || result.source || `AI Result ${index + 1}`,
+                        content: result.content || result.snippet || 'No content available',
+                        source: result.source || 'Unknown',
+                        score: result.score || 0,
+                        ai_ranked: isAiRanked,
+                        relevance: relevance,
+                        enhanced_context: enhancedContext
+                      })
+                    })
+                    sources = message.data.results.map((r: any) => r.source)
+                  }
+                  
                   const sourcesMessage: Message = {
                     id: crypto.randomUUID(),
                     role: "sources",
-                    content: t('search.foundRelevantSources', { count: message.data.snippets.length }),
-                    sources: message.data.files || [],
-                    searchResults: message.data.snippets.map((snippet: any, index: number) => ({
-                      id: `doc-${index}`,
-                      type: 'document',
-                      title: snippet.source || `Document ${index + 1}`,
-                      content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
-                      source: 'document'
-                    })),
+                    content: copilotMode 
+                      ? `🤖 AI Agent found ${searchResults.length} enhanced sources:`
+                      : `Found ${searchResults.length} relevant sources:`,
+                    sources: sources,
+                    searchResults: searchResults,
                     timestamp: new Date(Date.now()),
                   }
                   setMessages(prev => [...prev, sourcesMessage])
@@ -389,7 +478,7 @@ export default function SearchPage() {
                     const overviewLoadingMessage: Message = {
                       id: crypto.randomUUID(),
                       role: "assistant",
-                      content: t('search.generatingAiOverview'),
+                      content: copilotMode ? "🤖 AI Agent generating enhanced analysis..." : "Generating AI overview...",
                       timestamp: new Date(Date.now()),
                     }
                     setMessages(prev => [...prev, overviewLoadingMessage])
@@ -402,10 +491,13 @@ export default function SearchPage() {
                 loadingMessageAdded = false // Reset flag
                 lastToken = '' // Reset token deduplication
                 setMessages(prev => {
-                  const filtered = prev.filter(msg => msg.content !== t('search.generatingAiOverview'))
+                  const filtered = prev.filter(msg => 
+                    msg.content !== "Generating AI overview..." && 
+                    msg.content !== "🤖 AI Agent generating enhanced analysis..."
+                  )
                   return [...filtered, {
                     id: crypto.randomUUID(),
-                    role: "overview", 
+                    role: "overview",
                     content: "",
                     timestamp: new Date(Date.now()),
                   }]
@@ -441,12 +533,20 @@ export default function SearchPage() {
                 // Replace "Generating..." with actual overview (same as Vue) - fallback for non-streaming
                 overviewReceived = true
                 setIsLoading(false) // Ensure loading is stopped
+                
+                const overviewContent = copilotMode 
+                  ? `🤖 **AI-Agent Analysis:** ${message.data || ""}`
+                  : message.data || ""
+                  
                 setMessages(prev => {
-                  const filtered = prev.filter(msg => msg.content !== t('search.generatingAiOverview'))
+                  const filtered = prev.filter(msg => 
+                    msg.content !== "Generating AI overview..." && 
+                    msg.content !== "🤖 AI Agent generating enhanced analysis..."
+                  )
                   return [...filtered, {
                     id: crypto.randomUUID(),
                     role: "overview",
-                    content: message.data || "",
+                    content: overviewContent,
                     timestamp: new Date(Date.now()),
                   }]
                 })
@@ -508,6 +608,7 @@ export default function SearchPage() {
     // Fallback HTTP implementation
     const result = await queryApi.query(token, query, {
       humanize: true,
+      ai_agent_mode: copilotMode,
     })
     
     // Process and display results (existing logic)
@@ -521,7 +622,7 @@ export default function SearchPage() {
         const sourcesMessage: Message = {
           id: crypto.randomUUID(),
           role: "sources",
-          content: t('search.foundRelevantSources', { count: files.length }),
+          content: `Found ${files.length} relevant sources:`,
           sources: files,
           searchResults: snippets.map((snippet: any, index: number) => ({
             id: `doc-${index}`,
@@ -552,13 +653,13 @@ export default function SearchPage() {
 
     try {
       // Note: This would need to be adapted to the new API structure
-      toast.success(t('search.feedbackSubmittedSuccessfully'))
+      toast.success("Feedback submitted successfully")
       setIsFeedbackOpen(false)
       setFeedbackText("")
       setFeedbackMessage(null)
     } catch (error) {
       console.error("Feedback error:", error)
-      toast.error(t('search.failedToSubmitFeedback'))
+      toast.error("Failed to submit feedback")
     }
   }
 
@@ -581,26 +682,24 @@ export default function SearchPage() {
 
   return (
     <>
-      <AppHeader breadcrumbs={[{ label: t('search.title') }]} />
+      <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('search.title') }]} />
       <main className="flex-1 p-4 md:p-6 relative">
-        <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-100px)]">
-          {/* Main Search Area - 70% initially */}
-          <ResizablePanel defaultSize={70} minSize={40}>
-            <div className="p-2 h-full overflow-hidden">
-              <div className="h-full flex flex-col">
+        <div className="max-w-7xl mx-auto h-full">
+          <div className="p-2 h-full overflow-hidden">
+            <div className="h-full flex flex-col">
                 <ScrollArea className="flex-1 p-6 pb-32" ref={scrollRef}>
                   {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto text-center">
                       <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
                         <Sparkles className="w-10 h-10 text-primary" />
                       </div>
-                      <h2 className="text-2xl font-bold mb-2">Search Your Knowledge Base</h2>
+                      <h2 className="text-2xl font-bold mb-2">{t('search.searchYourKnowledgeBase')}</h2>
                       <p className="text-muted-foreground mb-8">
-                        Ask questions about your documents and get AI-powered answers with source references.
+                        {t('search.askQuestionsAboutYourDocuments')}
                       </p>
 
                       <div className="grid gap-3 w-full max-w-lg">
-                        <p className="text-sm font-medium text-muted-foreground">Try asking:</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t('search.tryAsking')}:</p>
                         {suggestedQuestions.map((question, index) => (
                           <Button
                             key={index}
@@ -638,7 +737,7 @@ export default function SearchPage() {
                               <div>
                                 <div className="flex items-center gap-2 mb-3">
                                   <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                  <span className="font-medium text-blue-900 dark:text-blue-100">Sources</span>
+                                  <span className="font-medium text-blue-900 dark:text-blue-100">{t('search.sources')}</span>
                                 </div>
                                 
                                 {message.searchResults && message.searchResults.length > 0 && (
@@ -673,9 +772,25 @@ export default function SearchPage() {
                                               </span>
                                             )}
                                           </h4>
-                                          {result.type === 'document' && (
-                                            <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                                          )}
+                                          <div className="flex gap-1 flex-shrink-0 items-center">
+                                            {result.ai_ranked && (
+                                              <Badge variant="secondary" className="text-xs">
+                                                <Brain className="w-3 h-3 mr-1" />
+                                                {t('search.aiRanked')}
+                                              </Badge>
+                                            )}
+                                            {result.relevance && (
+                                              <Badge 
+                                                variant={result.relevance === 'high' ? 'default' : result.relevance === 'medium' ? 'secondary' : 'outline'} 
+                                                className="text-xs"
+                                              >
+                                                {result.relevance === 'high' ? 'High' : result.relevance === 'medium' ? 'Medium' : 'Low'} Relevance
+                                              </Badge>
+                                            )}
+                                            {result.type === 'document' && (
+                                              <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                                            )}
+                                          </div>
                                         </div>
                                         
                                         <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
@@ -714,7 +829,7 @@ export default function SearchPage() {
                                 
                                 {message.sources && message.sources.length > 0 && (
                                   <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
-                                    <p className="text-xs font-medium mb-2 text-blue-700 dark:text-blue-300">All Sources:</p>
+                                    <p className="text-xs font-medium mb-2 text-blue-700 dark:text-blue-300">{t('search.allSources')}:</p>
                                     <div className="flex flex-wrap gap-1">
                                       {message.sources.map((source: string, sourceIndex: number) => (
                                         <Badge key={sourceIndex} variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
@@ -727,29 +842,29 @@ export default function SearchPage() {
                               </div>
                             )}
 
-                            {/* Overview Message Moved to AI Response Sidebar */}
-                            {/* {message.role === "overview" && (
-                              <div className="max-w-2xl mx-auto">
+                            {/* AI Overview */}
+                            {message.role === "overview" && (
+                              <div className="w-full">
                                 <div className="flex items-center gap-2 mb-3">
                                   <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                                  <span className="font-medium text-purple-900 dark:text-purple-100">AI Overview</span>
+                                  <span className="font-medium text-purple-900 dark:text-purple-100">{t('search.aiOverview')}</span>
                                 </div>
                                 <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
                                   <ReactMarkdown>{message.content}</ReactMarkdown>
                                 </div>
                               </div>
-                            )} */}
+                            )}
 
                             {/* Regular Assistant Message */}
-                            {/* {message.role === "assistant" && (
+                            {message.role === "assistant" && (
                               <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
-                                {message.content === "Generating AI overview..." ? (
+                                {message.content === "Generating AI overview..." || message.content === "🤖 AI Agent generating enhanced analysis..." ? (
                                   <span className="animate-pulse">{message.content}</span>
                                 ) : (
                                   <ReactMarkdown>{message.content}</ReactMarkdown>
                                 )}
                               </div>
-                            )} */}
+                            )}
 
                             {/* User Message */}
                             {message.role === "user" && (
@@ -771,28 +886,28 @@ export default function SearchPage() {
                                       onClick={() => setFeedbackMessage(message)}
                                     >
                                       <ThumbsDown className="w-3 h-3 mr-1" />
-                                      Report Issue
+                                      {t('search.reportAnIssue')}
                                     </Button>
                                   </DialogTrigger>
                                   <DialogContent>
                                     <DialogHeader>
-                                      <DialogTitle>Report an Issue</DialogTitle>
+                                      <DialogTitle>{t('search.reportAnIssue')}</DialogTitle>
                                       <DialogDescription>
-                                        Help us improve by describing what was wrong with this response.
+                                        {t('search.helpUsImproveByDescribingWhatWasWrongWithThisResponse')}
                                       </DialogDescription>
                                     </DialogHeader>
                                     <Textarea
-                                      placeholder="Describe the issue..."
+                                      placeholder={t('search.describeTheIssue')}
                                       value={feedbackText}
                                       onChange={(e) => setFeedbackText(e.target.value)}
                                       rows={4}
                                     />
                                     <DialogFooter>
                                       <Button variant="outline" onClick={() => setIsFeedbackOpen(false)}>
-                                        Cancel
+                                        {t('actions.cancel')}
                                       </Button>
                                       <Button onClick={handleFeedback} disabled={!feedbackText.trim()}>
-                                        Submit Feedback
+                                        {t('search.submitFeedback')}
                                       </Button>
                                     </DialogFooter>
                                   </DialogContent>
@@ -811,7 +926,7 @@ export default function SearchPage() {
                           <Card className="max-w-[80%] animate-pulse">
                             <CardContent className="p-4 flex items-center gap-2">
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>Searching...</span>
+                              <span>{t('search.searching')}</span>
                             </CardContent>
                           </Card>
                         </div>
@@ -821,20 +936,42 @@ export default function SearchPage() {
                 </ScrollArea>
 
                 {/* Search Input Area */}
-                <div className="fixed bottom-0 left-0 right-0 border-t bg-background p-4 z-50 shadow-lg">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Button
+                <div className="fixed bottom-0 left-64 right-0 border-t bg-background p-4 z-50 shadow-lg">
+                  <div className="px-4 md:px-6">
+                    <div className="flex items-center gap-2 mb-4">
+                    {/* Settings Button - Temporarily Commented Out */}
+                    {/* <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setSettingsOpen(true)}
                     >
                       <Settings className="w-4 h-4" />
                       Settings
-                    </Button>
-
+                    </Button> */}
+                    
+                    {/* Copilot AI Search Mode Toggle */}
+                    <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-lg">
+                      <Bot className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">{t('search.aiAgentSearch')}</span>
+                      <Switch
+                        checked={false}
+                        onCheckedChange={() => {}}
+                        disabled
+                      />
+                      <span className="text-xs text-muted-foreground">({t('search.comingSoon')})</span>
+                    </div>
+                    
+                    {/* WebSocket Connection Status (hidden if not available) */}
+                    {false && ( // Temporarily hide WebSocket status indicator
+                      <div className="flex items-center gap-1 text-xs">
+                        <Wifi className="w-3 h-3 text-green-500" />
+                        <span className="text-green-600">{t('search.realTimeSearch')}</span>
+                      </div>
+                    )}
+                    
                     <div className="flex-1" />
                     <div className="text-xs text-muted-foreground">
-                      {searchType === 'all' ? 'All' : searchType === 'documents' ? 'Documents' : 'Products'}
+                      {searchType === 'all' ? t('search.all') : searchType === 'documents' ? t('search.documents') : t('search.products')}
                     </div>
                   </div>
                   <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
@@ -843,7 +980,7 @@ export default function SearchPage() {
                       <Input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder="Ask a question about your knowledge base..."
+                        placeholder={t('search.askAQuestionAboutYourKnowledgeBase')}
                         className="pl-12 pr-12 h-12 text-base"
                         disabled={isLoading}
                       />
@@ -860,250 +997,19 @@ export default function SearchPage() {
                 </div>
               </div>
             </div>
-          </ResizablePanel>
-          
-          {/* Resizable Handle */}
-          <ResizableHandle withHandle />
-
-          {/* AI Response Sidebar - 30% initially */}
-          <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-            <div className="h-full border-l bg-muted/20">
-              <div className="p-4 h-full flex flex-col">
-                {/* AI Response Header */}
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b">
-                  <Brain className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold">AI Response</h3>
-                  {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
-                </div>
-
-                {/* AI Response Content */}
-                <ScrollArea className="flex-1 pr-2">
-                  {messages.length > 0 && (messages[messages.length - 1]?.role === "assistant" || messages[messages.length - 1]?.role === "overview") ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
-                      {messages[messages.length - 1]?.content === "Generating AI overview..." ? (
-                        <span className="animate-pulse">{messages[messages.length - 1]?.content}</span>
-                      ) : (
-                        <ReactMarkdown>{messages[messages.length - 1]?.content}</ReactMarkdown>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center text-muted-foreground py-8">
-                      <Brain className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">AI responses will appear here</p>
-                      <p className="text-xs mt-1">Ask a question to get started</p>
-                    </div>
-                  )}
-                </ScrollArea>
-
-                {/* AI Response Actions */}
-                {messages.length > 0 && (messages[messages.length - 1]?.role === "assistant" || messages[messages.length - 1]?.role === "overview") && (
-                  <div className="flex gap-2 mt-4 pt-3 border-t">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        const lastAssistantMessage = messages[messages.length - 1]
-                        if (lastAssistantMessage?.content) {
-                          navigator.clipboard.writeText(lastAssistantMessage.content)
-                          toast.success(t('search.responseCopiedToClipboard'))
-                        }
-                      }}
-                    >
-                      <Copy className="w-3 h-3 mr-1" />
-                      {t('search.copy')}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setMessages([])
-                      }}
-                    >
-                      <X className="w-3 h-3 mr-1" />
-                      {t('search.clear')}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+          </div>
+        </div>
       </main>
       
-      {/* Settings Modal */}
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Search Settings</DialogTitle>
-            <DialogDescription>
-              Configure your search preferences and scope
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-6">
-            {/* Search Scope */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Search Scope</h3>
-              
-              {loadingPlugins ? (
-                <div className="text-muted-foreground">Loading available search options...</div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4" />
-                        <span className="font-medium">All (Documents & Products)</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Search both knowledge base documents and OpenCart products</p>
-                    </div>
-                    <input
-                      type="radio"
-                      name="searchType"
-                      value="all"
-                      checked={searchType === 'all'}
-                      onChange={(e) => {
-                        setSearchType(e.target.value as any)
-                        saveSettings()
-                      }}
-                      disabled={!enabledPlugins.documents || !enabledPlugins.opencart}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        <span className="font-medium">Documents Only</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Search only knowledge base documents</p>
-                      {!enabledPlugins.documents && (
-                        <p className="text-sm text-red-600">Documents plugin is not enabled</p>
-                      )}
-                    </div>
-                    <input
-                      type="radio"
-                      name="searchType"
-                      value="documents"
-                      checked={searchType === 'documents'}
-                      onChange={(e) => {
-                        setSearchType(e.target.value as any)
-                        saveSettings()
-                      }}
-                      disabled={!enabledPlugins.documents}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <ShoppingCart className="w-4 h-4" />
-                        <span className="font-medium">Products Only</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Search only OpenCart products</p>
-                      {!enabledPlugins.opencart && (
-                        <p className="text-sm text-red-600">OpenCart plugin is not enabled</p>
-                      )}
-                    </div>
-                    <input
-                      type="radio"
-                      name="searchType"
-                      value="opencart"
-                      checked={searchType === 'opencart'}
-                      onChange={(e) => {
-                        setSearchType(e.target.value as any)
-                        saveSettings()
-                      }}
-                      disabled={!enabledPlugins.opencart}
-                    />
-                  </div>
-                  
-                  {/* Catalog Selection */}
-                  {enabledPlugins.opencart && (searchType === 'opencart' || searchType === 'all') && (
-                    <div className="mt-6">
-                      <h4 className="font-medium mb-3">Select Catalogs to Search</h4>
-                      
-                      {loadingCatalogs ? (
-                        <div className="text-muted-foreground">Loading catalogs...</div>
-                      ) : catalogs.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">
-                          No catalogs available. Create one in the OpenCart plugin.
-                        </div>
-                      ) : (
-                        <div className="space-y-2 max-h-40 overflow-y-auto">
-                          {catalogs.map((catalog) => (
-                            <div key={catalog.catalog_id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`catalog-${catalog.catalog_id}`}
-                                checked={selectedCatalogs.includes(catalog.catalog_id)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedCatalogs([...selectedCatalogs, catalog.catalog_id])
-                                  } else {
-                                    setSelectedCatalogs(selectedCatalogs.filter(id => id !== catalog.catalog_id))
-                                  }
-                                  saveSettings()
-                                }}
-                              />
-                              <label 
-                                htmlFor={`catalog-${catalog.catalog_id}`}
-                                className="text-sm cursor-pointer flex-1"
-                              >
-                                {catalog.shop_name}
-                                <span className="text-muted-foreground ml-2">
-                                  ({catalog.total_products} products)
-                                </span>
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {/* Display Options */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Display Options</h3>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    <span className="font-medium">Show AI Overview</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Display AI-generated summary of search results</p>
-                </div>
-                <Switch
-                  checked={showAiOverview}
-                  onCheckedChange={(checked) => {
-                    setShowAiOverview(checked)
-                    saveSettings()
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button onClick={() => setSettingsOpen(false)}>
-              Done
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Enhanced File Viewer Modal */}
-      <FileViewerModal
-        isOpen={isDocumentViewerOpen}
-        onClose={() => {
-          setIsDocumentViewerOpen(false)
-          setSelectedDocument(null)
-        }}
-        document={selectedDocument || {}}
-        searchChunk={selectedDocument?.content}
-        t={t}
+      {/* File Viewer Dialog */}
+      <UnifiedFileReader
+        file={selectedFile}
+        token={token}
+        open={isViewOpen}
+        onOpenChange={setIsViewOpen}
+        content={fileContent}
+        showDownload={true}
+        className="max-w-7xl mx-auto"
       />
     </>
   )
