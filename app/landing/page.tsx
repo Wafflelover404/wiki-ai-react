@@ -15,24 +15,48 @@ html { scroll-behavior: smooth; }
 
 /* ── shadcn dark token map ── */
 :root {
-  --bg:           #09090b;
-  --bg2:          #0f1117;
-  --card:         #111318;
-  --card2:        #161b26;
-  --border:       rgba(255,255,255,0.06);
-  --border-hi:    rgba(59,130,246,0.35);
-  --blue:         #3b82f6;
-  --blue-light:   #60a5fa;
-  --blue-dim:     rgba(59,130,246,0.12);
-  --sky:          #0ea5e9;
-  --indigo:       #6366f1;
-  --text:         #f1f5f9;
-  --text-muted:   #64748b;
-  --text-subtle:  #334155;
-  --green:        #22c55e;
-  --amber:        #f59e0b;
-  --rose:         #f43f5e;
-  --radius:       10px;
+  --bg:              #09090b;
+  --bg2:             #0f1117;
+  --card:            #111318;
+  --card2:           #161b26;
+  --border:          rgba(255,255,255,0.06);
+  --border-hi:       rgba(59,130,246,0.35);
+  --blue:            #3b82f6;
+  --blue-light:      #60a5fa;
+  --blue-dim:        rgba(59,130,246,0.12);
+  --sky:             #0ea5e9;
+  --indigo:          #6366f1;
+  --text:            #f1f5f9;
+  --text-muted:      #64748b;
+  --text-subtle:     #334155;
+  --green:           #22c55e;
+  --amber:           #f59e0b;
+  --rose:            #f43f5e;
+  --radius:          10px;
+  --text-dim:        #94a3b8;
+  --text-faint:      #475569;
+  --footer-link:     #334155;
+  --footer-link-h:   #64748b;
+  --footer-copy:     #1e293b;
+  --nav-scrolled-bg: rgba(9,9,11,0.82);
+  --drawer-bg:       rgba(9,9,11,0.97);
+  --terminal-bg:     #06080f;
+  --terminal-bar:    #0b0f1c;
+  --terminal-border: rgba(59,130,246,0.18);
+  --terminal-divider:rgba(59,130,246,0.08);
+  --terminal-btn:    #334155;
+  --search-bg:       #161b26;
+  --search-text:     #f1f5f9;
+  --result-doc:      #f1f5f9;
+  --result-page:     #334155;
+  --result-snippet:  #64748b;
+  --journey-role:    #94a3b8;
+  --journey-q-text:  #94a3b8;
+  --journey-a-text:  #86efac;
+  --compare-hi-text: #f1f5f9;
+  --compare-lo-text: #64748b;
+  --compare-lo-mark: #334155;
+  --stat-num:        #334155;
 }
 
 body {
@@ -112,7 +136,7 @@ body {
   box-shadow: 0 0 40px rgba(59,130,246,0.08);
 }
 .glass {
-  background: rgba(15,17,23,0.7);
+  background: var(--nav-scrolled-bg);
   backdrop-filter: blur(20px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -133,7 +157,7 @@ body {
   background:transparent; color:var(--text);
   border:1px solid var(--border); padding:11px 24px;
 }
-.btn-outline:hover { border-color:rgba(255,255,255,0.14); background:rgba(255,255,255,0.03); }
+.btn-outline:hover { border-color:var(--border-hi); background:var(--blue-dim); }
 .btn-lg { padding:14px 32px; font-size:15px; border-radius:10px; }
 
 /* ── Tag / badge ── */
@@ -201,8 +225,10 @@ body {
   position:fixed; inset:0; z-index:9998;
   background:var(--bg);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center;
+  padding:0 24px;
 }
-.splash-bar { width:200px; height:2px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; margin-top:32px; }
+.splash-bar { width:200px; height:2px; background:var(--border); border-radius:2px; overflow:hidden; margin-top:32px; }
 .splash-bar-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--sky)); border-radius:2px; animation:typing 1.9s ease forwards; }
 
 /* ── Nav ── */
@@ -213,7 +239,7 @@ body {
   transition:background .3s, border-color .3s;
 }
 .nav.scrolled {
-  background:rgba(9,9,11,0.82);
+  background:var(--nav-scrolled-bg);
   backdrop-filter:blur(20px);
   border-bottom:1px solid var(--border);
 }
@@ -229,12 +255,178 @@ body {
 .price-card.featured { border-color:rgba(59,130,246,0.4); background:linear-gradient(160deg,rgba(59,130,246,0.06),var(--card)); }
 .price-card.featured:hover { box-shadow:0 28px 70px rgba(59,130,246,0.12); }
 
+/* ── Hide/show helpers ── */
+.mobile-only { display:none; }
+
 @media (max-width:768px) {
-  .display { font-size:2.4rem; }
-  .h2 { font-size:1.7rem; }
+  .display { font-size:2rem; line-height:1.1; }
+  .h2 { font-size:1.5rem; }
   .hide-mobile { display:none !important; }
+  .mobile-only { display:block; }
+  .mobile-menu-btn { display:flex; }
+  /* Hide language button in nav on mobile — it lives in the drawer */
+  .lang-btn-nav { display:none !important; }
+
+  /* Section padding */
+  section { padding-left:5% !important; padding-right:5% !important; }
+  section[style*="padding:96px"] { padding-top:52px !important; padding-bottom:52px !important; }
+  section[style*="padding:80px"] { padding-top:44px !important; padding-bottom:44px !important; }
+  section[style*="padding:72px"] { padding-top:40px !important; padding-bottom:40px !important; }
+  section[style*="padding:80px 6% 100px"] { padding-top:44px !important; padding-bottom:56px !important; }
+
+  /* Shrink the divider-glow spacer */
+  .section-divider { margin-bottom:36px !important; }
+
+  /* Two-col → single col */
+  .two-col-grid {
+    grid-template-columns:1fr !important;
+    gap:32px !important;
+  }
+  .two-col-grid .r-l,
+  .two-col-grid .r-r { order:unset !important; }
+
+  /* Three-col comparison → single col */
+  .three-col-grid { grid-template-columns:1fr !important; }
+  .three-col-grid > div { padding:22px 18px !important; }
+
+  /* Cards */
+  .price-card { padding:24px 18px; }
+  .feat-card  { padding:20px 18px; }
+
+  /* CTA box */
+  .mobile-cta-box { padding:36px 22px !important; }
+
+  /* Social proof bar → 2x2 grid */
+  .social-proof-bar {
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    max-width:100% !important;
+  }
+  .social-proof-bar > div { border-right:none !important; border-bottom:1px solid var(--border); }
+  .social-proof-bar > div:nth-child(odd)  { border-right:1px solid var(--border) !important; }
+  .social-proof-bar > div:nth-child(3),
+  .social-proof-bar > div:nth-child(4)    { border-bottom:none !important; }
+
+  /* SearchDemo — compact height */
+  .search-demo-wrap    { height:auto !important; }
+  .search-results-wrap { height:auto !important; overflow:visible !important; }
+
+  /* Footer */
+  footer { padding:36px 5% 24px !important; }
+  .footer-top-row { flex-direction:column !important; gap:24px !important; }
+  .footer-link-cols {
+    display:grid !important;
+    grid-template-columns:repeat(3,1fr) !important;
+    gap:18px !important;
+    width:100% !important;
+  }
+
+  /* Nav */
+  .nav { padding:0 4% !important; }
+  .btn-lg { padding:12px 22px !important; font-size:14px !important; }
+
+  /* Stats grid */
+  .stats-grid { grid-template-columns:1fr 1fr !important; }
+
+  /* Use-cases / integrations detail row */
+  .auto-grid-240 { grid-template-columns:1fr 1fr !important; }
+}
+
+/* ── Mobile nav button ── */
+.mobile-menu-btn {
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  padding:8px;
+  cursor:pointer;
+  background:transparent;
+  border:none;
+  z-index:200;
+}
+.mobile-menu-btn span {
+  display:block;
+  width:22px;
+  height:2px;
+  background:var(--text);
+  border-radius:2px;
+  transition:all .3s;
+}
+.mobile-menu-btn.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+.mobile-menu-btn.open span:nth-child(2) { opacity:0; transform:scaleX(0); }
+.mobile-menu-btn.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+
+/* ── Mobile drawer ── */
+.mobile-drawer {
+  display:none;
+  position:fixed;
+  inset:0;
+  top:60px;
+  z-index:90;
+  background:var(--drawer-bg);
+  backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  flex-direction:column;
+  padding:32px 6%;
+  gap:0;
+  overflow-y:auto;
+  animation:fadeIn .2s ease;
+}
+.mobile-drawer.open { display:flex; }
+.mobile-drawer a {
+  display:block;
+  padding:18px 0;
+  border-bottom:1px solid var(--border);
+  color:var(--text);
+  text-decoration:none;
+  font-size:18px;
+  font-weight:600;
+  letter-spacing:-.01em;
+  transition:color .2s;
+}
+.mobile-drawer a:last-of-type { border-bottom:none; }
+
+/* ── Responsive layout classes ── */
+.two-col-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:64px;
+  align-items:center;
+}
+.three-col-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1px;
+  background:var(--border);
+  border-radius:14px;
+  overflow:hidden;
+}
+.mobile-cta-box { padding:64px 48px; }
+.social-proof-bar {
+  display:flex;
+  gap:0;
+  justify-content:center;
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  max-width:700px;
+  margin:0 auto;
+  background:var(--card);
 }
 `;
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE HOOK
+═══════════════════════════════════════════════════════════ */
+function useMobile(breakpoint = 768) {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setMobile(window.innerWidth <= breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return mobile;
+}
 
 /* ═══════════════════════════════════════════════════════════
    SCROLL REVEAL HOOK
@@ -244,10 +436,29 @@ function useReveal() {
     const els = document.querySelectorAll(".r,.r-l,.r-r");
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); } }),
-      { threshold: 0.1 }
+      { threshold: 0.01, rootMargin: '50px' }
     );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    
+    // Check elements already in viewport
+    els.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
+      if (isInViewport) {
+        el.classList.add("on");
+      } else {
+        io.observe(el);
+      }
+    });
+    
+    // Fallback: make any remaining elements visible after 1 second
+    const fallback = setTimeout(() => {
+      document.querySelectorAll(".r:not(.on), .r-l:not(.on), .r-r:not(.on)").forEach((el) => el.classList.add("on"));
+    }, 1000);
+    
+    return () => {
+      io.disconnect();
+      clearTimeout(fallback);
+    };
   }, []);
 }
 
@@ -318,14 +529,14 @@ function Terminal() {
   };
 
   return (
-    <div ref={ref} style={{ background:"#06080f", border:"1px solid rgba(59,130,246,0.18)", borderRadius:14, overflow:"hidden", boxShadow:"0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.06)", fontFamily:"'Geist Mono',monospace" }}>
+    <div ref={ref} style={{ background:"var(--terminal-bg)", border:"1px solid var(--terminal-border)", borderRadius:14, overflow:"hidden", boxShadow:"0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.06)", fontFamily:"'Geist Mono',monospace" }}>
       {/* Bar */}
-      <div style={{ background:"#0b0f1c", padding:"11px 16px", display:"flex", alignItems:"center", gap:8, borderBottom:"1px solid rgba(59,130,246,0.08)" }}>
+      <div style={{ background:"var(--terminal-bar)", padding:"11px 16px", display:"flex", alignItems:"center", gap:8, borderBottom:"1px solid var(--terminal-divider)" }}>
         <span style={{ width:11,height:11,borderRadius:"50%",background:"#ef4444",display:"block" }} />
         <span style={{ width:11,height:11,borderRadius:"50%",background:"#f59e0b",display:"block" }} />
         <span style={{ width:11,height:11,borderRadius:"50%",background:"#22c55e",display:"block" }} />
-        <span style={{ marginLeft:10,fontSize:11,color:"#334155" }}>wikiai — ai-agent bridge</span>
-        <button onClick={restart} style={{ marginLeft:"auto",background:"none",border:"none",color:"#334155",cursor:"pointer",fontSize:11 }}>↺ replay</button>
+        <span style={{ marginLeft:10,fontSize:11,color:"var(--terminal-btn)" }}>wikiai — ai-agent bridge</span>
+        <button onClick={restart} style={{ marginLeft:"auto",background:"none",border:"none",color:"var(--terminal-btn)",cursor:"pointer",fontSize:11 }}>↺ replay</button>
       </div>
       {/* Lines */}
       <div style={{ padding:"18px 20px", minHeight:280 }}>
@@ -371,7 +582,7 @@ function HubDiagram() {
     <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:20, alignItems:"center", maxWidth:900, margin:"0 auto" }}>
       {/* INPUTS */}
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        <div style={{ fontSize:11, color:"#334155", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", marginBottom:4, textAlign:"right" }}>Data Sources</div>
+        <div style={{ fontSize:11, color:"var(--stat-num)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", marginBottom:4, textAlign:"right" }}>Data Sources</div>
         {INPUTS.map((s, i) => (
           <div key={i} className="int-card" style={{
             justifyContent:"flex-end",
@@ -380,8 +591,8 @@ function HubDiagram() {
             transition:"all .4s ease"
           }}>
             <div style={{ textAlign:"right" }}>
-              <div style={{ fontSize:13, fontWeight:600, color: i===activeIn ? "#f1f5f9" : "#94a3b8" }}>{s.label}</div>
-              <div style={{ fontSize:11, color:"#334155" }}>{s.sub}</div>
+              <div style={{ fontSize:13, fontWeight:600, color: i===activeIn ? "var(--text)" : "var(--text-dim)" }}>{s.label}</div>
+              <div style={{ fontSize:11, color:"var(--stat-num)" }}>{s.sub}</div>
             </div>
             <div style={{ width:36,height:36,borderRadius:9,background:"rgba(59,130,246,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18, flexShrink:0 }}>{s.icon}</div>
           </div>
@@ -408,12 +619,12 @@ function HubDiagram() {
         </div>
         {/* Lines down */}
         <div style={{ width:1,height:60,background:"linear-gradient(to bottom,rgba(59,130,246,0.5),transparent)" }} />
-        <div style={{ fontSize:9, color:"#1e3a5f", fontFamily:"'Geist Mono',monospace", letterSpacing:".1em", textTransform:"uppercase" }}>Knowledge Hub</div>
+        <div style={{ fontSize:9, color:"var(--text-muted)", fontFamily:"'Geist Mono',monospace", letterSpacing:".1em", textTransform:"uppercase" }}>Knowledge Hub</div>
       </div>
 
       {/* OUTPUTS */}
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        <div style={{ fontSize:11, color:"#334155", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", marginBottom:4 }}>Delivery Channels</div>
+        <div style={{ fontSize:11, color:"var(--stat-num)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", marginBottom:4 }}>Delivery Channels</div>
         {OUTPUTS.map((s, i) => (
           <div key={i} className="int-card" style={{
             borderColor: i===activeOut ? "rgba(34,197,94,0.45)" : "rgba(255,255,255,0.06)",
@@ -422,8 +633,8 @@ function HubDiagram() {
           }}>
             <div style={{ width:36,height:36,borderRadius:9,background:"rgba(34,197,94,0.07)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18, flexShrink:0 }}>{s.icon}</div>
             <div>
-              <div style={{ fontSize:13, fontWeight:600, color: i===activeOut ? "#f1f5f9" : "#94a3b8" }}>{s.label}</div>
-              <div style={{ fontSize:11, color:"#334155" }}>{s.sub}</div>
+              <div style={{ fontSize:13, fontWeight:600, color: i===activeOut ? "var(--text)" : "var(--text-dim)" }}>{s.label}</div>
+              <div style={{ fontSize:11, color:"var(--stat-num)" }}>{s.sub}</div>
             </div>
           </div>
         ))}
@@ -433,8 +644,71 @@ function HubDiagram() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SEARCH DEMO
+   MOBILE INTEGRATION HUB (compact stack layout)
 ═══════════════════════════════════════════════════════════ */
+function MobileHubDiagram() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => { const iv = setInterval(() => setTick(t => t + 1), 1200); return () => clearInterval(iv); }, []);
+  const activeIn  = tick % INPUTS.length;
+  const activeOut = tick % OUTPUTS.length;
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16, maxWidth:420, margin:"0 auto" }}>
+      {/* Sources label */}
+      <div style={{ fontSize:11, color:"var(--text-muted)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", textAlign:"center" }}>Data Sources</div>
+      {/* Sources grid 2-col */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+        {INPUTS.map((s, i) => (
+          <div key={i} style={{
+            background:"var(--card)", border:`1px solid ${i===activeIn?"rgba(59,130,246,0.5)":"var(--border)"}`,
+            borderRadius:10, padding:"10px 12px", display:"flex", alignItems:"center", gap:8,
+            boxShadow: i===activeIn ? "0 0 16px rgba(59,130,246,0.12)" : "none",
+            transition:"all .4s ease"
+          }}>
+            <div style={{ width:30,height:30,borderRadius:8,background:"rgba(59,130,246,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0 }}>{s.icon}</div>
+            <div>
+              <div style={{ fontSize:12, fontWeight:600, color: i===activeIn ? "var(--text)" : "var(--text-dim)" }}>{s.label}</div>
+              <div style={{ fontSize:10, color:"var(--text-muted)" }}>{s.sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Center hub */}
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+        <div style={{ width:1, height:24, background:"linear-gradient(to bottom,rgba(59,130,246,0.5),transparent)" }} />
+        <div style={{ position:"relative", width:80, height:80 }}>
+          <div style={{ position:"absolute",inset:0,borderRadius:"50%",border:"1px solid rgba(59,130,246,0.2)",animation:"spin 12s linear infinite" }} />
+          <div style={{ position:"absolute",inset:8,borderRadius:"50%",border:"1px solid rgba(59,130,246,0.15)",animation:"spin-r 8s linear infinite" }} />
+          <div style={{ position:"absolute",inset:0,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,0.18),transparent 70%)" }} />
+          <div style={{ position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center" }}>
+            <div style={{ fontSize:22, lineHeight:1 }}>🧠</div>
+            <div style={{ fontSize:8, color:"#60a5fa", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", marginTop:2 }}>WikiAI</div>
+          </div>
+        </div>
+        <div style={{ width:1, height:24, background:"linear-gradient(to bottom,rgba(59,130,246,0.5),transparent)" }} />
+      </div>
+      {/* Delivery label */}
+      <div style={{ fontSize:11, color:"var(--text-muted)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", textAlign:"center" }}>Delivery Channels</div>
+      {/* Outputs grid 2-col */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+        {OUTPUTS.map((s, i) => (
+          <div key={i} style={{
+            background:"var(--card)", border:`1px solid ${i===activeOut?"rgba(34,197,94,0.4)":"var(--border)"}`,
+            borderRadius:10, padding:"10px 12px", display:"flex", alignItems:"center", gap:8,
+            boxShadow: i===activeOut ? "0 0 16px rgba(34,197,94,0.10)" : "none",
+            transition:"all .4s ease"
+          }}>
+            <div style={{ width:30,height:30,borderRadius:8,background:"rgba(34,197,94,0.07)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0 }}>{s.icon}</div>
+            <div>
+              <div style={{ fontSize:12, fontWeight:600, color: i===activeOut ? "var(--text)" : "var(--text-dim)" }}>{s.label}</div>
+              <div style={{ fontSize:10, color:"var(--text-muted)" }}>{s.sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 const QA = [
   {
     q: "What is our vacation policy for remote employees?",
@@ -463,26 +737,29 @@ function SearchDemo() {
   const [qi, setQi] = useState(0);
   const [typed, setTyped] = useState("");
   const [searching, setSearching] = useState(false);
-  const [showResults, setShowResults] = useState(true);
+  // Instead of toggling mount/unmount (which collapses height), track opacity
+  const [resultsVisible, setResultsVisible] = useState(false);
 
   useEffect(() => {
     const cycle = () => {
       const nextQi = (qi + 1) % QA.length;
-      setShowResults(false);
+      // Fade out results, then clear & retype
+      setResultsVisible(false);
       setSearching(false);
-      setTyped("");
-      // Type query
-      const q = QA[nextQi].q;
-      let i = 0;
-      const typeIv = setInterval(() => {
-        i++;
-        setTyped(q.slice(0, i));
-        if (i >= q.length) {
-          clearInterval(typeIv);
-          setSearching(true);
-          setTimeout(() => { setSearching(false); setShowResults(true); setQi(nextQi); }, 900);
-        }
-      }, 38);
+      setTimeout(() => {
+        setTyped("");
+        const q = QA[nextQi].q;
+        let i = 0;
+        const typeIv = setInterval(() => {
+          i++;
+          setTyped(q.slice(0, i));
+          if (i >= q.length) {
+            clearInterval(typeIv);
+            setSearching(true);
+            setTimeout(() => { setSearching(false); setQi(nextQi); setResultsVisible(true); }, 900);
+          }
+        }, 38);
+      }, 300); // wait for fade-out before retyping
     };
     const iv = setTimeout(cycle, 3600);
     return () => clearTimeout(iv);
@@ -492,17 +769,24 @@ function SearchDemo() {
   useEffect(() => {
     const q = QA[0].q;
     let i = 0;
-    const iv = setInterval(() => { i++; setTyped(q.slice(0,i)); if(i>=q.length) clearInterval(iv); }, 40);
+    const iv = setInterval(() => {
+      i++;
+      setTyped(q.slice(0,i));
+      if (i >= q.length) {
+        clearInterval(iv);
+        setResultsVisible(true);
+      }
+    }, 40);
     return () => clearInterval(iv);
   }, []);
 
   const cur = QA[qi];
   return (
-    <div style={{ maxWidth:580, margin:"0 auto", height:"400px" }}>
+    <div className="search-demo-wrap" style={{ maxWidth:580, margin:"0 auto", height:"auto", position:"relative" }}>
       {/* Search bar */}
-      <div style={{ display:"flex", alignItems:"center", gap:12, background:"var(--card2)", border:"1px solid rgba(59,130,246,0.2)", borderRadius:12, padding:"13px 18px", marginBottom:14, boxShadow:"0 20px 50px rgba(0,0,0,0.4)" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, background:"var(--search-bg)", border:"1px solid rgba(59,130,246,0.2)", borderRadius:12, padding:"13px 18px", marginBottom:14, boxShadow:"0 20px 50px rgba(0,0,0,0.15)", position:"relative", zIndex:10 }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <span style={{ flex:1, fontSize:13, color:"#f1f5f9", fontFamily:"'Geist Mono',monospace" }}>
+        <span style={{ flex:1, fontSize:13, color:"var(--search-text)", fontFamily:"'Geist Mono',monospace", lineHeight:1.5, minHeight:"1.5em", display:"flex", alignItems:"center" }}>
           {typed}<span style={{ animation:"blink .85s step-end infinite" }}>|</span>
         </span>
         {searching
@@ -510,14 +794,25 @@ function SearchDemo() {
           : <span style={{ fontSize:10, background:"rgba(59,130,246,0.1)", color:"#60a5fa", borderRadius:5, padding:"3px 8px", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".05em" }}>AI AGENT</span>
         }
       </div>
-      {/* Results */}
-      <div style={{ display:"flex", flexDirection:"column", gap:9, height:"300px", overflow:"hidden" }}>
-        {showResults && cur.results.map((r, i) => (
-          <div key={`${qi}-${i}`} style={{ background:"var(--card)", border:"1px solid var(--border)", borderRadius:11, padding:"14px 16px", animation:"fadeUp .35s ease both", animationDelay:`${i*100}ms`, minHeight:"80px" }}>
+      {/* Results — always rendered at fixed height to prevent layout shifts */}
+      <div
+        className="search-results-wrap"
+        style={{
+          display:"flex", flexDirection:"column", gap:9,
+          /* Reserve space for 2 result cards + extra space for longer queries */
+          minHeight:280,
+          opacity: resultsVisible ? 1 : 0,
+          transition:"opacity 0.25s ease",
+          /* Prevent layout shift during typing animations */
+          position:"relative",
+        }}
+      >
+        {cur.results.map((r, i) => (
+          <div key={`${qi}-${i}`} style={{ background:"var(--card)", border:"1px solid var(--border)", borderRadius:11, padding:"14px 16px" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:7 }}>
               <div>
-                <span style={{ fontSize:13, fontWeight:600, color:"#f1f5f9" }}>{r.doc}</span>
-                <span style={{ fontSize:11, color:"#334155", marginLeft:8, fontFamily:"'Geist Mono',monospace" }}>{r.page}</span>
+                <span style={{ fontSize:13, fontWeight:600, color:"var(--result-doc)" }}>{r.doc}</span>
+                <span style={{ fontSize:11, color:"var(--result-page)", marginLeft:8, fontFamily:"'Geist Mono',monospace" }}>{r.page}</span>
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
                 <div style={{ width:36, height:3, background:"rgba(59,130,246,0.15)", borderRadius:2 }}>
@@ -526,7 +821,7 @@ function SearchDemo() {
                 <span style={{ fontSize:11, color:"#60a5fa", fontFamily:"'Geist Mono',monospace" }}>{r.score}%</span>
               </div>
             </div>
-            <p style={{ fontSize:12.5, color:"#64748b", lineHeight:1.55 }}>{r.snippet}</p>
+            <p style={{ fontSize:12.5, color:"var(--result-snippet)", lineHeight:1.55 }}>{r.snippet}</p>
           </div>
         ))}
       </div>
@@ -549,14 +844,14 @@ function EmployeeJourney() {
         <div key={i} className="r" style={{ transitionDelay:`${i*120}ms`, background:"var(--card)", border:"1px solid var(--border)", borderRadius:12, padding:"20px 22px" }}>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
             <div style={{ width:36,height:36,borderRadius:"50%",background:`${s.color}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18 }}>{s.who}</div>
-            <span style={{ fontSize:13,fontWeight:600,color:"#94a3b8" }}>{s.role}</span>
+            <span style={{ fontSize:13,fontWeight:600,color:"var(--journey-role)" }}>{s.role}</span>
           </div>
           {/* Question bubble */}
-          <div style={{ background:"rgba(59,130,246,0.06)",border:`1px solid ${s.color}22`,borderRadius:8,padding:"10px 14px",marginBottom:10,fontSize:13,color:"#94a3b8",fontStyle:"italic" }}>
+          <div style={{ background:"rgba(59,130,246,0.06)",border:`1px solid ${s.color}22`,borderRadius:8,padding:"10px 14px",marginBottom:10,fontSize:13,color:"var(--journey-q-text)",fontStyle:"italic" }}>
             {s.q}
           </div>
           {/* Answer bubble */}
-          <div style={{ background:"rgba(34,197,94,0.04)",border:"1px solid rgba(34,197,94,0.15)",borderRadius:8,padding:"10px 14px",fontSize:13,color:"#86efac" }}>
+          <div style={{ background:"rgba(34,197,94,0.04)",border:"1px solid rgba(34,197,94,0.15)",borderRadius:8,padding:"10px 14px",fontSize:13,color:"var(--journey-a-text)" }}>
             🧠 {s.a}
           </div>
         </div>
@@ -611,7 +906,9 @@ export default function WikiAILanding() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [language, setLanguage] = useState('en');
   const [showLangDropdown, setShowLangDropdown] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
+  const isMobile = useMobile();
   useReveal();
 
   useEffect(() => { const t = setTimeout(() => setSplash(false), 2100); return () => clearTimeout(t); }, []);
@@ -637,25 +934,73 @@ export default function WikiAILanding() {
 
   // Apply theme changes
   useEffect(() => {
+    const r = document.documentElement;
     if (theme === 'light') {
-      document.documentElement.style.setProperty('--bg', '#ffffff');
-      document.documentElement.style.setProperty('--bg2', '#f8fafc');
-      document.documentElement.style.setProperty('--card', '#ffffff');
-      document.documentElement.style.setProperty('--card2', '#f1f5f9');
-      document.documentElement.style.setProperty('--text', '#1e293b');
-      document.documentElement.style.setProperty('--text-muted', '#64748b');
-      document.documentElement.style.setProperty('--text-subtle', '#94a3b8');
-      document.documentElement.style.setProperty('--border', 'rgba(0,0,0,0.08)');
+      r.style.setProperty('--bg',              '#f8fafc');
+      r.style.setProperty('--bg2',             '#f1f5f9');
+      r.style.setProperty('--card',            '#ffffff');
+      r.style.setProperty('--card2',           '#f1f5f9');
+      r.style.setProperty('--border',          'rgba(0,0,0,0.09)');
+      r.style.setProperty('--text',            '#0f172a');
+      r.style.setProperty('--text-muted',      '#475569');
+      r.style.setProperty('--text-subtle',     '#94a3b8');
+      r.style.setProperty('--text-dim',        '#64748b');
+      r.style.setProperty('--text-faint',      '#94a3b8');
+      r.style.setProperty('--footer-link',     '#64748b');
+      r.style.setProperty('--footer-link-h',   '#0f172a');
+      r.style.setProperty('--footer-copy',     '#94a3b8');
+      r.style.setProperty('--nav-scrolled-bg', 'rgba(248,250,252,0.9)');
+      r.style.setProperty('--drawer-bg',       'rgba(248,250,252,0.98)');
+      r.style.setProperty('--terminal-bg',     '#1e293b');
+      r.style.setProperty('--terminal-bar',    '#0f172a');
+      r.style.setProperty('--terminal-border', 'rgba(59,130,246,0.25)');
+      r.style.setProperty('--terminal-divider','rgba(59,130,246,0.12)');
+      r.style.setProperty('--terminal-btn',    '#64748b');
+      r.style.setProperty('--search-bg',       '#f1f5f9');
+      r.style.setProperty('--search-text',     '#0f172a');
+      r.style.setProperty('--result-doc',      '#0f172a');
+      r.style.setProperty('--result-page',     '#64748b');
+      r.style.setProperty('--result-snippet',  '#475569');
+      r.style.setProperty('--journey-role',    '#475569');
+      r.style.setProperty('--journey-q-text',  '#475569');
+      r.style.setProperty('--journey-a-text',  '#15803d');
+      r.style.setProperty('--compare-hi-text', '#0f172a');
+      r.style.setProperty('--compare-lo-text', '#64748b');
+      r.style.setProperty('--compare-lo-mark', '#94a3b8');
+      r.style.setProperty('--stat-num',        '#94a3b8');
     } else {
-      // Reset to dark theme defaults
-      document.documentElement.style.setProperty('--bg', '#09090b');
-      document.documentElement.style.setProperty('--bg2', '#0f1117');
-      document.documentElement.style.setProperty('--card', '#111318');
-      document.documentElement.style.setProperty('--card2', '#161b26');
-      document.documentElement.style.setProperty('--text', '#f1f5f9');
-      document.documentElement.style.setProperty('--text-muted', '#64748b');
-      document.documentElement.style.setProperty('--text-subtle', '#334155');
-      document.documentElement.style.setProperty('--border', 'rgba(255,255,255,0.06)');
+      r.style.setProperty('--bg',              '#09090b');
+      r.style.setProperty('--bg2',             '#0f1117');
+      r.style.setProperty('--card',            '#111318');
+      r.style.setProperty('--card2',           '#161b26');
+      r.style.setProperty('--border',          'rgba(255,255,255,0.06)');
+      r.style.setProperty('--text',            '#f1f5f9');
+      r.style.setProperty('--text-muted',      '#64748b');
+      r.style.setProperty('--text-subtle',     '#334155');
+      r.style.setProperty('--text-dim',        '#94a3b8');
+      r.style.setProperty('--text-faint',      '#475569');
+      r.style.setProperty('--footer-link',     '#334155');
+      r.style.setProperty('--footer-link-h',   '#64748b');
+      r.style.setProperty('--footer-copy',     '#1e293b');
+      r.style.setProperty('--nav-scrolled-bg', 'rgba(9,9,11,0.82)');
+      r.style.setProperty('--drawer-bg',       'rgba(9,9,11,0.97)');
+      r.style.setProperty('--terminal-bg',     '#06080f');
+      r.style.setProperty('--terminal-bar',    '#0b0f1c');
+      r.style.setProperty('--terminal-border', 'rgba(59,130,246,0.18)');
+      r.style.setProperty('--terminal-divider','rgba(59,130,246,0.08)');
+      r.style.setProperty('--terminal-btn',    '#334155');
+      r.style.setProperty('--search-bg',       '#161b26');
+      r.style.setProperty('--search-text',     '#f1f5f9');
+      r.style.setProperty('--result-doc',      '#f1f5f9');
+      r.style.setProperty('--result-page',     '#334155');
+      r.style.setProperty('--result-snippet',  '#64748b');
+      r.style.setProperty('--journey-role',    '#94a3b8');
+      r.style.setProperty('--journey-q-text',  '#94a3b8');
+      r.style.setProperty('--journey-a-text',  '#86efac');
+      r.style.setProperty('--compare-hi-text', '#f1f5f9');
+      r.style.setProperty('--compare-lo-text', '#64748b');
+      r.style.setProperty('--compare-lo-mark', '#334155');
+      r.style.setProperty('--stat-num',        '#334155');
     }
   }, [theme]);
 
@@ -668,7 +1013,7 @@ export default function WikiAILanding() {
   );
 
   const SectionHead = ({ tag, tagStyle, title, sub, center=true }: { tag: string; tagStyle?: string; title: string; sub?: string; center?: boolean }) => (
-    <div className="r" style={{ textAlign:center?"center":"left", marginBottom:52 }}>
+    <div className="r" style={{ textAlign:center?"center":"left", marginBottom:52, opacity:1, transform:"none" }}>
       <span className={`tag ${tagStyle||""}`} style={{ marginBottom:14, display:"inline-flex" }}>{tag}</span>
       <h2 className="h2" style={{ marginBottom:14 }} dangerouslySetInnerHTML={{ __html:title }} />
       {sub && <p style={{ color:"var(--text-muted)", maxWidth:480, margin:center?"0 auto":"0", lineHeight:1.7, fontSize:16 }}>{sub}</p>}
@@ -690,7 +1035,7 @@ export default function WikiAILanding() {
           <div style={{ fontSize:22,fontWeight:800,letterSpacing:"-.02em",marginBottom:6 }}>
             <span className="g-blue">Wiki</span><span>AI</span>
           </div>
-          <div style={{ fontSize:12,color:"#334155",fontFamily:"'Geist Mono',monospace" }}>loading knowledge engine...</div>
+          <div style={{ fontSize:12,color:"var(--stat-num)",fontFamily:"'Geist Mono',monospace" }}>loading knowledge engine...</div>
           <div className="splash-bar"><div className="splash-bar-fill" /></div>
         </div>
       )}
@@ -709,7 +1054,7 @@ export default function WikiAILanding() {
           {["Features","How It Works","Integrations","Pricing"].map(l => (
             <a key={l} href={`#${l.toLowerCase().replace(/\s+/g,"-")}`}
               style={{ color:"var(--text-muted)",textDecoration:"none",fontSize:14,fontWeight:500,transition:"color .2s" }}
-              onMouseEnter={e=>(e.target as HTMLElement).style.color="#f1f5f9"}
+              onMouseEnter={e=>(e.target as HTMLElement).style.color="var(--text)"}
               onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--text-muted)"}
             >{l}</a>
           ))}
@@ -728,7 +1073,7 @@ export default function WikiAILanding() {
           </button>
           
           {/* Language Dropdown */}
-          <div className="language-dropdown" style={{ position:"relative" }}>
+          <div className="language-dropdown lang-btn-nav" style={{ position:"relative" }}>
             <button 
               className="btn btn-outline" 
               style={{ padding:"8px 12px",fontSize:13,display:"flex",alignItems:"center",gap:6 }}
@@ -766,14 +1111,59 @@ export default function WikiAILanding() {
           </div>
           
           <button 
-            className="btn btn-blue" 
+            className="btn btn-blue hide-mobile" 
             style={{ padding:"8px 18px",fontSize:13 }}
             onClick={() => router.push('/login')}
           >
             Get Started →
           </button>
+
+          {/* Hamburger */}
+          <button
+            className={`mobile-menu-btn ${mobileMenuOpen ? "open" : ""}`}
+            onClick={() => setMobileMenuOpen(o => !o)}
+            aria-label="Toggle menu"
+          >
+            <span /><span /><span />
+          </button>
         </div>
       </nav>
+
+      {/* ── MOBILE DRAWER ───────────────────────── */}
+      <div className={`mobile-drawer ${mobileMenuOpen ? "open" : ""}`}>
+        {["Features","How It Works","Integrations","Pricing"].map(l => (
+          <a key={l}
+            href={`#${l.toLowerCase().replace(/\s+/g,"-")}`}
+            onClick={() => setMobileMenuOpen(false)}
+          >{l}</a>
+        ))}
+        <div style={{ marginTop:28, display:"flex", flexDirection:"column", gap:12 }}>
+          <button
+            className="btn btn-blue"
+            style={{ width:"100%", justifyContent:"center", padding:"14px", fontSize:15 }}
+            onClick={() => { setMobileMenuOpen(false); router.push('/login'); }}
+          >
+            🚀 Get Started →
+          </button>
+          <div style={{ display:"flex", gap:10 }}>
+            <button
+              className="btn btn-outline"
+              style={{ flex:1, justifyContent:"center", padding:"12px" }}
+              onClick={() => { setTheme(theme === 'dark' ? 'light' : 'dark'); }}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              <span style={{ marginLeft:6 }}>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
+            <button
+              className="btn btn-outline"
+              style={{ flex:1, justifyContent:"center", padding:"12px", fontSize:13 }}
+              onClick={() => setLanguage(l => l === 'en' ? 'ru' : 'en')}
+            >
+              🌐 {language.toUpperCase()}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* ── HERO ─────────────────────────────────── */}
       <section style={{ position:"relative",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",paddingTop:80 }}>
@@ -804,7 +1194,7 @@ export default function WikiAILanding() {
           {/* Value props */}
           <div style={{ display:"flex",gap:20,justifyContent:"center",flexWrap:"wrap",marginBottom:40 }}>
             {["Connects to Bitrix, ERP, Drive","Answers in any messenger or chat","Employees find answers in seconds"].map((p,i)=>(
-              <div key={i} style={{ display:"flex",alignItems:"center",gap:7,fontSize:13,color:"#64748b" }}>
+              <div key={i} style={{ display:"flex",alignItems:"center",gap:7,fontSize:13,color:"var(--text-muted)" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
                 {p}
               </div>
@@ -827,7 +1217,7 @@ export default function WikiAILanding() {
           </div>
 
           {/* Social proof bar */}
-          <div style={{ display:"flex",gap:0,justifyContent:"center",borderRadius:12,overflow:"hidden",border:"1px solid var(--border)",maxWidth:700,margin:"0 auto",background:"var(--card)" }}>
+          <div className="social-proof-bar" style={{ gap:0,justifyContent:"center",borderRadius:12,overflow:"hidden",border:"1px solid var(--border)",maxWidth:700,margin:"0 auto",background:"var(--card)" }}>
             {[
               { n:"Ai", label:"Powered" },
               { n:"<0.5s", label:"Search time" },
@@ -836,7 +1226,7 @@ export default function WikiAILanding() {
             ].map((s,i,arr)=>(
               <div key={i} style={{ flex:1,textAlign:"center",padding:"18px 10px",borderRight:i<arr.length-1?"1px solid var(--border)":"none" }}>
                 <div style={{ fontWeight:800,fontSize:20,letterSpacing:"-.02em",color:"#60a5fa",fontFamily:"'Geist',sans-serif" }}>{s.n}</div>
-                <div style={{ fontSize:11,color:"#334155",marginTop:2,fontFamily:"'Geist Mono',monospace" }}>{s.label}</div>
+                <div style={{ fontSize:11,color:"var(--stat-num)",marginTop:2,fontFamily:"'Geist Mono',monospace" }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -849,8 +1239,8 @@ export default function WikiAILanding() {
       </section>
 
       {/* ── PROBLEM / VALUE PROP ─────────────────── */}
-      <section style={{ padding:"80px 6%", minHeight:"600px" }}>
-        <div className="divider-glow" style={{ height:"1px", marginBottom:80 }} />
+      <section style={{ padding:"80px 6%" }}>
+        <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <div style={{ maxWidth:1060,margin:"0 auto" }}>
           <div className="r" style={{ textAlign:"center",marginBottom:52 }}>
             <h2 className="h2" style={{ marginBottom:16 }}>
@@ -861,7 +1251,7 @@ export default function WikiAILanding() {
             </p>
           </div>
 
-          <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:"var(--border)",borderRadius:14,overflow:"hidden" }}>
+          <div className="three-col-grid">
             {[
               { icon:"😤", title:"Before WikiAI", items:["Ask a colleague, interrupt their flow","Search 5 different systems manually","Wait for email reply that never comes","Onboarding takes weeks, not days"] },
               { icon:"⚡", title:"With WikiAI", items:["Ask in Telegram, get answer in 1 second","One search across all company data","AI cites the exact source document","New hires self-serve from day one"], hi:true },
@@ -869,10 +1259,10 @@ export default function WikiAILanding() {
             ].map((col,i)=>(
               <div key={i} className="r" style={{ background:col.hi?"rgba(59,130,246,0.05)":"var(--card)",padding:"32px 28px",transitionDelay:`${i*90}ms` }}>
                 <div style={{ fontSize:28,marginBottom:14 }}>{col.icon}</div>
-                <div style={{ fontSize:14,fontWeight:700,color:col.hi?"#60a5fa":"#64748b",marginBottom:18,fontFamily:"'Geist Mono',monospace",letterSpacing:".04em",textTransform:"uppercase" }}>{col.title}</div>
+                <div style={{ fontSize:14,fontWeight:700,color:col.hi?"#60a5fa":"var(--compare-lo-text)",marginBottom:18,fontFamily:"'Geist Mono',monospace",letterSpacing:".04em",textTransform:"uppercase" }}>{col.title}</div>
                 {col.items.map((item,j)=>(
-                  <div key={j} style={{ display:"flex",alignItems:"flex-start",gap:9,marginBottom:12,fontSize:14,color:col.hi?"#f1f5f9":"#64748b",lineHeight:1.5 }}>
-                    <span style={{ color:col.hi?"#22c55e":"#334155",marginTop:2,flexShrink:0 }}>{col.hi?"✓":"–"}</span>
+                  <div key={j} style={{ display:"flex",alignItems:"flex-start",gap:9,marginBottom:12,fontSize:14,color:col.hi?"var(--compare-hi-text)":"var(--compare-lo-text)",lineHeight:1.5 }}>
+                    <span style={{ color:col.hi?"#22c55e":"var(--compare-lo-mark)",marginTop:2,flexShrink:0 }}>{col.hi?"✓":"–"}</span>
                     {item}
                   </div>
                 ))}
@@ -883,11 +1273,11 @@ export default function WikiAILanding() {
       </section>
 
       {/* ── LIVE SEARCH DEMO ─────────────────────── */}
-      <section id="how-it-works" style={{ padding:"80px 6%", minHeight:"600px" }}>
-        <div className="divider-glow" style={{ height:"1px", marginBottom:80 }} />
+      <section id="how-it-works" style={{ padding:"80px 6%" }}>
+        <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <SectionHead
-          tag="Live Demo"
-          tagStyle="blue"
+          tag="Search Demo"
+          tagStyle="tag-blue"
           title={`Employees <span class="g-blue">find answers instantly</span>`}
           sub="Real questions from real roles — answered in under a second from your company's actual knowledge base."
         />
@@ -897,8 +1287,8 @@ export default function WikiAILanding() {
       </section>
 
       {/* ── FEATURES ─────────────────────────────── */}
-      <section id="features" style={{ padding:"80px 6%", minHeight:"600px" }}>
-        <div className="divider-glow" style={{ height:"1px", marginBottom:80 }} />
+      <section id="features" style={{ padding:"80px 6%" }}>
+        <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <SectionHead
           tag="Platform"
           tagStyle=""
@@ -910,7 +1300,7 @@ export default function WikiAILanding() {
             <div key={i} className={`feat-card r`} style={{ transitionDelay:`${i*70}ms` }}>
               <div style={{ fontSize:30,marginBottom:16 }}>{f.icon}</div>
               <div style={{ display:"flex",alignItems:"center",gap:9,marginBottom:10 }}>
-                <h3 style={{ fontSize:16,fontWeight:700,color:"#f1f5f9" }}>{f.title}</h3>
+                <h3 style={{ fontSize:16,fontWeight:700,color:"var(--text)" }}>{f.title}</h3>
                 <span className={`tag ${f.tagStyle}`} style={{ fontSize:10,padding:"2px 8px" }}>{f.tag}</span>
               </div>
               <p style={{ color:"var(--text-muted)",fontSize:14,lineHeight:1.65 }}>{f.desc}</p>
@@ -921,7 +1311,7 @@ export default function WikiAILanding() {
 
       {/* ── EMPLOYEE JOURNEY ─────────────────────── */}
       <section style={{ padding:"80px 6%",background:"linear-gradient(180deg,transparent,rgba(59,130,246,0.025),transparent)" }}>
-        <div style={{ maxWidth:1060,margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:64,alignItems:"center" }}>
+        <div className="two-col-grid" style={{ maxWidth:1060,margin:"0 auto" }}>
           <div className="r-l">
             <span className="tag" style={{ marginBottom:18,display:"inline-flex" }}>Employee Experience</span>
             <h2 className="h2" style={{ marginBottom:18,lineHeight:1.15 }}>
@@ -932,7 +1322,7 @@ export default function WikiAILanding() {
             </p>
             <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
               {["HR policies, contracts, and onboarding guides","Sales playbooks and pricing rules","Technical runbooks and infrastructure docs","Live CRM and ERP data via integrations"].map((item,i)=>(
-                <div key={i} style={{ display:"flex",alignItems:"center",gap:10,fontSize:14,color:"#94a3b8" }}>
+                <div key={i} style={{ display:"flex",alignItems:"center",gap:10,fontSize:14,color:"var(--text-dim)" }}>
                   <div style={{ width:6,height:6,borderRadius:"50%",background:"#3b82f6",flexShrink:0 }} />
                   {item}
                 </div>
@@ -946,8 +1336,8 @@ export default function WikiAILanding() {
       </section>
 
       {/* ── INTEGRATION HUB ──────────────────────── */}
-      <section id="integrations" style={{ padding:"80px 6%", minHeight:"700px" }}>
-        <div className="divider-glow" style={{ height:"1px", marginBottom:80 }} />
+      <section id="integrations" style={{ padding:"80px 6%" }}>
+        <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <SectionHead
           tag="Integrations"
           tagStyle=""
@@ -955,7 +1345,7 @@ export default function WikiAILanding() {
           sub="WikiAI sits at the center of your tech stack — pulling from every source, pushing answers to every channel."
         />
         <div className="r" style={{ transitionDelay:"60ms" }}>
-          <HubDiagram />
+          {isMobile ? <MobileHubDiagram /> : <HubDiagram />}
         </div>
         {/* Extra detail row */}
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:16,maxWidth:900,margin:"48px auto 0" }}>
@@ -967,7 +1357,7 @@ export default function WikiAILanding() {
           ].map((c,i)=>(
             <div key={i} className={`r feat-card`} style={{ transitionDelay:`${i*80}ms` }}>
               <div style={{ fontSize:24,marginBottom:12 }}>{c.icon}</div>
-              <div style={{ fontSize:15,fontWeight:700,color:"#f1f5f9",marginBottom:7 }}>{c.title}</div>
+              <div style={{ fontSize:15,fontWeight:700,color:"var(--text)",marginBottom:7 }}>{c.title}</div>
               <p style={{ fontSize:13,color:"var(--text-muted)",lineHeight:1.6 }}>{c.desc}</p>
             </div>
           ))}
@@ -976,7 +1366,7 @@ export default function WikiAILanding() {
 
       {/* ── TERMINAL ─────────────────────────────── */}
       <section style={{ padding:"80px 6%",background:"linear-gradient(180deg,transparent,rgba(59,130,246,0.025),transparent)" }}>
-        <div style={{ maxWidth:1060,margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:64,alignItems:"center" }}>
+        <div className="two-col-grid" style={{ maxWidth:1060,margin:"0 auto" }}>
           <div className="r-r" style={{ order:2 }}>
             <span className="tag tag-green" style={{ marginBottom:18,display:"inline-flex" }}>AI Agent Bridge</span>
             <h2 className="h2" style={{ marginBottom:18,lineHeight:1.15 }}>
@@ -993,7 +1383,7 @@ export default function WikiAILanding() {
                 "Works in Russian, English, any language",
                 "Escalates to human when confidence is low",
               ].map((item,i)=>(
-                <div key={i} style={{ display:"flex",alignItems:"center",gap:10,fontSize:14,color:"#94a3b8" }}>
+                <div key={i} style={{ display:"flex",alignItems:"center",gap:10,fontSize:14,color:"var(--text-dim)" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
                   {item}
                 </div>
@@ -1007,8 +1397,8 @@ export default function WikiAILanding() {
       </section>
 
       {/* ── USE CASES ────────────────────────────── */}
-      <section style={{ padding:"80px 6%", minHeight:"600px" }}>
-        <div className="divider-glow" style={{ height:"1px", marginBottom:80 }} />
+      <section style={{ padding:"80px 6%" }}>
+        <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <SectionHead
           tag="Use Cases"
           tagStyle=""
@@ -1019,7 +1409,7 @@ export default function WikiAILanding() {
           {USECASES.map((u,i)=>(
             <div key={i} className={`r feat-card`} style={{ transitionDelay:`${i*80}ms` }}>
               <div style={{ fontSize:32,marginBottom:16 }}>{u.icon}</div>
-              <h3 style={{ fontSize:16,fontWeight:700,color:"#f1f5f9",marginBottom:10 }}>{u.title}</h3>
+              <h3 style={{ fontSize:16,fontWeight:700,color:"var(--text)",marginBottom:10 }}>{u.title}</h3>
               <p style={{ fontSize:14,color:"var(--text-muted)",lineHeight:1.65 }}>{u.desc}</p>
             </div>
           ))}
@@ -1034,16 +1424,16 @@ export default function WikiAILanding() {
               <div style={{ fontSize:"2.8rem",fontWeight:900,letterSpacing:"-.03em",color:"#60a5fa",lineHeight:1,marginBottom:8,fontFamily:"'Geist',sans-serif" }}>
                 <Counter to={s.n} suffix={s.s} decimals={s.dec} />
               </div>
-              <div style={{ fontSize:15,fontWeight:600,color:"#f1f5f9",marginBottom:4 }}>{s.label}</div>
-              <div style={{ fontSize:12,color:"#334155" }}>{s.desc}</div>
+              <div style={{ fontSize:15,fontWeight:600,color:"var(--text)",marginBottom:4 }}>{s.label}</div>
+              <div style={{ fontSize:12,color:"var(--stat-num)" }}>{s.desc}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── PRICING ──────────────────────────────── */}
-      <section id="pricing" style={{ padding:"96px 6%", minHeight:"800px" }}>
-        <div className="divider-glow" style={{ height:"1px", marginBottom:80 }} />
+      <section id="pricing" style={{ padding:"96px 6%" }}>
+        <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <SectionHead
           tag="Pricing"
           tagStyle=""
@@ -1058,16 +1448,16 @@ export default function WikiAILanding() {
                   MOST POPULAR
                 </div>
               )}
-              <div style={{ fontSize:18,fontWeight:700,color:"#f1f5f9",marginBottom:4 }}>{p.name}</div>
-              <div style={{ fontSize:13,color:"#475569",marginBottom:22 }}>{p.desc}</div>
+              <div style={{ fontSize:18,fontWeight:700,color:"var(--text)",marginBottom:4 }}>{p.name}</div>
+              <div style={{ fontSize:13,color:"var(--text-faint)",marginBottom:22 }}>{p.desc}</div>
               <div style={{ display:"flex",alignItems:"baseline",gap:4,marginBottom:8 }}>
-                <span style={{ fontSize:40,fontWeight:900,letterSpacing:"-.03em",color:p.hi?"#60a5fa":"#f1f5f9" }}>{p.price}</span>
-                <span style={{ color:"#475569",fontSize:14 }}>{p.per}</span>
+                <span style={{ fontSize:40,fontWeight:900,letterSpacing:"-.03em",color:p.hi?"#60a5fa":"var(--text)" }}>{p.price}</span>
+                <span style={{ color:"var(--text-faint)",fontSize:14 }}>{p.per}</span>
               </div>
               <div className="divider" style={{ height:"1px", margin:"20px 0" }} />
               <div style={{ marginBottom:28 }}>
                 {p.features.map((f,j)=>(
-                  <div key={j} style={{ display:"flex",alignItems:"center",gap:9,marginBottom:11,fontSize:14,color:"#94a3b8" }}>
+                  <div key={j} style={{ display:"flex",alignItems:"center",gap:9,marginBottom:11,fontSize:14,color:"var(--text-dim)" }}>
                     <Check />{f}
                   </div>
                 ))}
@@ -1087,7 +1477,7 @@ export default function WikiAILanding() {
       {/* ── CTA ──────────────────────────────────── */}
       <section style={{ padding:"80px 6% 100px" }}>
         <div className="r" style={{ maxWidth:780,margin:"0 auto",textAlign:"center" }}>
-          <div style={{ background:"linear-gradient(135deg,rgba(59,130,246,0.1),rgba(14,165,233,0.07),rgba(99,102,241,0.06))",border:"1px solid rgba(59,130,246,0.2)",borderRadius:22,padding:"64px 48px",position:"relative",overflow:"hidden" }}>
+          <div className="mobile-cta-box" style={{ background:"linear-gradient(135deg,rgba(59,130,246,0.1),rgba(14,165,233,0.07),rgba(99,102,241,0.06))",border:"1px solid rgba(59,130,246,0.2)",borderRadius:22,position:"relative",overflow:"hidden" }}>
             <div style={{ position:"absolute",width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,0.12),transparent 70%)",top:"-30%",left:"50%",transform:"translateX(-50%)",pointerEvents:"none" }} />
             <div style={{ fontSize:46,marginBottom:18 }}>🧠</div>
             <h2 className="h2" style={{ marginBottom:16 }}>
@@ -1117,40 +1507,42 @@ export default function WikiAILanding() {
       {/* ── FOOTER ───────────────────────────────── */}
       <footer style={{ borderTop:"1px solid var(--border)",padding:"52px 6% 32px" }}>
         <div style={{ maxWidth:1060,margin:"0 auto" }}>
-          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:36,marginBottom:52 }}>
+          <div className="footer-top-row" style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:36,marginBottom:52 }}>
             <div>
               <div style={{ display:"flex",alignItems:"center",gap:9,marginBottom:12 }}>
                 <div style={{ width:30,height:30,borderRadius:8,background:"linear-gradient(135deg,#3b82f6,#0ea5e9)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15 }}>🧠</div>
                 <span style={{ fontWeight:800,fontSize:17,letterSpacing:"-.02em" }}><span className="g-blue">Wiki</span>AI</span>
               </div>
-              <p style={{ color:"#334155",fontSize:13,maxWidth:210,lineHeight:1.65 }}>Centralised AI knowledge hub for modern companies and their teams.</p>
+              <p style={{ color:"var(--stat-num)",fontSize:13,maxWidth:210,lineHeight:1.65 }}>Centralised AI knowledge hub for modern companies and their teams.</p>
             </div>
+            <div className="footer-link-cols" style={{ display:"flex",gap:40,flexWrap:"wrap" }}>
             {[
               { title:"Product", links:["Features","Integrations","Pricing","Changelog","Roadmap"] },
               { title:"Use Cases", links:["Employee Onboarding","Sales Enablement","Call Centers","E-commerce"] },
               { title:"Company", links:["About","Blog","Careers","Contact","Privacy"] },
             ].map((col,i)=>(
               <div key={i}>
-                <div style={{ fontSize:12,fontWeight:700,color:"#f1f5f9",marginBottom:16,letterSpacing:".06em",textTransform:"uppercase",fontFamily:"'Geist Mono',monospace" }}>{col.title}</div>
+                <div style={{ fontSize:12,fontWeight:700,color:"var(--text)",marginBottom:16,letterSpacing:".06em",textTransform:"uppercase",fontFamily:"'Geist Mono',monospace" }}>{col.title}</div>
                 <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                   {col.links.map(l=>(
-                    <a key={l} href="#" style={{ color:"#334155",fontSize:14,textDecoration:"none",transition:"color .2s" }}
-                      onMouseEnter={e=>(e.target as HTMLElement).style.color="#64748b"}
-                      onMouseLeave={e=>(e.target as HTMLElement).style.color="#334155"}
+                    <a key={l} href="#" style={{ color:"var(--stat-num)",fontSize:14,textDecoration:"none",transition:"color .2s" }}
+                      onMouseEnter={e=>(e.target as HTMLElement).style.color="var(--footer-link-h)"}
+                      onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--stat-num)"}
                     >{l}</a>
                   ))}
                 </div>
               </div>
             ))}
+            </div>
           </div>
           <div className="divider" style={{ height:"1px", marginBottom:24 }} />
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12 }}>
-            <span style={{ color:"#1e293b",fontSize:13,fontFamily:"'Geist Mono',monospace" }}>© 2025 WikiAI. All rights reserved.</span>
+            <span style={{ color:"var(--footer-copy)",fontSize:13,fontFamily:"'Geist Mono',monospace" }}>© 2025 WikiAI. All rights reserved.</span>
             <div style={{ display:"flex",gap:20 }}>
               {["Privacy","Terms","Security"].map(l=>(
-                <a key={l} href="#" style={{ color:"#1e293b",fontSize:13,textDecoration:"none",transition:"color .2s" }}
-                  onMouseEnter={e=>(e.target as HTMLElement).style.color="#334155"}
-                  onMouseLeave={e=>(e.target as HTMLElement).style.color="#1e293b"}
+                <a key={l} href="#" style={{ color:"var(--footer-copy)",fontSize:13,textDecoration:"none",transition:"color .2s" }}
+                  onMouseEnter={e=>(e.target as HTMLElement).style.color="var(--footer-link-h)"}
+                  onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--footer-copy)"}
                 >{l}</a>
               ))}
             </div>
