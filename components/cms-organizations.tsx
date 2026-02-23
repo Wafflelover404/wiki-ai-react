@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -80,6 +80,9 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const [newMessage, setNewMessage] = useState("")
   const [sendingMessage, setSendingMessage] = useState(false)
   
+  // Track the current valid token (may be refreshed)
+  const currentTokenRef = useRef<string>(token)
+  
   // Status change modal state
   const [statusChangeModal, setStatusChangeModal] = useState<{
     isOpen: boolean
@@ -93,6 +96,11 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
     reason: ""
   })
 
+  // Update token ref when prop changes
+  useEffect(() => {
+    currentTokenRef.current = token
+  }, [token])
+
   // WebSocket messaging (disabled for stability - using HTTP API instead)
   const {
     isConnected: wsIsConnected,
@@ -104,85 +112,104 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
     markMessageAsRead: wsMarkMessageAsRead
   } = useWebSocketMessaging("") // Disabled by passing empty token
 
-  const validateToken = async (providedToken: string): Promise<string | null> => {
+  // Token validation/refresh helper
+  const refreshToken = async (): Promise<string | null> => {
     try {
-      const response = await fetch("http://127.0.0.1:9001/organizations", {
-        headers: {
-          "Authorization": `Bearer ${providedToken}`,
-          "Content-Type": "application/json"
-        }
-      })
-
-      if (response.ok) {
-        return providedToken // Token is valid
-      } else if (response.status === 403) {
-        // Token is invalid, try to refresh with hardcoded credentials
-        console.log("Token expired, attempting to refresh...")
-        const refreshResponse = await fetch("http://127.0.0.1:9001/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: "admin", password: "admin123" })
-        })
-
-        if (refreshResponse.ok) {
-          const data = await refreshResponse.json()
-          if (data.status === "success" && data.token) {
-            console.log("Token refreshed successfully")
-            return data.token
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Token validation error:", err)
-    }
-    
-    return null
-  }
-
-  const fetchOrganizations = async () => {
-    try {
-      const validToken = await validateToken(token)
-      if (!validToken) {
-        setError("Authentication failed - please refresh the page")
-        return
-      }
-
-      const response = await fetch("http://127.0.0.1:9001/organizations", {
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        }
+      console.log("Attempting to refresh token with admin credentials...")
+      const cmsPassword = process.env.NEXT_PUBLIC_CMS_PASSWORD || "AdminTestPassword1423"
+      const response = await fetch("http://127.0.0.1:9001/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "admin", password: cmsPassword })
       })
 
       if (response.ok) {
         const data = await response.json()
+        if (data.status === "success" && data.token) {
+          console.log("Token refreshed successfully, updating local reference")
+          currentTokenRef.current = data.token
+          return data.token
+        }
+      }
+    } catch (err) {
+      console.error("Token refresh error:", err)
+    }
+    return null
+  }
+
+  // Make API request with automatic token refresh on 401/403
+  const makeAuthenticatedRequest = async (
+    url: string,
+    options: RequestInit = {}
+  ): Promise<Response> => {
+    try {
+      let currentToken = currentTokenRef.current
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          "Authorization": `Bearer ${currentToken}`,
+          "Content-Type": "application/json"
+        }
+      })
+
+      // If we get 401/403, try to refresh token and retry
+      if (response.status === 401 || response.status === 403) {
+        console.log("Token invalid, attempting refresh...")
+        const newToken = await refreshToken()
+        if (newToken && newToken !== currentToken) {
+          console.log("Retrying request with refreshed token")
+          // Retry with new token
+          return fetch(url, {
+            ...options,
+            headers: {
+              ...options.headers,
+              "Authorization": `Bearer ${newToken}`,
+              "Content-Type": "application/json"
+            }
+          })
+        }
+      }
+
+      return response
+    } catch (err) {
+      console.error("Request error:", err)
+      throw err
+    }
+  }
+
+  const fetchOrganizations = async () => {
+    try {
+      const response = await makeAuthenticatedRequest(
+        "http://127.0.0.1:9001/organizations",
+        { method: "GET" }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
         if (data.status === "success") {
+          console.log("Fetched organizations:", data.response.organizations)
           setOrganizations(data.response.organizations || [])
+          setError(null)
         } else {
           setError(data.message || "Failed to fetch organizations")
         }
       } else {
-        setError(`HTTP ${response.status}: Failed to fetch organizations`)
+        console.error(`HTTP ${response.status}: Failed to fetch organizations`)
+        setError(`Failed to fetch organizations (${response.status})`)
       }
     } catch (err) {
       setError("Failed to fetch organizations")
+      console.error(err)
     }
   }
 
   const fetchMessageThreads = async () => {
     try {
-      const validToken = await validateToken(token)
-      if (!validToken) {
-        setError("Authentication failed - please refresh the page")
-        return
-      }
-
-      const response = await fetch("http://127.0.0.1:9001/messages/threads", {
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        }
-      })
+      const response = await makeAuthenticatedRequest(
+        "http://127.0.0.1:9001/messages/threads",
+        { method: "GET" }
+      )
 
       if (response.ok) {
         const data = await response.json()
@@ -196,20 +223,16 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       }
     } catch (err) {
       setError("Failed to fetch message threads")
+      console.error(err)
     }
   }
 
   const fetchUnreadCount = async () => {
     try {
-      const validToken = await validateToken(token)
-      if (!validToken) return
-
-      const response = await fetch("http://127.0.0.1:9001/messages/unread-count", {
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        }
-      })
+      const response = await makeAuthenticatedRequest(
+        "http://127.0.0.1:9001/messages/unread-count",
+        { method: "GET" }
+      )
 
       if (response.ok) {
         const data = await response.json()
@@ -225,18 +248,10 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const fetchThreadMessages = async (threadId: string) => {
     try {
       // Always use HTTP API for message fetching (more reliable than WebSocket)
-      const validToken = await validateToken(token)
-      if (!validToken) {
-        setError("Authentication failed - please refresh the page")
-        return
-      }
-
-      const response = await fetch(`http://127.0.0.1:9001/messages/threads/${threadId}/messages`, {
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        }
-      })
+      const response = await makeAuthenticatedRequest(
+        `http://127.0.0.1:9001/messages/threads/${threadId}/messages`,
+        { method: "GET" }
+      )
 
       if (response.ok) {
         const data = await response.json()
@@ -248,24 +263,16 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       }
     } catch (err) {
       setError("Failed to fetch thread messages")
+      console.error(err)
     }
   }
 
   const banOrganization = async (orgId: string) => {
     try {
-      const validToken = await validateToken(token)
-      if (!validToken) {
-        setError("Authentication failed - please refresh the page")
-        return
-      }
-
-      const response = await fetch(`http://127.0.0.1:9001/organizations/ban/${orgId}`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        }
-      })
+      const response = await makeAuthenticatedRequest(
+        `http://127.0.0.1:9001/organizations/ban/${orgId}`,
+        { method: "POST" }
+      )
 
       if (response.ok) {
         await fetchOrganizations()
@@ -274,24 +281,16 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       }
     } catch (err) {
       setError("Failed to ban organization")
+      console.error(err)
     }
   }
 
   const approveOrganization = async (orgId: string) => {
     try {
-      const validToken = await validateToken(token)
-      if (!validToken) {
-        setError("Authentication failed - please refresh the page")
-        return
-      }
-
-      const response = await fetch(`http://127.0.0.1:9001/organizations/approve/${orgId}`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        }
-      })
+      const response = await makeAuthenticatedRequest(
+        `http://127.0.0.1:9001/organizations/approve/${orgId}`,
+        { method: "POST" }
+      )
 
       if (response.ok) {
         await fetchOrganizations()
@@ -300,25 +299,16 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       }
     } catch (err) {
       setError("Failed to approve organization")
+      console.error(err)
     }
   }
 
   const rejectOrganization = async (orgId: string, reason: string = "") => {
     try {
-      const validToken = await validateToken(token)
-      if (!validToken) {
-        setError("Authentication failed - please refresh the page")
-        return
-      }
-
-      const response = await fetch(`http://127.0.0.1:9001/organizations/reject/${orgId}`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ reason })
-      })
+      const response = await makeAuthenticatedRequest(
+        `http://127.0.0.1:9001/organizations/reject/${orgId}`,
+        { method: "POST", body: JSON.stringify({ reason }) }
+      )
 
       if (response.ok) {
         await fetchOrganizations()
@@ -328,25 +318,16 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       }
     } catch (err) {
       setError("Failed to reject organization")
+      console.error(err)
     }
   }
 
   const changeOrganizationStatus = async (orgId: string, newStatus: string) => {
     try {
-      const validToken = await validateToken(token)
-      if (!validToken) {
-        setError("Authentication failed - please refresh the page")
-        return
-      }
-
-      const response = await fetch(`http://127.0.0.1:9001/organizations/change-status/${orgId}`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ status: newStatus })
-      })
+      const response = await makeAuthenticatedRequest(
+        `http://127.0.0.1:9001/organizations/change-status/${orgId}`,
+        { method: "POST", body: JSON.stringify({ status: newStatus }) }
+      )
 
       if (response.ok) {
         await fetchOrganizations()
@@ -356,6 +337,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       }
     } catch (err) {
       setError("Failed to change organization status")
+      console.error(err)
     }
   }
 
@@ -383,34 +365,30 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
     setSendingMessage(true)
     try {
-      const validToken = await validateToken(token)
-      if (!validToken) {
-        setError("Authentication failed - please refresh the page")
-        return
-      }
-
-      const response = await fetch(`http://127.0.0.1:9001/messages/threads/${selectedThread?.id}/messages`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: newMessage.trim(),
-          sender_name: "WikiAI Admin",
-          sender_email: "admin@wikiai.com",
-          message_type: "response"
-        })
-      })
+      const response = await makeAuthenticatedRequest(
+        `http://127.0.0.1:9001/messages/threads/${selectedThread?.id}/messages`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            message: newMessage.trim(),
+            sender_name: "WikiAI Admin",
+            sender_email: "admin@wikiai.com",
+            message_type: "response"
+          })
+        }
+      )
 
       if (response.ok) {
         setNewMessage("")
         if (selectedThread?.id) {
           fetchThreadMessages(selectedThread.id)
         }
+      } else {
+        setError("Failed to send message")
       }
     } catch (err) {
       setError("Failed to send message")
+      console.error(err)
     } finally {
       setSendingMessage(false)
     }
@@ -418,19 +396,10 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
   const markMessageAsRead = async (messageId: string) => {
     try {
-      const validToken = await validateToken(token)
-      if (!validToken) {
-        setError("Authentication failed - please refresh the page")
-        return
-      }
-
-      const response = await fetch(`http://127.0.0.1:9001/messages/${messageId}/read`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        }
-      })
+      const response = await makeAuthenticatedRequest(
+        `http://127.0.0.1:9001/messages/${messageId}/read`,
+        { method: "POST" }
+      )
 
       if (response.ok) {
         if (selectedThread?.id) {
@@ -440,32 +409,26 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       }
     } catch (err) {
       setError("Failed to mark message as read")
+      console.error(err)
     }
   }
 
   const openThreadWithOrganization = async (orgId: string, orgName: string) => {
     try {
-      const validToken = await validateToken(token)
-      if (!validToken) {
-        setError("Authentication failed - please refresh the page")
-        return
-      }
-
-      const response = await fetch("http://127.0.0.1:9001/messages/threads", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${validToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          organization_id: orgId,
-          subject: `Conversation with ${orgName}`,
-          sender_name: "WikiAI Admin",
-          sender_email: "admin@wikiai.com",
-          message: `Hello! This is a message thread opened with ${orgName}. How can we help you today?`,
-          message_type: "inquiry"
-        })
-      })
+      const response = await makeAuthenticatedRequest(
+        "http://127.0.0.1:9001/messages/threads",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            organization_id: orgId,
+            subject: `Conversation with ${orgName}`,
+            sender_name: "WikiAI Admin",
+            sender_email: "admin@wikiai.com",
+            message: `Hello! This is a message thread opened with ${orgName}. How can we help you today?`,
+            message_type: "inquiry"
+          })
+        }
+      )
 
       if (response.ok) {
         const data = await response.json()
@@ -474,15 +437,13 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
           await fetchMessageThreads()
           
           // Find the newly created thread
-          const updatedThreads = await fetch("http://127.0.0.1:9001/messages/threads", {
-            headers: {
-              "Authorization": `Bearer ${validToken}`,
-              "Content-Type": "application/json"
-            }
-          })
+          const updatedThreadsResponse = await makeAuthenticatedRequest(
+            "http://127.0.0.1:9001/messages/threads",
+            { method: "GET" }
+          )
           
-          if (updatedThreads.ok) {
-            const threadsData = await updatedThreads.json()
+          if (updatedThreadsResponse.ok) {
+            const threadsData = await updatedThreadsResponse.json()
             const threads = threadsData.response?.threads || []
             const newThread = threads.find((t: any) => t.subject === `Conversation with ${orgName}`)
             
@@ -507,12 +468,12 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       }
     } catch (err) {
       setError("Failed to create thread")
+      console.error(err)
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "approved":
       case "active":
         return <CheckCircle className="w-4 h-4 text-green-600" />
       case "pending":
@@ -528,7 +489,6 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "approved":
       case "active":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
       case "pending":
@@ -555,6 +515,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
+      // Fetch all data in parallel with automatic token refresh on failure
       await Promise.all([
         fetchOrganizations(),
         fetchMessageThreads(),
@@ -563,8 +524,10 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
       setLoading(false)
     }
 
-    loadData()
-  }, [])
+    if (token) {
+      loadData()
+    }
+  }, [token])
 
   if (loading) {
     return (
@@ -715,7 +678,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                         </Button>
                       </div>
                     )}
-                    {(org.status === "pending" || org.status === "approved" || org.status === "active") && (
+                    {(org.status === "pending" || org.status === "active") && (
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
@@ -935,7 +898,6 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                 >
                   <option value="pending">Pending</option>
                   <option value="active">Active</option>
-                  <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
               </div>
@@ -960,7 +922,6 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                 <ul className="space-y-1 text-xs">
                   <li><strong>Pending:</strong> Awaiting approval (login blocked)</li>
                   <li><strong>Active:</strong> Approved and functional (login allowed)</li>
-                  <li><strong>Approved:</strong> Alternative approved status (login allowed)</li>
                   <li><strong>Rejected:</strong> Rejected by admin (login blocked)</li>
                 </ul>
               </div>
