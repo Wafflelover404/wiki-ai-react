@@ -770,82 +770,351 @@
   "landing": {
     "nav": {
       "features": "Features",
-      "pricing": "Pricing", 
+      "howItWorks": "How It Works",
+      "integrations": "Integrations",
+      "pricing": "Pricing",
       "about": "About",
       "contact": "Contact",
       "signIn": "Sign In",
       "brochure": "Brochure",
-      "account": "Account"
+      "account": "Account",
+      "getStarted": "Get Started →",
+      "watchDemo": "▶ Watch Demo",
+      "toggleTheme": "Toggle theme",
+      "language": "Language"
     },
     "hero": {
-      "badge": "AI-Powered Knowledge Management",
-      "title": "Knowledge Base Reimagined with ",
-      "titleHighlight": "AI",
-      "subtitle": "Transform your organization's knowledge into an intelligent, searchable resource. Get instant answers, manage documents, and empower your team with AI-driven insights.",
-      "getStarted": "Get Started",
-      "learnMore": "Learn More",
+      "badge": "Company Knowledge Platform",
+      "title": "All Company Knowledge.",
+      "titleHighlight": "One Intelligent Hub.",
+      "subtitle": "WikiAI centralises everything your company knows — from CRM records to policy docs — and makes it instantly searchable by every employee, and deliverable through any channel.",
+      "valueProps": {
+        "connects": "Connects to Bitrix, ERP, Drive",
+        "answers": "Answers in any messenger or chat",
+        "seconds": "Employees find answers in seconds"
+      },
+      "getStarted": "🚀 Start for Free",
+      "learnMore": "▶ Watch Demo",
       "viewBrochure": "View Brochure",
       "noCreditCard": "No credit card required",
       "freeTrial": "14-day free trial",
-      "setupMinutes": "Setup in minutes"
-    },
-    "features": {
-      "title": "Powerful Features for Modern Teams",
-      "subtitle": "Everything you need to manage, search, and leverage your organization's knowledge effectively.",
-      "smartSearch": {
-        "title": "Smart Search",
-        "description": "Find information instantly across your entire knowledge base with advanced semantic search."
-      },
-      "aiAnswers": {
-        "title": "AI-Powered Answers",
-        "description": "Get intelligent responses to your questions with context-aware AI assistance."
-      },
-      "documentManagement": {
-        "title": "Document Management", 
-        "description": "Upload, organize, and manage all your documents in one centralized location."
-      },
-      "secure": {
-        "title": "Secure & Private",
-        "description": "Enterprise-grade security with role-based access control and data encryption."
-      },
-      "realTime": {
-        "title": "Real-time Processing",
-        "description": "Experience fast, responsive performance with real-time updates and WebSocket connectivity."
-      },
-      "collaboration": {
-        "title": "Team Collaboration",
-        "description": "Work together seamlessly with shared knowledge bases and collaborative features."
+      "setupMinutes": "Setup in minutes",
+      "socialProof": {
+        "ai": "AI",
+        "powered": "Powered",
+        "searchTime": "Search time",
+        "integrations": "Integrations",
+        "uptime": "Uptime"
       }
     },
-    "benefits": {
-      "title": "Why Choose WikiAI?",
-      "subtitle": "Our intelligent knowledge management system helps teams work smarter, not harder. Experience the power of AI-driven information retrieval and collaboration.",
-      "reduceTime": "Reduce information retrieval time by 80%",
-      "improveSharing": "Improve team knowledge sharing",
-      "centralizedManagement": "Centralized document management",
-      "aiInsights": "AI-powered insights and recommendations",
-      "security": "Secure role-based access control",
-      "realTimeUpdates": "Real-time search and updates",
-      "startFreeTrial": "Start Your Free Trial",
-      "semanticSearch": "Semantic Search",
-      "semanticSearchDesc": "Find what you need, instantly",
-      "aiAssistant": "AI Assistant",
-      "aiAssistantDesc": "Get intelligent answers",
-      "analytics": "Analytics",
-      "analyticsDesc": "Track usage and insights"
+    "problem": {
+      "title": "Your team is <span class=\"g-blue\">drowning in tabs</span> looking for answers",
+      "subtitle": "Knowledge scattered across Google Drive, Confluence, email threads, Bitrix tasks, and human brains. WikiAI fixes that.",
+      "before": {
+        "title": "Before WikiAI",
+        "items": [
+          "Ask a colleague, interrupt their flow",
+          "Search 5 different systems manually",
+          "Wait for email reply that never comes",
+          "Onboarding takes weeks, not days"
+        ]
+      },
+      "with": {
+        "title": "With WikiAI",
+        "items": [
+          "Ask in Telegram, get answer in 1 second",
+          "One search across all company data",
+          "AI cites exact source document",
+          "New hires self-serve from day one"
+        ]
+      },
+      "result": {
+        "title": "The Result",
+        "items": [
+          "40% fewer interruption requests",
+          "10× faster information retrieval",
+          "Consistent answers across team",
+          "Knowledge gaps become visible"
+        ]
+      }
+    },
+    "searchDemo": {
+      "tag": "Search Demo",
+      "title": "Employees <span class=\"g-blue\">find answers instantly</span>",
+      "subtitle": "Real questions from real roles — answered in under a second from your company's actual knowledge base.",
+      "questions": {
+        "vacation": "What is our vacation policy for remote employees?",
+        "refund": "How to process a B2B refund in Bitrix?",
+        "servers": "What servers are in production right now?"
+      },
+      "results": {
+        "hrPolicy": "HR Policy Manual 2024",
+        "employmentContract": "Employment Contract Template",
+        "bitrixCrm": "Bitrix CRM Guide",
+        "financeSop": "Finance SOP v3",
+        "infrastructure": "Infrastructure Registry",
+        "deploymentRunbook": "Deployment Runbook",
+        "vacationSnippet": "Remote employees are entitled to 28 calendar days of paid vacation, applicable from first day of employment...",
+        "refundSnippet": "Vacation scheduling must be agreed with direct manager 14 days in advance via the HR portal...",
+        "processSnippet": "Navigate to CRM → Deals → Refund Requests. Select client segment 'B2B Enterprise' and initiate refund workflow...",
+        "approvalSnippet": "B2B refunds require approval from Finance Manager and must be logged in 1C within 2 business days...",
+        "productionSnippet": "Current production: app-srv-01 (Berlin), app-srv-02 (Frankfurt), db-master-01, cdn-edge-04...",
+        "maintenanceSnippet": "All production changes require DevOps lead sign-off. Maintenance window: Sundays 02:00–04:00 UTC..."
+      },
+      "aiAgent": "AI AGENT"
+    },
+    "features": {
+      "tag": "Platform",
+      "title": "Everything in one place,<br/><span class=\"g-blue\">delivered everywhere</span>",
+      "subtitle": "A complete knowledge infrastructure — from ingestion to delivery.",
+      "singleHub": {
+        "title": "Single Knowledge Hub",
+        "desc": "All company documents, policies, CRM data and wikis unified in one AI-searchable place. No more hunting through folders or asking colleagues.",
+        "tag": "Core"
+      },
+      "integrations": {
+        "title": "Deep Integrations",
+        "desc": "Pull data live from Bitrix24, 1C ERP, Confluence, SharePoint, Google Drive and any REST source. Knowledge stays fresh automatically.",
+        "tag": "Integrations"
+      },
+      "aiAgent": {
+        "title": "AI Agent Delivery",
+        "desc": "Deploy WikiAI as an AI agent in your Telegram bot, website chat, Slack workspace, or online store. Answers driven by your real company data.",
+        "tag": "Delivery"
+      },
+      "semanticSearch": {
+        "title": "Semantic Search",
+        "desc": "Ask questions in natural language. Vector embeddings understand meaning, not just keywords. Get ranked answers with source citations.",
+        "tag": "Search"
+      },
+      "multiDepartment": {
+        "title": "Multi-Department",
+        "desc": "Separate knowledge bases per department or subsidiary with full data isolation. Marketing, Sales, Tech — each with their own space.",
+        "tag": "Multi-tenant"
+      },
+      "analytics": {
+        "title": "Usage Analytics",
+        "desc": "See which questions employees ask most. Identify knowledge gaps. Track adoption and measure ROI of your knowledge base investment.",
+        "tag": "Analytics"
+      }
+    },
+    "employeeJourney": {
+      "tag": "Employee Experience",
+      "title": "Every role gets answers <span class=\"g-blue\">in seconds</span>",
+      "subtitle": "From a first-day hire to a seasoned VP — WikiAI understands context of question and searches across every document, database, and system your company uses.",
+      "knowledgeTypes": [
+        "HR policies, contracts, and onboarding guides",
+        "Sales playbooks and pricing rules",
+        "Technical runbooks and infrastructure docs",
+        "Live CRM and ERP data via integrations"
+      ],
+      "roles": {
+        "newEmployee": "New Employee",
+        "salesManager": "Sales Manager",
+        "supportAgent": "Support Agent",
+        "questions": {
+          "vacation": "\"What's our expense reimbursement process?\"",
+          "discount": "\"What's the discount ceiling for SMB clients?\"",
+          "reset2fa": "\"How to reset 2FA for a client account?\""
+        },
+        "answers": {
+          "vacation": "Found in Finance SOP §3.1 — submit via HR portal within 30 days with receipts.",
+          "discount": "Max 15% without VP approval. Source: Pricing Policy 2024, updated Jan 15.",
+          "reset2fa": "Use admin panel → Users → Security. Requires ticket logged in Bitrix first."
+        }
+      }
+    },
+    "integrationHub": {
+      "tag": "Integrations",
+      "title": "Connect your systems. <span class=\"g-blue\">Deliver anywhere.</span>",
+      "subtitle": "WikiAI sits at center of your tech stack — pulling from every source, pushing answers to every channel.",
+      "dataSources": "Data Sources",
+      "deliveryChannels": "Delivery Channels",
+      "knowledgeHub": "Knowledge Hub",
+      "sources": {
+        "bitrix": "Bitrix24",
+        "bitrixSub": "CRM / Tasks",
+        "erp": "1C ERP",
+        "erpSub": "Operations",
+        "drive": "Google Drive",
+        "driveSub": "Documents",
+        "confluence": "Confluence",
+        "confluenceSub": "Wiki pages",
+        "email": "Email / IMAP",
+        "emailSub": "Mail archive",
+        "sharepoint": "SharePoint",
+        "sharepointSub": "Corp files"
+      },
+      "outputs": {
+        "telegram": "Telegram Bot",
+        "telegramSub": "Team messenger",
+        "shop": "Online Store",
+        "shopSub": "Customer AI chat",
+        "slack": "Slack",
+        "slackSub": "Workspace chat",
+        "website": "Website Widget",
+        "websiteSub": "Support chat",
+        "callCenter": "Call Center",
+        "callCenterSub": "Agent assistant",
+        "api": "REST API",
+        "apiSub": "Any integration"
+      },
+      "detailCards": {
+        "bitrix24": "Sync CRM contacts, deals, tasks and company wikis in real-time.",
+        "erp": "Pull product catalogs, pricing, inventory and order data automatically.",
+        "messaging": "Deploy a bot that answers in your team chats, powered by company knowledge.",
+        "store": "Embed a support agent that answers product and policy questions on your shop."
+      }
+    },
+    "aiAgentBridge": {
+      "tag": "AI Agent Bridge",
+      "title": "Your Telegram bot, <span class=\"g-blue\">powered by real company data</span>",
+      "subtitle": "Deploy WikiAI as the brain behind your internal Telegram bot, Slack assistant, or website widget. It doesn't hallucinate — it cites exact document and section.",
+      "features": [
+        "Answers sourced from actual company docs",
+        "Cites exact file name and paragraph",
+        "Queries Bitrix CRM context on the fly",
+        "Works in Russian, English, any language",
+        "Escalates to human when confidence is low"
+      ],
+      "terminal": {
+        "title": "wikiai — ai-agent bridge",
+        "replay": "↺ replay",
+        "logs": [
+          "# Employee asks a question in Telegram",
+          "→ Received: \"What's the refund policy for B2B clients?\"",
+          "→ Querying WikiAI knowledge base...",
+          "→ Searching: contracts_2024.pdf, policy_manual.docx",
+          "→ Cross-referencing Bitrix CRM client segment...",
+          "✓ Answer found — confidence 96.2%",
+          "  \"B2B clients with Enterprise tier receive 30-day",
+          "   full refund window. See §4.2 of Contract Terms.\"",
+          "→ Sources: policy_manual.docx §4.2, crm_tier_rules.json",
+          "⚡ Total response time: 0.4s"
+        ]
+      }
+    },
+    "useCases": {
+      "tag": "Use Cases",
+      "title": "Built for how <span class=\"g-blue\">real teams work</span>",
+      "subtitle": "WikiAI adapts to your business — not the other way around.",
+      "onboarding": {
+        "title": "Employee Onboarding",
+        "desc": "New hires get instant answers about processes, tools, and company policies without overwhelming their manager."
+      },
+      "ecommerce": {
+        "title": "E-commerce Support",
+        "desc": "Deploy WikiAI as your online store's support chat. It answers product questions, return policies, and shipping info from your actual docs."
+      },
+      "callCenter": {
+        "title": "Call Center Assist",
+        "desc": "Agents get real-time suggested answers pulled from your knowledge base while on a call. Shorter handle time, higher CSAT."
+      },
+      "sales": {
+        "title": "Sales Enablement",
+        "desc": "Sales reps instantly find pricing rules, competitor comparisons, and product specs. No more 'let me check with the team'."
+      }
+    },
+    "stats": {
+      "faster": "Faster answers",
+      "vsManual": "vs searching manually",
+      "interruptions": "Less interruptions",
+      "colleaguesStop": "colleagues stop asking each other",
+      "responseTime": "Avg response time",
+      "aiQuery": "AI query to answer",
+      "uptime": "Uptime SLA",
+      "reliability": "enterprise reliability"
+    },
+    "pricing": {
+      "tag": "Pricing",
+      "title": "Simple pricing, <span class=\"g-blue\">no surprises</span>",
+      "subtitle": "Start small, scale to enterprise. All plans include a 14-day free trial.",
+      "mostPopular": "MOST POPULAR",
+      "plans": {
+        "starter": {
+          "name": "Starter",
+          "price": "$N/A",
+          "per": "/mo",
+          "desc": "Small teams, single department",
+          "features": [
+            "1 department workspace",
+            "Up to 25 users",
+            "10 GB document storage",
+            "Standard AI search",
+            "1 external channel (Telegram/Web)",
+            "Basic analytics"
+          ],
+          "cta": "Start Free"
+        },
+        "business": {
+          "name": "Business",
+          "price": "$N/A",
+          "per": "/mo",
+          "desc": "Growing companies, multiple sources",
+          "features": [
+            "5 department workspaces",
+            "Unlimited users",
+            "100 GB storage",
+            "AI Agent mode + commands",
+            "Bitrix24 & CRM integration",
+            "3 external channels",
+            "Advanced analytics",
+            "API access"
+          ],
+          "cta": "Try Free 14 Days"
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "price": "Custom",
+          "per": "",
+          "desc": "Large-scale or self-hosted",
+          "features": [
+            "Unlimited workspaces",
+            "Any data source",
+            "Self-hosted option",
+            "SSO / SAML / LDAP",
+            "Custom LLM providers",
+            "Unlimited channels",
+            "White-label bot",
+            "SLA + Dedicated support"
+          ],
+          "cta": "Talk to Us"
+        }
+      }
     },
     "cta": {
-      "title": "Ready to Transform Your Knowledge Management?",
-      "subtitle": "Join thousands of teams already using WikiAI to organize, search, and leverage their collective knowledge.",
-      "startFreeTrial": "Start Free Trial",
-      "requestDemo": "Request Demo"
+      "title": "Ready to unite your<br/><span class=\"g-blue\">company's knowledge?</span>",
+      "subtitle": "Join hundreds of companies who've replaced scattered wikis, folders, and endless colleague interruptions with WikiAI.",
+      "startNow": "🚀 Start Now",
+      "bookDemo": "📅 Book a Demo"
     },
     "footer": {
-      "description": "AI-powered knowledge management for modern teams.",
+      "description": "Centralised AI knowledge hub for modern companies and their teams.",
       "product": "Product",
-      "company": "Company", 
-      "support": "Support",
-      "copyright": " 2024 WikiAI. All rights reserved."
+      "useCases": "Use Cases",
+      "company": "Company",
+      "links": {
+        "features": "Features",
+        "integrations": "Integrations",
+        "pricing": "Pricing",
+        "changelog": "Changelog",
+        "roadmap": "Roadmap",
+        "onboarding": "Employee Onboarding",
+        "sales": "Sales Enablement",
+        "callCenters": "Call Centers",
+        "ecommerce": "E-commerce",
+        "about": "About",
+        "blog": "Blog",
+        "careers": "Careers",
+        "contact": "Contact",
+        "privacy": "Privacy"
+      },
+      "bottomLinks": {
+        "privacy": "Privacy",
+        "terms": "Terms",
+        "security": "Security"
+      },
+      "copyright": "© 2025 WikiAI. All rights reserved."
     }
   },
   "about": {
