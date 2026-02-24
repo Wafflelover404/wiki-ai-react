@@ -3,15 +3,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Sun, Moon } from "lucide-react";
+import { useTranslation } from "@/src/i18n";
 
 /* ═══════════════════════════════════════════════════════════
-   GLOBAL CSS  —  shadcn/ui dark palette + custom animations
+   SCOPED CSS  —  shadcn/ui dark palette + custom animations
 ═══════════════════════════════════════════════════════════ */
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+.wiki-ai-landing *, .wiki-ai-landing *::before, .wiki-ai-landing *::after { box-sizing: border-box; margin: 0; padding: 0; }
+.wiki-ai-landing { scroll-behavior: smooth; }
 
 /* ── shadcn dark token map ── */
 :root {
@@ -59,7 +60,7 @@ html { scroll-behavior: smooth; }
   --stat-num:        #334155;
 }
 
-body {
+.wiki-ai-landing {
   background: var(--bg);
   color: var(--text);
   font-family: 'Geist', system-ui, sans-serif;
@@ -67,9 +68,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 2px; }
+.wiki-ai-landing ::-webkit-scrollbar { width: 3px; }
+.wiki-ai-landing ::-webkit-scrollbar-track { background: var(--bg); }
+.wiki-ai-landing ::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 2px; }
 
 /* ── Keyframes ── */
 @keyframes fadeUp   { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
@@ -87,36 +88,36 @@ body {
 @keyframes bar-grow { from{width:0;} to{width:var(--w);} }
 
 /* ── Scroll reveal ── */
-.r   { opacity:0; transform:translateY(22px); transition:opacity .6s ease,transform .6s ease; }
-.r-l { opacity:0; transform:translateX(-28px); transition:opacity .6s ease,transform .6s ease; }
-.r-r { opacity:0; transform:translateX(28px);  transition:opacity .6s ease,transform .6s ease; }
-.r.on,.r-l.on,.r-r.on { opacity:1; transform:none; }
+.wiki-ai-landing .r   { opacity:0; transform:translateY(22px); transition:opacity .6s ease,transform .6s ease; }
+.wiki-ai-landing .r-l { opacity:0; transform:translateX(-28px); transition:opacity .6s ease,transform .6s ease; }
+.wiki-ai-landing .r-r { opacity:0; transform:translateX(28px);  transition:opacity .6s ease,transform .6s ease; }
+.wiki-ai-landing .r.on,.wiki-ai-landing .r-l.on,.wiki-ai-landing .r-r.on { opacity:1; transform:none; }
 
 /* ── Typography ── */
-.display {
+.wiki-ai-landing .display {
   font-size: clamp(2.6rem, 6vw, 5rem);
   font-weight: 800;
   line-height: 1.06;
   letter-spacing: -0.03em;
 }
-.h2 {
+.wiki-ai-landing .h2 {
   font-size: clamp(1.75rem, 4vw, 2.75rem);
   font-weight: 750;
   line-height: 1.12;
   letter-spacing: -0.025em;
 }
-.mono { font-family: 'Geist Mono', monospace; }
+.wiki-ai-landing .mono { font-family: 'Geist Mono', monospace; }
 
 /* ── Gradient text ── */
-.g-blue {
+.wiki-ai-landing .g-blue {
   background: linear-gradient(135deg, var(--blue-light) 0%, var(--sky) 60%, #38bdf8 100%);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
 }
-.g-indigo {
+.wiki-ai-landing .g-indigo {
   background: linear-gradient(135deg, #818cf8, var(--indigo), var(--blue));
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
 }
-.g-shimmer {
+.wiki-ai-landing .g-shimmer {
   background: linear-gradient(90deg, var(--text) 0%, var(--blue-light) 30%, var(--sky) 50%, var(--blue-light) 70%, var(--text) 100%);
   background-size: 300% auto;
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
@@ -124,18 +125,18 @@ body {
 }
 
 /* ── Surface / glass ── */
-.card {
+.wiki-ai-landing .card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
-.card-hi {
+.wiki-ai-landing .card-hi {
   background: var(--card2);
   border: 1px solid var(--border-hi);
   border-radius: var(--radius);
   box-shadow: 0 0 40px rgba(59,130,246,0.08);
 }
-.glass {
+.wiki-ai-landing .glass {
   background: var(--nav-scrolled-bg);
   backdrop-filter: blur(20px);
   border: 1px solid var(--border);
@@ -143,25 +144,25 @@ body {
 }
 
 /* ── Buttons ── */
-.btn {
+.wiki-ai-landing .btn {
   display: inline-flex; align-items:center; gap:8px;
   padding: 11px 24px; border-radius: 8px; border:none;
   font-family:'Geist',sans-serif; font-size:14px; font-weight:600;
   cursor:pointer; transition:all .2s; letter-spacing:-.01em;
 }
-.btn-blue {
+.wiki-ai-landing .btn-blue {
   background: var(--blue); color:#fff;
 }
-.btn-blue:hover { background:#2563eb; box-shadow:0 8px 28px rgba(59,130,246,0.35); transform:translateY(-1px); }
-.btn-outline {
+.wiki-ai-landing .btn-blue:hover { background:#2563eb; box-shadow:0 8px 28px rgba(59,130,246,0.35); transform:translateY(-1px); }
+.wiki-ai-landing .btn-outline {
   background:transparent; color:var(--text);
   border:1px solid var(--border); padding:11px 24px;
 }
-.btn-outline:hover { border-color:var(--border-hi); background:var(--blue-dim); }
-.btn-lg { padding:14px 32px; font-size:15px; border-radius:10px; }
+.wiki-ai-landing .btn-outline:hover { border-color:var(--border-hi); background:var(--blue-dim); }
+.wiki-ai-landing .btn-lg { padding:14px 32px; font-size:15px; border-radius:10px; }
 
 /* ── Tag / badge ── */
-.tag {
+.wiki-ai-landing .tag {
   display:inline-flex; align-items:center; gap:6px;
   padding:4px 12px; border-radius:100px;
   font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
@@ -169,12 +170,19 @@ body {
   background: var(--blue-dim); color:var(--blue-light);
   border:1px solid rgba(59,130,246,0.22);
 }
-.tag-green { background:rgba(34,197,94,0.08); color:#4ade80; border-color:rgba(34,197,94,0.2); }
-.tag-amber { background:rgba(245,158,11,0.08); color:#fbbf24; border-color:rgba(245,158,11,0.2); }
-.tag-indigo{ background:rgba(99,102,241,0.1); color:#a5b4fc; border-color:rgba(99,102,241,0.25); }
+.wiki-ai-landing .tag-blue-large { 
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 16px; border-radius:100px;
+  font-size:18px; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
+  background: var(--blue-dim); color:var(--blue-light);
+  border:1px solid rgba(59,130,246,0.22);
+}
+.wiki-ai-landing .tag-green { background:rgba(34,197,94,0.08); color:#4ade80; border-color:rgba(34,197,94,0.2); }
+.wiki-ai-landing .tag-amber { background:rgba(245,158,11,0.08); color:#fbbf24; border-color:rgba(245,158,11,0.2); }
+.wiki-ai-landing .tag-indigo{ background:rgba(99,102,241,0.1); color:#a5b4fc; border-color:rgba(99,102,241,0.25); }
 
 /* ── Grid bg ── */
-.grid-bg {
+.wiki-ai-landing .grid-bg {
   background-image:
     linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
@@ -182,139 +190,139 @@ body {
 }
 
 /* ── Divider ── */
-.divider { height:1px; background:var(--border); width:100%; }
-.divider-glow { height:1px; background:linear-gradient(90deg,transparent,rgba(59,130,246,0.3),transparent); width:100%; }
+.wiki-ai-landing .divider { height:1px; background:var(--border); width:100%; }
+.wiki-ai-landing .divider-glow { height:1px; background:linear-gradient(90deg,transparent,rgba(59,130,246,0.3),transparent); width:100%; }
 
 /* ── Integration card ── */
-.int-card {
+.wiki-ai-landing .int-card {
   background:var(--card); border:1px solid var(--border);
   border-radius:12px; padding:16px 18px;
   display:flex; align-items:center; gap:12px;
   transition: border-color .25s, transform .25s, box-shadow .25s;
   cursor:default;
 }
-.int-card:hover {
+.wiki-ai-landing .int-card:hover {
   border-color:rgba(59,130,246,0.3);
   transform:translateY(-2px);
   box-shadow:0 12px 32px rgba(0,0,0,0.4);
 }
 
 /* ── Feature card ── */
-.feat-card {
+.wiki-ai-landing .feat-card {
   background:var(--card); border:1px solid var(--border);
   border-radius:14px; padding:28px;
   transition:border-color .25s, transform .3s, box-shadow .3s;
   position:relative; overflow:hidden;
 }
-.feat-card::before {
+.wiki-ai-landing .feat-card::before {
   content:''; position:absolute; inset:0;
   background:linear-gradient(135deg,rgba(59,130,246,0.05),transparent 55%);
   opacity:0; transition:opacity .3s;
 }
-.feat-card:hover { border-color:rgba(59,130,246,0.28); transform:translateY(-3px); box-shadow:0 20px 50px rgba(0,0,0,0.45); }
-.feat-card:hover::before { opacity:1; }
+.wiki-ai-landing .feat-card:hover { border-color:rgba(59,130,246,0.28); transform:translateY(-3px); box-shadow:0 20px 50px rgba(0,0,0,0.45); }
+.wiki-ai-landing .feat-card:hover::before { opacity:1; }
 
 /* ── Noise ── */
-.noise {
+.wiki-ai-landing .noise {
   position:fixed; inset:0; pointer-events:none; z-index:9999; opacity:.022;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* ── Splash ── */
-.splash {
+.wiki-ai-landing .splash {
   position:fixed; inset:0; z-index:9998;
   background:var(--bg);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   text-align:center;
   padding:0 24px;
 }
-.splash-bar { width:200px; height:2px; background:var(--border); border-radius:2px; overflow:hidden; margin-top:32px; }
-.splash-bar-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--sky)); border-radius:2px; animation:typing 1.9s ease forwards; }
+.wiki-ai-landing .splash-bar { width:200px; height:2px; background:var(--border); border-radius:2px; overflow:hidden; margin-top:32px; }
+.wiki-ai-landing .splash-bar-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--sky)); border-radius:2px; animation:typing 1.9s ease forwards; }
 
 /* ── Nav ── */
-.nav {
+.wiki-ai-landing .nav {
   position:fixed; top:0; left:0; right:0; z-index:100;
   display:flex; align-items:center; justify-content:space-between;
   padding:0 5%; height:60px;
   transition:background .3s, border-color .3s;
 }
-.nav.scrolled {
+.wiki-ai-landing .nav.scrolled {
   background:var(--nav-scrolled-bg);
   backdrop-filter:blur(20px);
   border-bottom:1px solid var(--border);
 }
 
 /* ── Pricing ── */
-.price-card {
+.wiki-ai-landing .price-card {
   background:var(--card); border:1px solid var(--border);
   border-radius:16px; padding:36px 30px;
   transition:transform .3s, box-shadow .3s, border-color .3s;
   position:relative;
 }
-.price-card:hover { transform:translateY(-4px); box-shadow:0 28px 70px rgba(0,0,0,0.5); }
-.price-card.featured { border-color:rgba(59,130,246,0.4); background:linear-gradient(160deg,rgba(59,130,246,0.06),var(--card)); }
-.price-card.featured:hover { box-shadow:0 28px 70px rgba(59,130,246,0.12); }
+.wiki-ai-landing .price-card:hover { transform:translateY(-4px); box-shadow:0 28px 70px rgba(0,0,0,0.5); }
+.wiki-ai-landing .price-card.featured { border-color:rgba(59,130,246,0.4); background:linear-gradient(160deg,rgba(59,130,246,0.06),var(--card)); }
+.wiki-ai-landing .price-card.featured:hover { box-shadow:0 28px 70px rgba(59,130,246,0.12); }
 
 /* ── Hide/show helpers ── */
-.mobile-only { display:none; }
+.wiki-ai-landing .mobile-only { display:none; }
 
 @media (max-width:768px) {
-  .display { font-size:2rem; line-height:1.1; }
-  .h2 { font-size:1.5rem; }
-  .hide-mobile { display:none !important; }
-  .mobile-only { display:block; }
-  .mobile-menu-btn { display:flex; }
+  .wiki-ai-landing .display { font-size:2rem; line-height:1.1; }
+  .wiki-ai-landing .h2 { font-size:1.5rem; }
+  .wiki-ai-landing .hide-mobile { display:none !important; }
+  .wiki-ai-landing .mobile-only { display:block; }
+  .wiki-ai-landing .mobile-menu-btn { display:flex; }
   /* Hide language button in nav on mobile — it lives in the drawer */
-  .lang-btn-nav { display:none !important; }
+  .wiki-ai-landing .lang-btn-nav { display:none !important; }
 
   /* Section padding */
-  section { padding-left:5% !important; padding-right:5% !important; }
-  section[style*="padding:96px"] { padding-top:52px !important; padding-bottom:52px !important; }
-  section[style*="padding:80px"] { padding-top:44px !important; padding-bottom:44px !important; }
-  section[style*="padding:72px"] { padding-top:40px !important; padding-bottom:40px !important; }
-  section[style*="padding:80px 6% 100px"] { padding-top:44px !important; padding-bottom:56px !important; }
+  .wiki-ai-landing section { padding-left:5% !important; padding-right:5% !important; }
+  .wiki-ai-landing section[style*="padding:96px"] { padding-top:52px !important; padding-bottom:52px !important; }
+  .wiki-ai-landing section[style*="padding:80px"] { padding-top:44px !important; padding-bottom:44px !important; }
+  .wiki-ai-landing section[style*="padding:72px"] { padding-top:40px !important; padding-bottom:40px !important; }
+  .wiki-ai-landing section[style*="padding:80px 6% 100px"] { padding-top:44px !important; padding-bottom:56px !important; }
 
   /* Shrink the divider-glow spacer */
-  .section-divider { margin-bottom:36px !important; }
+  .wiki-ai-landing .section-divider { margin-bottom:36px !important; }
 
   /* Two-col → single col */
-  .two-col-grid {
+  .wiki-ai-landing .two-col-grid {
     grid-template-columns:1fr !important;
     gap:32px !important;
   }
-  .two-col-grid .r-l,
-  .two-col-grid .r-r { order:unset !important; }
+  .wiki-ai-landing .two-col-grid .r-l,
+  .wiki-ai-landing .two-col-grid .r-r { order:unset !important; }
 
   /* Three-col comparison → single col */
-  .three-col-grid { grid-template-columns:1fr !important; }
-  .three-col-grid > div { padding:22px 18px !important; }
+  .wiki-ai-landing .three-col-grid { grid-template-columns:1fr !important; }
+  .wiki-ai-landing .three-col-grid > div { padding:22px 18px !important; }
 
   /* Cards */
-  .price-card { padding:24px 18px; }
-  .feat-card  { padding:20px 18px; }
+  .wiki-ai-landing .price-card { padding:24px 18px; }
+  .wiki-ai-landing .feat-card  { padding:20px 18px; }
 
   /* CTA box */
-  .mobile-cta-box { padding:36px 22px !important; }
+  .wiki-ai-landing .mobile-cta-box { padding:36px 22px !important; }
 
   /* Social proof bar → 2x2 grid */
-  .social-proof-bar {
+  .wiki-ai-landing .social-proof-bar {
     display:grid !important;
     grid-template-columns:1fr 1fr !important;
     max-width:100% !important;
   }
-  .social-proof-bar > div { border-right:none !important; border-bottom:1px solid var(--border); }
-  .social-proof-bar > div:nth-child(odd)  { border-right:1px solid var(--border) !important; }
-  .social-proof-bar > div:nth-child(3),
-  .social-proof-bar > div:nth-child(4)    { border-bottom:none !important; }
+  .wiki-ai-landing .social-proof-bar > div { border-right:none !important; border-bottom:1px solid var(--border); }
+  .wiki-ai-landing .social-proof-bar > div:nth-child(odd)  { border-right:1px solid var(--border) !important; }
+  .wiki-ai-landing .social-proof-bar > div:nth-child(3),
+  .wiki-ai-landing .social-proof-bar > div:nth-child(4)    { border-bottom:none !important; }
 
   /* SearchDemo — compact height */
-  .search-demo-wrap    { height:auto !important; }
-  .search-results-wrap { height:auto !important; overflow:visible !important; }
+  .wiki-ai-landing .search-demo-wrap    { height:auto !important; }
+  .wiki-ai-landing .search-results-wrap { height:auto !important; overflow:visible !important; }
 
   /* Footer */
-  footer { padding:36px 5% 24px !important; }
-  .footer-top-row { flex-direction:column !important; gap:24px !important; }
-  .footer-link-cols {
+  .wiki-ai-landing footer { padding:36px 5% 24px !important; }
+  .wiki-ai-landing .footer-top-row { flex-direction:column !important; gap:24px !important; }
+  .wiki-ai-landing .footer-link-cols {
     display:grid !important;
     grid-template-columns:repeat(3,1fr) !important;
     gap:18px !important;
@@ -322,18 +330,18 @@ body {
   }
 
   /* Nav */
-  .nav { padding:0 4% !important; }
-  .btn-lg { padding:12px 22px !important; font-size:14px !important; }
+  .wiki-ai-landing .nav { padding:0 4% !important; }
+  .wiki-ai-landing .btn-lg { padding:12px 22px !important; font-size:14px !important; }
 
   /* Stats grid */
-  .stats-grid { grid-template-columns:1fr 1fr !important; }
+  .wiki-ai-landing .stats-grid { grid-template-columns:1fr 1fr !important; }
 
   /* Use-cases / integrations detail row */
-  .auto-grid-240 { grid-template-columns:1fr 1fr !important; }
+  .wiki-ai-landing .auto-grid-240 { grid-template-columns:1fr 1fr !important; }
 }
 
 /* ── Mobile nav button ── */
-.mobile-menu-btn {
+.wiki-ai-landing .mobile-menu-btn {
   display:none;
   flex-direction:column;
   gap:5px;
@@ -343,7 +351,7 @@ body {
   border:none;
   z-index:200;
 }
-.mobile-menu-btn span {
+.wiki-ai-landing .mobile-menu-btn span {
   display:block;
   width:22px;
   height:2px;
@@ -351,12 +359,12 @@ body {
   border-radius:2px;
   transition:all .3s;
 }
-.mobile-menu-btn.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
-.mobile-menu-btn.open span:nth-child(2) { opacity:0; transform:scaleX(0); }
-.mobile-menu-btn.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+.wiki-ai-landing .mobile-menu-btn.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+.wiki-ai-landing .mobile-menu-btn.open span:nth-child(2) { opacity:0; transform:scaleX(0); }
+.wiki-ai-landing .mobile-menu-btn.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
 
 /* ── Mobile drawer ── */
-.mobile-drawer {
+.wiki-ai-landing .mobile-drawer {
   display:none;
   position:fixed;
   inset:0;
@@ -371,8 +379,8 @@ body {
   overflow-y:auto;
   animation:fadeIn .2s ease;
 }
-.mobile-drawer.open { display:flex; }
-.mobile-drawer a {
+.wiki-ai-landing .mobile-drawer.open { display:flex; }
+.wiki-ai-landing .mobile-drawer a {
   display:block;
   padding:18px 0;
   border-bottom:1px solid var(--border);
@@ -383,16 +391,16 @@ body {
   letter-spacing:-.01em;
   transition:color .2s;
 }
-.mobile-drawer a:last-of-type { border-bottom:none; }
+.wiki-ai-landing .mobile-drawer a:last-of-type { border-bottom:none; }
 
 /* ── Responsive layout classes ── */
-.two-col-grid {
+.wiki-ai-landing .two-col-grid {
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:64px;
   align-items:center;
 }
-.three-col-grid {
+.wiki-ai-landing .three-col-grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:1px;
@@ -400,8 +408,8 @@ body {
   border-radius:14px;
   overflow:hidden;
 }
-.mobile-cta-box { padding:64px 48px; }
-.social-proof-bar {
+.wiki-ai-landing .mobile-cta-box { padding:64px 48px; }
+.wiki-ai-landing .social-proof-bar {
   display:flex;
   gap:0;
   justify-content:center;
@@ -491,23 +499,24 @@ function Counter({ to, suffix = "", decimals = 0 }: { to: number; suffix?: strin
 /* ═══════════════════════════════════════════════════════════
    ANIMATED TERMINAL
 ═══════════════════════════════════════════════════════════ */
-const TERM = [
-  { d:0,    c:"#64748b", t:"# Employee asks a question in Telegram" },
-  { d:500,  c:"#94a3b8", t:"→ Received: \"What's the refund policy for B2B clients?\"" },
-  { d:1100, c:"#60a5fa", t:"→ Querying WikiAI knowledge base..." },
-  { d:1700, c:"#64748b", t:"→ Searching: contracts_2024.pdf, policy_manual.docx" },
-  { d:2200, c:"#60a5fa", t:"→ Cross-referencing Bitrix CRM client segment..." },
-  { d:2800, c:"#22c55e", t:"✓ Answer found — confidence 96.2%" },
-  { d:3300, c:"#f1f5f9", t:"  \"B2B clients with Enterprise tier receive 30-day" },
-  { d:3400, c:"#f1f5f9", t:"   full refund window. See §4.2 of Contract Terms.\"" },
-  { d:3900, c:"#94a3b8", t:"→ Sources: policy_manual.docx §4.2, crm_tier_rules.json" },
-  { d:4400, c:"#f59e0b", t:"⚡ Total response time: 0.4s" },
-];
-
 function Terminal() {
+  const { t } = useTranslation();
   const [shown, setShown] = useState<number[]>([]);
   const ref = useRef(null);
   const started = useRef(false);
+  const TERM = [
+    { d:0,    c:"#64748b", t:t('landing.aiAgentBridge.terminal.logs.0') },
+    { d:500,  c:"#94a3b8", t:t('landing.aiAgentBridge.terminal.logs.1') },
+    { d:1100, c:"#60a5fa", t:t('landing.aiAgentBridge.terminal.logs.2') },
+    { d:1700, c:"#64748b", t:t('landing.aiAgentBridge.terminal.logs.3') },
+    { d:2200, c:"#60a5fa", t:t('landing.aiAgentBridge.terminal.logs.4') },
+    { d:2800, c:"#22c55e", t:t('landing.aiAgentBridge.terminal.logs.5') },
+    { d:3300, c:"#f1f5f9", t:t('landing.aiAgentBridge.terminal.logs.6') },
+    { d:3400, c:"#f1f5f9", t:t('landing.aiAgentBridge.terminal.logs.7') },
+    { d:3900, c:"#94a3b8", t:t('landing.aiAgentBridge.terminal.logs.8') },
+    { d:4400, c:"#f59e0b", t:t('landing.aiAgentBridge.terminal.logs.9') },
+  ];
+
   useEffect(() => {
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting && !started.current) {
@@ -535,8 +544,8 @@ function Terminal() {
         <span style={{ width:11,height:11,borderRadius:"50%",background:"#ef4444",display:"block" }} />
         <span style={{ width:11,height:11,borderRadius:"50%",background:"#f59e0b",display:"block" }} />
         <span style={{ width:11,height:11,borderRadius:"50%",background:"#22c55e",display:"block" }} />
-        <span style={{ marginLeft:10,fontSize:11,color:"var(--terminal-btn)" }}>wikiai — ai-agent bridge</span>
-        <button onClick={restart} style={{ marginLeft:"auto",background:"none",border:"none",color:"var(--terminal-btn)",cursor:"pointer",fontSize:11 }}>↺ replay</button>
+        <span style={{ marginLeft:10,fontSize:11,color:"var(--terminal-btn)" }}>{t('landing.aiAgentBridge.terminal.title')}</span>
+        <button onClick={restart} style={{ marginLeft:"auto",background:"none",border:"none",color:"var(--terminal-btn)",cursor:"pointer",fontSize:11 }}>{t('landing.aiAgentBridge.terminal.replay')}</button>
       </div>
       {/* Lines */}
       <div style={{ padding:"18px 20px", minHeight:280 }}>
@@ -551,39 +560,37 @@ function Terminal() {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   INTEGRATION HUB DIAGRAM
-═══════════════════════════════════════════════════════════ */
-const INPUTS = [
-  { icon:"🔷", label:"Bitrix24", sub:"CRM / Tasks" },
-  { icon:"📊", label:"1C ERP", sub:"Operations" },
-  { icon:"📁", label:"Google Drive", sub:"Documents" },
-  { icon:"🔗", label:"Confluence", sub:"Wiki pages" },
-  { icon:"📬", label:"Email / IMAP", sub:"Mail archive" },
-  { icon:"🗃️", label:"SharePoint", sub:"Corp files" },
-];
-const OUTPUTS = [
-  { icon:"💬", label:"Telegram Bot", sub:"Team messenger" },
-  { icon:"🛒", label:"Online Shop", sub:"Customer AI chat" },
-  { icon:"📱", label:"Slack", sub:"Workspace chat" },
-  { icon:"🌐", label:"Website Widget", sub:"Support chat" },
-  { icon:"📞", label:"Call Center", sub:"Agent assistant" },
-  { icon:"🔌", label:"REST API", sub:"Any integration" },
-];
-
 function HubDiagram() {
+  const { t } = useTranslation();
   const [tick, setTick] = useState(0);
   useEffect(() => { const iv = setInterval(() => setTick(t => t + 1), 1200); return () => clearInterval(iv); }, []);
+  
+  const sources = [
+    { icon:"🔷", label:t('landing.integrationHub.sources.bitrix'), sub:t('landing.integrationHub.sources.bitrixSub'), color:"#3b82f6" },
+    { icon:"�", label:t('landing.integrationHub.sources.erp'), sub:t('landing.integrationHub.sources.erpSub'), color:"#3b82f6" },
+    { icon:"�", label:t('landing.integrationHub.sources.drive'), sub:t('landing.integrationHub.sources.driveSub'), color:"#3b82f6" },
+    { icon:"�", label:t('landing.integrationHub.sources.confluence'), sub:t('landing.integrationHub.sources.confluenceSub'), color:"#3b82f6" },
+    { icon:"�", label:t('landing.integrationHub.sources.email'), sub:t('landing.integrationHub.sources.emailSub'), color:"#3b82f6" },
+    { icon:"�", label:t('landing.integrationHub.sources.sharepoint'), sub:t('landing.integrationHub.sources.sharepointSub'), color:"#3b82f6" },
+  ];
+  const outputs = [
+    { icon:"💬", label:t('landing.integrationHub.outputs.telegram'), sub:t('landing.integrationHub.outputs.telegramSub'), color:"#22c55e" },
+    { icon:"🛒", label:t('landing.integrationHub.outputs.shop'), sub:t('landing.integrationHub.outputs.shopSub'), color:"#22c55e" },
+    { icon:"📱", label:t('landing.integrationHub.outputs.slack'), sub:t('landing.integrationHub.outputs.slackSub'), color:"#22c55e" },
+    { icon:"🌐", label:t('landing.integrationHub.outputs.website'), sub:t('landing.integrationHub.outputs.websiteSub'), color:"#22c55e" },
+    { icon:"📞", label:t('landing.integrationHub.outputs.callCenter'), sub:t('landing.integrationHub.outputs.callCenterSub'), color:"#22c55e" },
+    { icon:"🔌", label:t('landing.integrationHub.outputs.api'), sub:t('landing.integrationHub.outputs.apiSub'), color:"#22c55e" },
+  ];
 
-  const activeIn = tick % INPUTS.length;
-  const activeOut = tick % OUTPUTS.length;
+  const activeIn = tick % sources.length;
+  const activeOut = tick % outputs.length;
 
   return (
     <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:20, alignItems:"center", maxWidth:900, margin:"0 auto" }}>
       {/* INPUTS */}
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        <div style={{ fontSize:11, color:"var(--stat-num)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", marginBottom:4, textAlign:"right" }}>Data Sources</div>
-        {INPUTS.map((s, i) => (
+        <div style={{ fontSize:11, color:"var(--stat-num)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", marginBottom:4, textAlign:"right" }}>{t('landing.integrationHub.dataSources')}</div>
+        {sources.map((s, i) => (
           <div key={i} className="int-card" style={{
             justifyContent:"flex-end",
             borderColor: i===activeIn ? "rgba(59,130,246,0.5)" : "rgba(255,255,255,0.06)",
@@ -619,13 +626,13 @@ function HubDiagram() {
         </div>
         {/* Lines down */}
         <div style={{ width:1,height:60,background:"linear-gradient(to bottom,rgba(59,130,246,0.5),transparent)" }} />
-        <div style={{ fontSize:9, color:"var(--text-muted)", fontFamily:"'Geist Mono',monospace", letterSpacing:".1em", textTransform:"uppercase" }}>Knowledge Hub</div>
+        <div style={{ fontSize:9, color:"var(--text-muted)", fontFamily:"'Geist Mono',monospace", letterSpacing:".1em", textTransform:"uppercase" }}>{t('landing.integrationHub.knowledgeHub')}</div>
       </div>
 
       {/* OUTPUTS */}
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        <div style={{ fontSize:11, color:"var(--stat-num)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", marginBottom:4 }}>Delivery Channels</div>
-        {OUTPUTS.map((s, i) => (
+        <div style={{ fontSize:11, color:"var(--stat-num)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", marginBottom:4 }}>{t('landing.integrationHub.deliveryChannels')}</div>
+        {outputs.map((s, i) => (
           <div key={i} className="int-card" style={{
             borderColor: i===activeOut ? "rgba(34,197,94,0.45)" : "rgba(255,255,255,0.06)",
             boxShadow: i===activeOut ? "0 0 20px rgba(34,197,94,0.12)" : "none",
@@ -647,10 +654,29 @@ function HubDiagram() {
    MOBILE INTEGRATION HUB (compact stack layout)
 ═══════════════════════════════════════════════════════════ */
 function MobileHubDiagram() {
+  const { t } = useTranslation();
   const [tick, setTick] = useState(0);
   useEffect(() => { const iv = setInterval(() => setTick(t => t + 1), 1200); return () => clearInterval(iv); }, []);
-  const activeIn  = tick % INPUTS.length;
-  const activeOut = tick % OUTPUTS.length;
+  
+  const sources = [
+    { icon:"📄", label:t('landing.integrationHub.sources.pdf'), sub:t('landing.integrationHub.sources.pdfSub'), color:"#3b82f6" },
+    { icon:"📝", label:t('landing.integrationHub.sources.docx'), sub:t('landing.integrationHub.sources.docxSub'), color:"#3b82f6" },
+    { icon:"🌐", label:t('landing.integrationHub.sources.website'), sub:t('landing.integrationHub.sources.websiteSub'), color:"#3b82f6" },
+    { icon:"📧", label:t('landing.integrationHub.sources.email'), sub:t('landing.integrationHub.sources.emailSub'), color:"#3b82f6" },
+    { icon:"📂", label:t('landing.integrationHub.sources.sharepoint'), sub:t('landing.integrationHub.sources.sharepointSub'), color:"#3b82f6" },
+  ];
+  
+  const outputs = [
+    { icon:"💬", label:t('landing.integrationHub.outputs.telegram'), sub:t('landing.integrationHub.outputs.telegramSub'), color:"#22c55e" },
+    { icon:"🛒", label:t('landing.integrationHub.outputs.shop'), sub:t('landing.integrationHub.outputs.shopSub'), color:"#22c55e" },
+    { icon:"📱", label:t('landing.integrationHub.outputs.slack'), sub:t('landing.integrationHub.outputs.slackSub'), color:"#22c55e" },
+    { icon:"🌐", label:t('landing.integrationHub.outputs.website'), sub:t('landing.integrationHub.outputs.websiteSub'), color:"#22c55e" },
+    { icon:"📞", label:t('landing.integrationHub.outputs.callCenter'), sub:t('landing.integrationHub.outputs.callCenterSub'), color:"#22c55e" },
+    { icon:"🔌", label:t('landing.integrationHub.outputs.api'), sub:t('landing.integrationHub.outputs.apiSub'), color:"#22c55e" },
+  ];
+  
+  const activeIn  = tick % sources.length;
+  const activeOut = tick % outputs.length;
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16, maxWidth:420, margin:"0 auto" }}>
@@ -658,7 +684,7 @@ function MobileHubDiagram() {
       <div style={{ fontSize:11, color:"var(--text-muted)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", textAlign:"center" }}>Data Sources</div>
       {/* Sources grid 2-col */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-        {INPUTS.map((s, i) => (
+        {sources.map((s: any, i: number) => (
           <div key={i} style={{
             background:"var(--card)", border:`1px solid ${i===activeIn?"rgba(59,130,246,0.5)":"var(--border)"}`,
             borderRadius:10, padding:"10px 12px", display:"flex", alignItems:"center", gap:8,
@@ -691,7 +717,7 @@ function MobileHubDiagram() {
       <div style={{ fontSize:11, color:"var(--text-muted)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", textTransform:"uppercase", textAlign:"center" }}>Delivery Channels</div>
       {/* Outputs grid 2-col */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-        {OUTPUTS.map((s, i) => (
+        {outputs.map((s: any, i: number) => (
           <div key={i} style={{
             background:"var(--card)", border:`1px solid ${i===activeOut?"rgba(34,197,94,0.4)":"var(--border)"}`,
             borderRadius:10, padding:"10px 12px", display:"flex", alignItems:"center", gap:8,
@@ -709,31 +735,11 @@ function MobileHubDiagram() {
     </div>
   );
 }
-const QA = [
-  {
-    q: "What is our vacation policy for remote employees?",
-    results: [
-      { doc:"HR Policy Manual 2024", page:"§8.3", score:98, snippet:"Remote employees are entitled to 28 calendar days of paid vacation, applicable from first day of employment..." },
-      { doc:"Employment Contract Template", page:"Clause 12", score:87, snippet:"Vacation scheduling must be agreed with direct manager 14 days in advance via the HR portal..." },
-    ]
-  },
-  {
-    q: "How to process a B2B refund in Bitrix?",
-    results: [
-      { doc:"Bitrix CRM Guide", page:"Ch.6", score:96, snippet:"Navigate to CRM → Deals → Refund Requests. Select client segment 'B2B Enterprise' and initiate refund workflow..." },
-      { doc:"Finance SOP v3", page:"p.14", score:82, snippet:"B2B refunds require approval from Finance Manager and must be logged in 1C within 2 business days..." },
-    ]
-  },
-  {
-    q: "What servers are in production right now?",
-    results: [
-      { doc:"Infrastructure Registry", page:"Live", score:99, snippet:"Current production: app-srv-01 (Berlin), app-srv-02 (Frankfurt), db-master-01, cdn-edge-04..." },
-      { doc:"Deployment Runbook", page:"§2", score:78, snippet:"All production changes require DevOps lead sign-off. Maintenance window: Sundays 02:00–04:00 UTC..." },
-    ]
-  },
-];
 
-function SearchDemo() {
+/* ═══════════════════════════════════════════════════════════
+   SEARCH DEMO
+═══════════════════════════════════════════════════════════ */
+function SearchDemo({ qa }: { qa: any[] }) {
   const [qi, setQi] = useState(0);
   const [typed, setTyped] = useState("");
   const [searching, setSearching] = useState(false);
@@ -742,13 +748,13 @@ function SearchDemo() {
 
   useEffect(() => {
     const cycle = () => {
-      const nextQi = (qi + 1) % QA.length;
+      const nextQi = (qi + 1) % qa.length;
       // Fade out results, then clear & retype
       setResultsVisible(false);
       setSearching(false);
       setTimeout(() => {
         setTyped("");
-        const q = QA[nextQi].q;
+        const q = qa[nextQi].q;
         let i = 0;
         const typeIv = setInterval(() => {
           i++;
@@ -767,7 +773,7 @@ function SearchDemo() {
 
   // initial type
   useEffect(() => {
-    const q = QA[0].q;
+    const q = qa[0].q;
     let i = 0;
     const iv = setInterval(() => {
       i++;
@@ -780,7 +786,7 @@ function SearchDemo() {
     return () => clearInterval(iv);
   }, []);
 
-  const cur = QA[qi];
+  const cur = qa[qi];
   return (
     <div className="search-demo-wrap" style={{ width:580, maxWidth:"100%", margin:"0 auto", height:400, position:"relative" }}>
       {/* Search bar */}
@@ -809,7 +815,7 @@ function SearchDemo() {
           overflow:"hidden"
         }}
       >
-        {cur.results.map((r, i) => (
+        {cur.results.map((r: any, i: number) => (
           <div key={`${qi}-${i}`} style={{ background:"var(--card)", border:"1px solid var(--border)", borderRadius:11, padding:"14px 16px" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:7 }}>
               <div>
@@ -835,10 +841,11 @@ function SearchDemo() {
    EMPLOYEE JOURNEY VISUAL
 ═══════════════════════════════════════════════════════════ */
 function EmployeeJourney() {
+  const { t } = useTranslation();
   const steps = [
-    { who:"👤", role:"New Employee", q:"\"What's our expense reimbursement process?\"", a:"Found in Finance SOP §3.1 — submit via HR portal within 30 days with receipts.", color:"#3b82f6" },
-    { who:"🧑‍💼", role:"Sales Manager", q:"\"What's the discount ceiling for SMB clients?\"", a:"Max 15% without VP approval. Source: Pricing Policy 2024, updated Jan 15.", color:"#6366f1" },
-    { who:"🧑‍🔧", role:"Support Agent", q:"\"How to reset 2FA for a client account?\"", a:"Use admin panel → Users → Security. Requires ticket logged in Bitrix first.", color:"#0ea5e9" },
+    { who:"👤", role:t('landing.employeeJourney.roles.newEmployee'), q:t('landing.employeeJourney.roles.questions.vacation'), a:t('landing.employeeJourney.roles.answers.vacation'), color:"#3b82f6" },
+    { who:"🧑‍💼", role:t('landing.employeeJourney.roles.salesManager'), q:t('landing.employeeJourney.roles.questions.discount'), a:t('landing.employeeJourney.roles.answers.discount'), color:"#6366f1" },
+    { who:"🧑‍🔧", role:t('landing.employeeJourney.roles.supportAgent'), q:t('landing.employeeJourney.roles.questions.reset2fa'), a:t('landing.employeeJourney.roles.answers.reset2fa'), color:"#8b5cf6" },
   ];
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
@@ -865,48 +872,141 @@ function EmployeeJourney() {
 /* ═══════════════════════════════════════════════════════════
    DATA
 ═══════════════════════════════════════════════════════════ */
-const FEATURES = [
-  { icon:"🧠", title:"Single Knowledge Hub", desc:"All company documents, policies, CRM data and wikis unified in one AI-searchable place. No more hunting through folders or asking colleagues.", tag:"Core", tagStyle:"" },
-  { icon:"🔌", title:"Deep Integrations", desc:"Pull data live from Bitrix24, 1C ERP, Confluence, SharePoint, Google Drive and any REST source. Knowledge stays fresh automatically.", tag:"Integrations", tagStyle:"tag-indigo" },
-  { icon:"🤖", title:"AI Agent Delivery", desc:"Deploy WikiAI as an AI agent in your Telegram bot, website chat, Slack workspace, or online store. Answers driven by your real company data.", tag:"Delivery", tagStyle:"tag-green" },
-  { icon:"🔍", title:"Semantic Search", desc:"Ask questions in natural language. Vector embeddings understand meaning, not just keywords. Get ranked answers with source citations.", tag:"Search", tagStyle:"" },
-  { icon:"🏢", title:"Multi-Department", desc:"Separate knowledge bases per department or subsidiary with full data isolation. Marketing, Sales, Tech — each with their own space.", tag:"Multi-tenant", tagStyle:"tag-indigo" },
-  { icon:"📊", title:"Usage Analytics", desc:"See which questions employees ask most. Identify knowledge gaps. Track adoption and measure ROI of your knowledge base investment.", tag:"Analytics", tagStyle:"tag-amber" },
-];
-
-const STATS = [
-  { n:10, s:"x", label:"Faster answers", desc:"vs searching manually", dec:0 },
-  { n:40, s:"%", label:"Less interruptions", desc:"colleagues stop asking each other", dec:0 },
-  { n:0.4, s:"s", label:"Avg response time", desc:"AI query to answer", dec:1 },
-  { n:99.9, s:"%", label:"Uptime SLA", desc:"enterprise reliability", dec:1 },
-];
-
-const USECASES = [
-  { icon:"🆕", title:"Employee Onboarding", desc:"New hires get instant answers about processes, tools, and company policies without overwhelming their manager." },
-  { icon:"🛒", title:"E-commerce Support", desc:"Deploy WikiAI as your online store's support chat. It answers product questions, return policies, and shipping info from your actual docs." },
-  { icon:"📞", title:"Call Center Assist", desc:"Agents get real-time suggested answers pulled from your knowledge base while on a call. Shorter handle time, higher CSAT." },
-  { icon:"🤝", title:"Sales Enablement", desc:"Sales reps instantly find pricing rules, competitor comparisons, and product specs. No more 'let me check with the team'." },
-];
-
-const PLANS = [
-  { name:"Starter", price:"$N/A", per:"/mo", desc:"Small teams, single department", features:["1 department workspace","Up to 25 users","10 GB document storage","Standard AI search","1 external channel (Telegram/Web)","Basic analytics"], hi:false, cta:"Start Free" },
-  { name:"Business", price:"$N/A", per:"/mo", desc:"Growing companies, multiple sources", features:["5 department workspaces","Unlimited users","100 GB storage","AI Agent mode + commands","Bitrix24 & CRM integration","3 external channels","Advanced analytics","API access"], hi:true, cta:"Try Free 14 Days" },
-  { name:"Enterprise", price:"Custom", per:"", desc:"Large-scale or self-hosted", features:["Unlimited workspaces","Any data source","Self-hosted option","SSO / SAML / LDAP","Custom LLM providers","Unlimited channels","White-label bot","SLA + Dedicated support"], hi:false, cta:"Talk to Us" },
-];
-
-const LANGUAGES = [
-  { code: 'en', name: 'EN' },
-  { code: 'ru', name: 'RU' },
-];
 
 /* ═══════════════════════════════════════════════════════════
    ROOT COMPONENT
 ═══════════════════════════════════════════════════════════ */
 export default function WikiAILanding() {
+  const translationHook = useTranslation();
+  const { t, locale, changeLanguage, availableLanguages } = translationHook;
+  
+  // Define data arrays inside component where t function is available
+  const FEATURES = [
+    { icon:"🧠", title:t('landing.features.singleHub.title'), desc:t('landing.features.singleHub.desc'), tag:t('landing.features.singleHub.tag'), tagStyle:"" },
+    { icon:"🔌", title:t('landing.features.integrations.title'), desc:t('landing.features.integrations.desc'), tag:t('landing.features.integrations.tag'), tagStyle:"tag-indigo" },
+    { icon:"🤖", title:t('landing.features.aiAgent.title'), desc:t('landing.features.aiAgent.desc'), tag:t('landing.features.aiAgent.tag'), tagStyle:"tag-green" },
+    { icon:"🔍", title:t('landing.features.semanticSearch.title'), desc:t('landing.features.semanticSearch.desc'), tag:t('landing.features.semanticSearch.tag'), tagStyle:"" },
+    { icon:"🏢", title:t('landing.features.multiDepartment.title'), desc:t('landing.features.multiDepartment.desc'), tag:t('landing.features.multiDepartment.tag'), tagStyle:"tag-indigo" },
+    { icon:"📊", title:t('landing.features.analytics.title'), desc:t('landing.features.analytics.desc'), tag:t('landing.features.analytics.tag'), tagStyle:"tag-amber" },
+  ];
+  
+  const STATS = [
+    { n:10, s:"x", label:t('landing.stats.faster'), desc:t('landing.stats.vsManual'), dec:0 },
+    { n:40, s:"%", label:t('landing.stats.interruptions'), desc:t('landing.stats.colleaguesStop'), dec:0 },
+    { n:0.4, s:"s", label:t('landing.stats.responseTime'), desc:t('landing.stats.aiQuery'), dec:1 },
+    { n:99.9, s:"%", label:t('landing.stats.uptime'), desc:t('landing.stats.reliability'), dec:1 },
+  ];
+  
+  // Define QA array inside component where t function is available
+  const QA = [
+    {
+      q: t('landing.searchDemo.questions.vacation'),
+      results: [
+        { doc:t('landing.searchDemo.results.hrPolicy'), page:"§8.3", score:98, snippet:t('landing.searchDemo.results.vacationSnippet') },
+        { doc:t('landing.searchDemo.results.employmentContract'), page:"Clause 12", score:87, snippet:t('landing.searchDemo.results.refundSnippet') },
+      ]
+    },
+    {
+      q: t('landing.searchDemo.questions.refund'),
+      results: [
+        { doc:t('landing.searchDemo.results.bitrixCrm'), page:"Ch.6", score:96, snippet:t('landing.searchDemo.results.processSnippet') },
+        { doc:t('landing.searchDemo.results.financeSop'), page:"p.14", score:82, snippet:t('landing.searchDemo.results.approvalSnippet') },
+      ]
+    },
+    {
+      q: t('landing.searchDemo.questions.servers'),
+      results: [
+        { doc:t('landing.searchDemo.results.infrastructure'), page:"Live", score:99, snippet:t('landing.searchDemo.results.productionSnippet') },
+        { doc:t('landing.searchDemo.results.deploymentRunbook'), page:"§2", score:78, snippet:t('landing.searchDemo.results.maintenanceSnippet') },
+      ]
+    },
+  ];
+  
+  const USECASES = [
+    { icon:"🆕", title:t('landing.useCases.onboarding.title'), desc:t('landing.useCases.onboarding.desc') },
+    { icon:"🛒", title:t('landing.useCases.ecommerce.title'), desc:t('landing.useCases.ecommerce.desc') },
+    { icon:"📞", title:t('landing.useCases.callCenter.title'), desc:t('landing.useCases.callCenter.desc') },
+    { icon:"🤝", title:t('landing.useCases.sales.title'), desc:t('landing.useCases.sales.desc') },
+  ];
+  
+  const KNOWLEDGE_TYPES = [
+    t('landing.employeeJourney.knowledgeTypes.0'),
+    t('landing.employeeJourney.knowledgeTypes.1'),
+    t('landing.employeeJourney.knowledgeTypes.2'),
+    t('landing.employeeJourney.knowledgeTypes.3'),
+  ];
+  
+  const AI_AGENT_FEATURES = [
+    t('landing.aiAgentBridge.features.0'),
+    t('landing.aiAgentBridge.features.1'),
+    t('landing.aiAgentBridge.features.2'),
+    t('landing.aiAgentBridge.features.3'),
+    t('landing.aiAgentBridge.features.4'),
+  ];
+  
+  const PLANS = [
+    { 
+      name:t('landing.pricing.plans.starter.name'), 
+      price:t('landing.pricing.plans.starter.price'), 
+      per:t('landing.pricing.plans.starter.per'), 
+      desc:t('landing.pricing.plans.starter.desc'), 
+      features:[
+        t('landing.pricing.plans.starter.features.0'),
+        t('landing.pricing.plans.starter.features.1'),
+        t('landing.pricing.plans.starter.features.2'),
+        t('landing.pricing.plans.starter.features.3'),
+        t('landing.pricing.plans.starter.features.4'),
+        t('landing.pricing.plans.starter.features.5')
+      ], 
+      hi:false, 
+      cta:t('landing.pricing.plans.starter.cta') 
+    },
+    { 
+      name:t('landing.pricing.plans.business.name'), 
+      price:t('landing.pricing.plans.business.price'), 
+      per:t('landing.pricing.plans.business.per'), 
+      desc:t('landing.pricing.plans.business.desc'), 
+      features:[
+        t('landing.pricing.plans.business.features.0'),
+        t('landing.pricing.plans.business.features.1'),
+        t('landing.pricing.plans.business.features.2'),
+        t('landing.pricing.plans.business.features.3'),
+        t('landing.pricing.plans.business.features.4'),
+        t('landing.pricing.plans.business.features.5'),
+        t('landing.pricing.plans.business.features.6'),
+        t('landing.pricing.plans.business.features.7')
+      ], 
+      hi:true, 
+      cta:t('landing.pricing.plans.business.cta') 
+    },
+    { 
+      name:t('landing.pricing.plans.enterprise.name'), 
+      price:t('landing.pricing.plans.enterprise.price'), 
+      per:"", 
+      desc:t('landing.pricing.plans.enterprise.desc'), 
+      features:[
+        t('landing.pricing.plans.enterprise.features.0'),
+        t('landing.pricing.plans.enterprise.features.1'),
+        t('landing.pricing.plans.enterprise.features.2'),
+        t('landing.pricing.plans.enterprise.features.3'),
+        t('landing.pricing.plans.enterprise.features.4'),
+        t('landing.pricing.plans.enterprise.features.5'),
+        t('landing.pricing.plans.enterprise.features.6'),
+        t('landing.pricing.plans.enterprise.features.7')
+      ], 
+      hi:false, 
+      cta:t('landing.pricing.plans.enterprise.cta') 
+    },
+  ];
+  
+  const LANGUAGES = [
+    { code: 'en', name: 'EN' },
+    { code: 'ru', name: 'RU' },
+  ];
+  
   const [scrolled, setScrolled] = useState(false);
   const [splash, setSplash] = useState(true);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [language, setLanguage] = useState('en');
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -1025,7 +1125,8 @@ export default function WikiAILanding() {
   return (
     <>
       <style>{CSS}</style>
-      <div className="noise" />
+      <div className="wiki-ai-landing">
+        <div className="noise" />
 
       {/* ── SPLASH ─────────────────────────────── */}
       {splash && (
@@ -1053,12 +1154,17 @@ export default function WikiAILanding() {
         
         {/* Center Navigation Links */}
         <div className="hide-mobile" style={{ position:"absolute",left:"50%",transform:"translateX(-50%)",display:"flex",gap:28,alignItems:"center" }}>
-          {["Features","How It Works","Integrations","Pricing"].map(l => (
-            <a key={l} href={`#${l.toLowerCase().replace(/\s+/g,"-")}`}
+          {[
+            { key: "features", text: t('landing.nav.features') },
+            { key: "how-it-works", text: t('landing.nav.howItWorks') },
+            { key: "integrations", text: t('landing.nav.integrations') },
+            { key: "pricing", text: t('landing.nav.pricing') }
+          ].map(l => (
+            <a key={l.key} href={`#${l.key}`}
               style={{ color:"var(--text-muted)",textDecoration:"none",fontSize:14,fontWeight:500,transition:"color .2s" }}
               onMouseEnter={e=>(e.target as HTMLElement).style.color="var(--text)"}
               onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--text-muted)"}
-            >{l}</a>
+            >{l.text}</a>
           ))}
         </div>
         
@@ -1071,7 +1177,7 @@ export default function WikiAILanding() {
               style={{ padding:"8px 12px",fontSize:13,display:"flex",alignItems:"center",gap:6 }}
               onClick={() => setShowLangDropdown(!showLangDropdown)}
             >
-              {LANGUAGES.find(l => l.code === language)?.name} ▼
+              {availableLanguages ? Object.entries(availableLanguages).find(([code]) => code === locale)?.[1]?.name : 'EN'} ▼
             </button>
             {showLangDropdown && (
               <div style={{ 
@@ -1079,9 +1185,9 @@ export default function WikiAILanding() {
                 background:"var(--card)",border:"1px solid var(--border)",borderRadius:8,
                 boxShadow:"0 8px 24px rgba(0,0,0,0.4)",zIndex:1000,minWidth:80
               }}>
-                {LANGUAGES.map(lang => (
+                {availableLanguages && Object.entries(availableLanguages).map(([code, lang]: [string, any]) => (
                   <button
-                    key={lang.code}
+                    key={code}
                     style={{
                       width:"100%",padding:"8px 12px",border:"none",background:"none",
                       textAlign:"left",fontSize:13,color:"var(--text)",cursor:"pointer",
@@ -1091,7 +1197,7 @@ export default function WikiAILanding() {
                     onMouseEnter={e=>(e.target as HTMLElement).style.background="rgba(59,130,246,0.1)"}
                     onMouseLeave={e=>(e.target as HTMLElement).style.background="none"}
                     onClick={() => {
-                      setLanguage(lang.code);
+                      changeLanguage(code);
                       setShowLangDropdown(false);
                     }}
                   >
@@ -1117,7 +1223,7 @@ export default function WikiAILanding() {
             style={{ padding:"8px 18px",fontSize:13 }}
             onClick={() => router.push('/login')}
           >
-            Get Started →
+            {t('landing.nav.getStarted')}
           </button>
 
           {/* Hamburger */}
@@ -1133,11 +1239,16 @@ export default function WikiAILanding() {
 
       {/* ── MOBILE DRAWER ───────────────────────── */}
       <div className={`mobile-drawer ${mobileMenuOpen ? "open" : ""}`}>
-        {["Features","How It Works","Integrations","Pricing"].map(l => (
-          <a key={l}
-            href={`#${l.toLowerCase().replace(/\s+/g,"-")}`}
+        {[
+          { key: "features", text: t('landing.nav.features') },
+          { key: "how-it-works", text: t('landing.nav.howItWorks') },
+          { key: "integrations", text: t('landing.nav.integrations') },
+          { key: "pricing", text: t('landing.nav.pricing') }
+        ].map(l => (
+          <a key={l.key}
+            href={`#${l.key}`}
             onClick={() => setMobileMenuOpen(false)}
-          >{l}</a>
+          >{l.text}</a>
         ))}
         <div style={{ marginTop:28, display:"flex", flexDirection:"column", gap:12 }}>
           <button
@@ -1145,7 +1256,7 @@ export default function WikiAILanding() {
             style={{ width:"100%", justifyContent:"center", padding:"14px", fontSize:15 }}
             onClick={() => { setMobileMenuOpen(false); router.push('/login'); }}
           >
-            🚀 Get Started →
+            🚀 {t('landing.nav.getStarted')}
           </button>
           <div style={{ display:"flex", gap:10 }}>
             <button
@@ -1159,9 +1270,9 @@ export default function WikiAILanding() {
             <button
               className="btn btn-outline"
               style={{ flex:1, justifyContent:"center", padding:"12px", fontSize:13 }}
-              onClick={() => setLanguage(l => l === 'en' ? 'ru' : 'en')}
+              onClick={() => changeLanguage(locale === 'en' ? 'ru' : 'en')}
             >
-              🌐 {language.toUpperCase()}
+              🌐 {locale.toUpperCase()}
             </button>
           </div>
         </div>
@@ -1180,22 +1291,26 @@ export default function WikiAILanding() {
           <div style={{ marginBottom:22,display:"flex",justifyContent:"center",alignItems:"center",gap:10 }}>
             <span className="tag">
               <span style={{ width:6,height:6,borderRadius:"50%",background:"#22c55e",display:"inline-block",animation:"pulse-dot 1.8s ease-in-out infinite" }} />
-              Company Knowledge Platform
+              {t('landing.hero.badge')}
             </span>
           </div>
 
           <h1 className="display" style={{ marginBottom:22 }}>
-            All Company Knowledge.<br />
-            <span className="g-shimmer">One Intelligent Hub.</span>
+            {t('landing.hero.title')}<br />
+            <span className="g-shimmer">{t('landing.hero.titleHighlight')}</span>
           </h1>
 
           <p style={{ fontSize:"clamp(15px,2vw,18px)",color:"var(--text-muted)",maxWidth:560,margin:"0 auto 36px",lineHeight:1.7 }}>
-            WikiAI centralises everything your company knows — from CRM records to policy docs — and makes it instantly searchable by every employee, and deliverable through any channel.
+            {t('landing.hero.subtitle')}
           </p>
 
           {/* Value props */}
           <div style={{ display:"flex",gap:20,justifyContent:"center",flexWrap:"wrap",marginBottom:40 }}>
-            {["Connects to Bitrix, ERP, Drive","Answers in any messenger or chat","Employees find answers in seconds"].map((p,i)=>(
+            {[
+              t('landing.hero.valueProps.connects'),
+              t('landing.hero.valueProps.answers'),
+              t('landing.hero.valueProps.seconds')
+            ].map((p,i)=>(
               <div key={i} style={{ display:"flex",alignItems:"center",gap:7,fontSize:13,color:"var(--text-muted)" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
                 {p}
@@ -1208,23 +1323,23 @@ export default function WikiAILanding() {
               className="btn btn-blue btn-lg"
               onClick={() => router.push('/login')}
             >
-              🚀 Start for Free
+              {t('landing.hero.getStarted')}
             </button>
             <button 
               className="btn btn-outline btn-lg"
               onClick={() => window.open('https://demo.wikiai.com', '_blank')}
             >
-              ▶ Watch Demo
+              {t('landing.hero.learnMore')}
             </button>
           </div>
 
           {/* Social proof bar */}
           <div className="social-proof-bar" style={{ gap:0,justifyContent:"center",borderRadius:12,overflow:"hidden",border:"1px solid var(--border)",maxWidth:700,margin:"0 auto",background:"var(--card)" }}>
             {[
-              { n:"Ai", label:"Powered" },
-              { n:"<0.5s", label:"Search time" },
-              { n:"10+", label:"Integrations" },
-              { n:"99.9%", label:"Uptime" },
+              { n:t('landing.hero.socialProof.ai'), label:t('landing.hero.socialProof.powered') },
+              { n:"<0.5s", label:t('landing.hero.socialProof.searchTime') },
+              { n:"10+", label:t('landing.hero.socialProof.integrations') },
+              { n:"99.9%", label:t('landing.hero.socialProof.uptime') },
             ].map((s,i,arr)=>(
               <div key={i} style={{ flex:1,textAlign:"center",padding:"18px 10px",borderRight:i<arr.length-1?"1px solid var(--border)":"none" }}>
                 <div style={{ fontWeight:800,fontSize:20,letterSpacing:"-.02em",color:"#60a5fa",fontFamily:"'Geist',sans-serif" }}>{s.n}</div>
@@ -1245,19 +1360,32 @@ export default function WikiAILanding() {
         <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <div style={{ maxWidth:1060,margin:"0 auto" }}>
           <div className="r" style={{ textAlign:"center",marginBottom:52 }}>
-            <h2 className="h2" style={{ marginBottom:16 }}>
-              Your team is <span className="g-blue">drowning in tabs</span> looking for answers
-            </h2>
+            <h2 className="h2" style={{ marginBottom:16 }} dangerouslySetInnerHTML={{ __html: t('landing.problem.title') }} />
             <p style={{ color:"var(--text-muted)",maxWidth:520,margin:"0 auto",lineHeight:1.7 }}>
-              Knowledge scattered across Google Drive, Confluence, email threads, Bitrix tasks, and human brains. WikiAI fixes that.
+              {t('landing.problem.subtitle')}
             </p>
           </div>
 
           <div className="three-col-grid">
             {[
-              { icon:"😤", title:"Before WikiAI", items:["Ask a colleague, interrupt their flow","Search 5 different systems manually","Wait for email reply that never comes","Onboarding takes weeks, not days"] },
-              { icon:"⚡", title:"With WikiAI", items:["Ask in Telegram, get answer in 1 second","One search across all company data","AI cites the exact source document","New hires self-serve from day one"], hi:true },
-              { icon:"📈", title:"The Result", items:["40% fewer interruption requests","10× faster information retrieval","Consistent answers across the team","Knowledge gaps become visible"] },
+              { icon:"😤", title:t('landing.problem.before.title'), items:[
+                t('landing.problem.before.items.0'),
+                t('landing.problem.before.items.1'),
+                t('landing.problem.before.items.2'),
+                t('landing.problem.before.items.3')
+              ] },
+              { icon:"⚡", title:t('landing.problem.with.title'), items:[
+                t('landing.problem.with.items.0'),
+                t('landing.problem.with.items.1'),
+                t('landing.problem.with.items.2'),
+                t('landing.problem.with.items.3')
+              ], hi:true },
+              { icon:"📈", title:t('landing.problem.result.title'), items:[
+                t('landing.problem.result.items.0'),
+                t('landing.problem.result.items.1'),
+                t('landing.problem.result.items.2'),
+                t('landing.problem.result.items.3')
+              ] },
             ].map((col,i)=>(
               <div key={i} className="r" style={{ background:col.hi?"rgba(59,130,246,0.05)":"var(--card)",padding:"32px 28px",transitionDelay:`${i*90}ms` }}>
                 <div style={{ fontSize:28,marginBottom:14 }}>{col.icon}</div>
@@ -1278,13 +1406,13 @@ export default function WikiAILanding() {
       <section id="how-it-works" style={{ padding:"80px 6%" }}>
         <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <SectionHead
-          tag="Search Demo"
+          tag={t('landing.searchDemo.tag')}
           tagStyle="tag-blue"
-          title={`Employees <span class="g-blue">find answers instantly</span>`}
-          sub="Real questions from real roles — answered in under a second from your company's actual knowledge base."
+          title={t('landing.searchDemo.title')}
+          sub={t('landing.searchDemo.subtitle')}
         />
         <div className="r" style={{ transitionDelay:"80ms" }}>
-          <SearchDemo />
+          <SearchDemo qa={QA} />
         </div>
       </section>
 
@@ -1292,10 +1420,10 @@ export default function WikiAILanding() {
       <section id="features" style={{ padding:"80px 6%" }}>
         <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <SectionHead
-          tag="Platform"
+          tag={t('landing.features.tag')}
           tagStyle=""
-          title={`Everything in one place,<br/><span class="g-blue">delivered everywhere</span>`}
-          sub="A complete knowledge infrastructure — from ingestion to delivery."
+          title={`${t('landing.features.title')}`}
+          sub={t('landing.features.subtitle')}
         />
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(290px,1fr))",gap:18,maxWidth:1060,margin:"0 auto" }}>
           {FEATURES.map((f,i)=>(
@@ -1315,15 +1443,14 @@ export default function WikiAILanding() {
       <section style={{ padding:"80px 6%",background:"linear-gradient(180deg,transparent,rgba(59,130,246,0.025),transparent)" }}>
         <div className="two-col-grid" style={{ maxWidth:1060,margin:"0 auto" }}>
           <div className="r-l">
-            <span className="tag" style={{ marginBottom:18,display:"inline-flex" }}>Employee Experience</span>
-            <h2 className="h2" style={{ marginBottom:18,lineHeight:1.15 }}>
-              Every role gets answers <span className="g-blue">in seconds</span>
-            </h2>
-            <p style={{ color:"var(--text-muted)",fontSize:15,lineHeight:1.75,marginBottom:28 }}>
-              From a first-day hire to a seasoned VP — WikiAI understands the context of the question and searches across every document, database, and system your company uses.
-            </p>
+            <SectionHead
+              tag={t('landing.employeeJourney.tag')}
+              tagStyle="tag-blue"
+              title={t('landing.employeeJourney.title')}
+              sub={t('landing.employeeJourney.subtitle')}
+            />
             <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-              {["HR policies, contracts, and onboarding guides","Sales playbooks and pricing rules","Technical runbooks and infrastructure docs","Live CRM and ERP data via integrations"].map((item,i)=>(
+              {KNOWLEDGE_TYPES.map((item: string, i: number) => (
                 <div key={i} style={{ display:"flex",alignItems:"center",gap:10,fontSize:14,color:"var(--text-dim)" }}>
                   <div style={{ width:6,height:6,borderRadius:"50%",background:"#3b82f6",flexShrink:0 }} />
                   {item}
@@ -1341,10 +1468,10 @@ export default function WikiAILanding() {
       <section id="integrations" style={{ padding:"80px 6%" }}>
         <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <SectionHead
-          tag="Integrations"
-          tagStyle=""
-          title={`Connect your systems. <span class="g-blue">Deliver anywhere.</span>`}
-          sub="WikiAI sits at the center of your tech stack — pulling from every source, pushing answers to every channel."
+          tag={t('landing.integrationHub.tag')}
+          tagStyle="tag-indigo"
+          title={`${t('landing.integrationHub.title')}`}
+          sub={t('landing.integrationHub.subtitle')}
         />
         <div className="r" style={{ transitionDelay:"60ms" }}>
           {isMobile ? <MobileHubDiagram /> : <HubDiagram />}
@@ -1352,15 +1479,15 @@ export default function WikiAILanding() {
         {/* Extra detail row */}
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:16,maxWidth:900,margin:"48px auto 0" }}>
           {[
-            { icon:"🔷", title:"Bitrix24", desc:"Sync CRM contacts, deals, tasks and company wikis in real-time." },
-            { icon:"📊", title:"1C / ERP", desc:"Pull product catalogs, pricing, inventory and order data automatically." },
-            { icon:"💬", title:"Telegram & Slack", desc:"Deploy a bot that answers in your team chats, powered by company knowledge." },
-            { icon:"🛒", title:"Online Store", desc:"Embed a support agent that answers product and policy questions on your shop." },
-          ].map((c,i)=>(
+            { icon:"🔷", title:"Bitrix24", desc:t('landing.integrationHub.detailCards.bitrix24') },
+            { icon:"📊", title:"1C / ERP", desc:t('landing.integrationHub.detailCards.erp') },
+            { icon:"💬", title:"Telegram & Slack", desc:t('landing.integrationHub.detailCards.messaging') },
+            { icon:"🛒", title:"Online Store", desc:t('landing.integrationHub.detailCards.store') },
+          ].map((d,i)=>(
             <div key={i} className={`r feat-card`} style={{ transitionDelay:`${i*80}ms` }}>
-              <div style={{ fontSize:24,marginBottom:12 }}>{c.icon}</div>
-              <div style={{ fontSize:15,fontWeight:700,color:"var(--text)",marginBottom:7 }}>{c.title}</div>
-              <p style={{ fontSize:13,color:"var(--text-muted)",lineHeight:1.6 }}>{c.desc}</p>
+              <div style={{ fontSize:24,marginBottom:12 }}>{d.icon}</div>
+              <div style={{ fontSize:15,fontWeight:700,color:"var(--text)",marginBottom:7 }}>{d.title}</div>
+              <p style={{ fontSize:13,color:"var(--text-muted)",lineHeight:1.6 }}>{d.desc}</p>
             </div>
           ))}
         </div>
@@ -1370,21 +1497,13 @@ export default function WikiAILanding() {
       <section style={{ padding:"80px 6%",background:"linear-gradient(180deg,transparent,rgba(59,130,246,0.025),transparent)" }}>
         <div className="two-col-grid" style={{ maxWidth:1060,margin:"0 auto" }}>
           <div className="r-r" style={{ order:2 }}>
-            <span className="tag tag-green" style={{ marginBottom:18,display:"inline-flex" }}>AI Agent Bridge</span>
-            <h2 className="h2" style={{ marginBottom:18,lineHeight:1.15 }}>
-              Your Telegram bot, <span className="g-blue">powered by real company data</span>
-            </h2>
-            <p style={{ color:"var(--text-muted)",fontSize:15,lineHeight:1.75,marginBottom:28 }}>
-              Deploy WikiAI as the brain behind your internal Telegram bot, Slack assistant, or website widget. It doesn't hallucinate — it cites the exact document and section.
+            <span className="tag tag-green" style={{ marginBottom:18,display:"inline-flex" }}>{t('landing.aiAgentBridge.tag')}</span>
+            <h2 className="h2" style={{ marginBottom:18 }} dangerouslySetInnerHTML={{ __html: t('landing.aiAgentBridge.title') }} />
+            <p style={{ color:"var(--text-muted)",fontSize:15,lineHeight:1.75,marginBottom:24 }}>
+              {t('landing.aiAgentBridge.subtitle')}
             </p>
             <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
-              {[
-                "Answers sourced from actual company docs",
-                "Cites exact file name and paragraph",
-                "Queries Bitrix CRM context on the fly",
-                "Works in Russian, English, any language",
-                "Escalates to human when confidence is low",
-              ].map((item,i)=>(
+              {AI_AGENT_FEATURES.map((item: string, i: number) => (
                 <div key={i} style={{ display:"flex",alignItems:"center",gap:10,fontSize:14,color:"var(--text-dim)" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
                   {item}
@@ -1402,10 +1521,10 @@ export default function WikiAILanding() {
       <section style={{ padding:"80px 6%" }}>
         <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <SectionHead
-          tag="Use Cases"
-          tagStyle=""
-          title={`Built for how <span class="g-blue">real teams work</span>`}
-          sub="WikiAI adapts to your business — not the other way around."
+          tag={t('landing.useCases.tag')}
+          tagStyle="tag-blue"
+          title={`${t('landing.useCases.title')}`}
+          sub={t('landing.useCases.subtitle')}
         />
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:18,maxWidth:1060,margin:"0 auto" }}>
           {USECASES.map((u,i)=>(
@@ -1437,17 +1556,17 @@ export default function WikiAILanding() {
       <section id="pricing" style={{ padding:"96px 6%" }}>
         <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <SectionHead
-          tag="Pricing"
-          tagStyle=""
-          title={`Simple pricing, <span class="g-blue">no surprises</span>`}
-          sub="Start small, scale to enterprise. All plans include a 14-day free trial."
+          tag={t('landing.pricing.tag')}
+          tagStyle="tag-blue"
+          title={`${t('landing.pricing.title')}`}
+          sub={t('landing.pricing.subtitle')}
         />
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20,maxWidth:980,margin:"0 auto" }}>
           {PLANS.map((p,i)=>(
             <div key={i} className={`price-card r ${p.hi?"featured":""}`} style={{ transitionDelay:`${i*80}ms` }}>
               {p.hi && (
                 <div style={{ position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(90deg,#3b82f6,#0ea5e9)",color:"#fff",fontSize:10,fontWeight:700,padding:"4px 16px",borderRadius:"0 0 8px 8px",fontFamily:"'Geist Mono',monospace",letterSpacing:".08em",whiteSpace:"nowrap" }}>
-                  MOST POPULAR
+                  {t('landing.pricing.mostPopular')}
                 </div>
               )}
               <div style={{ fontSize:18,fontWeight:700,color:"var(--text)",marginBottom:4 }}>{p.name}</div>
@@ -1481,19 +1600,18 @@ export default function WikiAILanding() {
         <div className="r" style={{ maxWidth:780,margin:"0 auto",textAlign:"center" }}>
           <div className="mobile-cta-box" style={{ background:"linear-gradient(135deg,rgba(59,130,246,0.1),rgba(14,165,233,0.07),rgba(99,102,241,0.06))",border:"1px solid rgba(59,130,246,0.2)",borderRadius:22,position:"relative",overflow:"hidden" }}>
             <div style={{ position:"absolute",width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,0.12),transparent 70%)",top:"-30%",left:"50%",transform:"translateX(-50%)",pointerEvents:"none" }} />
-            <div style={{ fontSize:46,marginBottom:18 }}>🧠</div>
-            <h2 className="h2" style={{ marginBottom:16 }}>
-              Ready to unite your<br /><span className="g-blue">company's knowledge?</span>
-            </h2>
-            <p style={{ color:"var(--text-muted)",fontSize:15,maxWidth:440,margin:"0 auto 36px",lineHeight:1.7 }}>
-              Join hundreds of companies who've replaced scattered wikis, folders, and endless colleague interruptions with WikiAI.
-            </p>
+            <SectionHead
+              tag="🧠"
+              tagStyle="tag-blue-large"
+              title={`${t('landing.cta.title')}`}
+              sub={t('landing.cta.subtitle')}
+            />
             <div style={{ display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap" }}>
               <button 
                 className="btn btn-blue btn-lg"
                 onClick={() => router.push('/login')}
               >
-                🚀 Start Now
+                {t('landing.cta.startNow')}
               </button>
               {/* <button 
                 className="btn btn-outline btn-lg"
@@ -1509,48 +1627,81 @@ export default function WikiAILanding() {
       {/* ── FOOTER ───────────────────────────────── */}
       <footer style={{ borderTop:"1px solid var(--border)",padding:"52px 6% 32px" }}>
         <div style={{ maxWidth:1060,margin:"0 auto" }}>
-          <div className="footer-top-row" style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:36,marginBottom:52 }}>
+          <p style={{ color:"var(--footer-copy)",fontSize:12,marginBottom:20 }}>
+            {t('landing.footer.description')}
+          </p>
+          <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:24,marginBottom:32 }}>
             <div>
-              <div style={{ display:"flex",alignItems:"center",gap:9,marginBottom:12 }}>
-                <div style={{ width:30,height:30,borderRadius:8,background:"linear-gradient(135deg,#3b82f6,#0ea5e9)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15 }}>🧠</div>
-                <span style={{ fontWeight:800,fontSize:17,letterSpacing:"-.02em" }}><span className="g-blue">Wiki</span>AI</span>
+              <div style={{ fontSize:12,fontWeight:700,color:"var(--text)",marginBottom:12,textTransform:"uppercase",letterSpacing:".05em" }}>{t('landing.footer.product')}</div>
+              <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+                {[
+                  { key:"features", text:t('landing.footer.links.features') },
+                  { key:"integrations", text:t('landing.footer.links.integrations') },
+                  { key:"pricing", text:t('landing.footer.links.pricing') },
+                  { key:"changelog", text:t('landing.footer.links.changelog') },
+                  { key:"roadmap", text:t('landing.footer.links.roadmap') },
+                ].map(l => (
+                  <a key={l.key} href={`#${l.key}`} style={{ color:"var(--footer-link)",textDecoration:"none",fontSize:12,transition:"color .2s" }}
+                    onMouseEnter={e=>(e.target as HTMLElement).style.color="var(--footer-link-h)"}
+                    onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--footer-link)"}
+                  >{l.text}</a>
+                ))}
               </div>
-              <p style={{ color:"var(--stat-num)",fontSize:13,maxWidth:210,lineHeight:1.65 }}>Centralised AI knowledge hub for modern companies and their teams.</p>
             </div>
-            <div className="footer-link-cols" style={{ display:"flex",gap:40,flexWrap:"wrap" }}>
-            {[
-              { title:"Product", links:["Features","Integrations","Pricing","Changelog","Roadmap"] },
-              { title:"Use Cases", links:["Employee Onboarding","Sales Enablement","Call Centers","E-commerce"] },
-              { title:"Company", links:["About","Blog","Careers","Contact","Privacy"] },
-            ].map((col,i)=>(
-              <div key={i}>
-                <div style={{ fontSize:12,fontWeight:700,color:"var(--text)",marginBottom:16,letterSpacing:".06em",textTransform:"uppercase",fontFamily:"'Geist Mono',monospace" }}>{col.title}</div>
-                <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-                  {col.links.map(l=>(
-                    <a key={l} href="#" style={{ color:"var(--stat-num)",fontSize:14,textDecoration:"none",transition:"color .2s" }}
-                      onMouseEnter={e=>(e.target as HTMLElement).style.color="var(--footer-link-h)"}
-                      onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--stat-num)"}
-                    >{l}</a>
-                  ))}
-                </div>
+            <div>
+              <div style={{ fontSize:12,fontWeight:700,color:"var(--text)",marginBottom:12,textTransform:"uppercase",letterSpacing:".05em" }}>{t('landing.footer.useCases')}</div>
+              <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+                {[
+                  { key:"onboarding", text:t('landing.footer.links.onboarding') },
+                  { key:"sales", text:t('landing.footer.links.sales') },
+                  { key:"call-centers", text:t('landing.footer.links.callCenters') },
+                  { key:"ecommerce", text:t('landing.footer.links.ecommerce') },
+                ].map(l => (
+                  <a key={l.key} href={`#${l.key}`} style={{ color:"var(--footer-link)",textDecoration:"none",fontSize:12,transition:"color .2s" }}
+                    onMouseEnter={e=>(e.target as HTMLElement).style.color="var(--footer-link-h)"}
+                    onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--footer-link)"}
+                  >{l.text}</a>
+                ))}
               </div>
-            ))}
+            </div>
+            <div>
+              <div style={{ fontSize:12,fontWeight:700,color:"var(--text)",marginBottom:12,textTransform:"uppercase",letterSpacing:".05em" }}>{t('landing.footer.company')}</div>
+              <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+                {[
+                  { key:"about", text:t('landing.footer.links.about') },
+                  { key:"blog", text:t('landing.footer.links.blog') },
+                  { key:"careers", text:t('landing.footer.links.careers') },
+                  { key:"contact", text:t('landing.footer.links.contact') },
+                  { key:"privacy", text:t('landing.footer.links.privacy') },
+                ].map(l => (
+                  <a key={l.key} href={`#${l.key}`} style={{ color:"var(--footer-link)",textDecoration:"none",fontSize:12,transition:"color .2s" }}
+                    onMouseEnter={e=>(e.target as HTMLElement).style.color="var(--footer-link-h)"}
+                    onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--footer-link)"}
+                  >{l.text}</a>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="divider" style={{ height:"1px", marginBottom:24 }} />
-          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12 }}>
-            <span style={{ color:"var(--footer-copy)",fontSize:13,fontFamily:"'Geist Mono',monospace" }}>© 2025 WikiAI. All rights reserved.</span>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:24,borderTop:"1px solid var(--border)",flexWrap:"wrap",gap:12 }}>
+            <div style={{ fontSize:12,color:"var(--footer-copy)" }}>
+              {t('landing.footer.copyright')}
+            </div>
             <div style={{ display:"flex",gap:20 }}>
-              {["Privacy","Terms","Security"].map(l=>(
-                <a key={l} href="#" style={{ color:"var(--footer-copy)",fontSize:13,textDecoration:"none",transition:"color .2s" }}
+              {[
+                { key:"privacy", text:t('landing.footer.bottomLinks.privacy') },
+                { key:"terms", text:t('landing.footer.bottomLinks.terms') },
+                { key:"security", text:t('landing.footer.bottomLinks.security') },
+              ].map(l => (
+                <a key={l.key} href={`#${l.key}`} style={{ color:"var(--footer-link)",textDecoration:"none",fontSize:12,transition:"color .2s" }}
                   onMouseEnter={e=>(e.target as HTMLElement).style.color="var(--footer-link-h)"}
-                  onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--footer-copy)"}
-                >{l}</a>
+                  onMouseLeave={e=>(e.target as HTMLElement).style.color="var(--footer-link)"}
+                >{l.text}</a>
               ))}
             </div>
           </div>
         </div>
       </footer>
+      </div>
     </>
   );
 }
