@@ -73,25 +73,29 @@ const CSS = `
 .wiki-ai-landing ::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 2px; }
 
 /* ── Keyframes ── */
-@keyframes fadeUp   { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeUp   { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:none; } }
 @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
 @keyframes floatY   { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
 @keyframes shimmer  { 0% { background-position:-300% center; } 100% { background-position:300% center; } }
 @keyframes blink    { 0%,100%{opacity:1;} 50%{opacity:0;} }
 @keyframes spin     { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
 @keyframes spin-r   { from{transform:rotate(0deg);} to{transform:rotate(-360deg);} }
-@keyframes pulse-dot{ 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+@keyframes pulse-dot{ 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.45;transform:scale(.75);} }
 @keyframes flow-x   { 0%{transform:translateX(-100%);} 100%{transform:translateX(300%);} }
 @keyframes flow-y   { 0%{transform:translateY(-100%);} 100%{transform:translateY(300%);} }
-@keyframes count    { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+@keyframes count    { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
 @keyframes typing   { from{width:0;} to{width:100%;} }
 @keyframes bar-grow { from{width:0;} to{width:var(--w);} }
 
 /* ── Scroll reveal ── */
-.wiki-ai-landing .r   { opacity:0; transform:translateY(22px); transition:opacity .6s ease,transform .6s ease; }
-.wiki-ai-landing .r-l { opacity:0; transform:translateX(-28px); transition:opacity .6s ease,transform .6s ease; }
-.wiki-ai-landing .r-r { opacity:0; transform:translateX(28px);  transition:opacity .6s ease,transform .6s ease; }
-.wiki-ai-landing .r.on,.wiki-ai-landing .r-l.on,.wiki-ai-landing .r-r.on { opacity:1; transform:none; }
+.wiki-ai-landing .wai-r, .wiki-ai-landing .wai-rl, .wiki-ai-landing .wai-rr {
+  opacity: 0;
+  transition: opacity .6s ease, transform .6s ease;
+}
+.wiki-ai-landing .wai-r  { transform: translateY(22px); }
+.wiki-ai-landing .wai-rl { transform: translateX(-28px); }
+.wiki-ai-landing .wai-rr { transform: translateX(28px); }
+.wiki-ai-landing .wai-r.on, .wiki-ai-landing .wai-rl.on, .wiki-ai-landing .wai-rr.on { opacity:1; transform:none; }
 
 /* ── Typography ── */
 .wiki-ai-landing .display {
@@ -198,20 +202,20 @@ const CSS = `
   background:var(--card); border:1px solid var(--border);
   border-radius:12px; padding:16px 18px;
   display:flex; align-items:center; gap:12px;
-  transition: border-color .25s, transform .25s, box-shadow .25s;
+  transition: border-color .35s, transform .25s, box-shadow .25s;
   cursor:default;
 }
 .wiki-ai-landing .int-card:hover {
   border-color:rgba(59,130,246,0.3);
   transform:translateY(-2px);
-  box-shadow:0 12px 32px rgba(0,0,0,0.4);
+  box-shadow:0 12px 32px rgba(0,0,0,0.35);
 }
 
 /* ── Feature card ── */
 .wiki-ai-landing .feat-card {
   background:var(--card); border:1px solid var(--border);
   border-radius:14px; padding:28px;
-  transition:border-color .25s, transform .3s, box-shadow .3s;
+  transition:border-color .25s, transform .28s, box-shadow .28s;
   position:relative; overflow:hidden;
 }
 .wiki-ai-landing .feat-card::before {
@@ -219,7 +223,7 @@ const CSS = `
   background:linear-gradient(135deg,rgba(59,130,246,0.05),transparent 55%);
   opacity:0; transition:opacity .3s;
 }
-.wiki-ai-landing .feat-card:hover { border-color:rgba(59,130,246,0.28); transform:translateY(-3px); box-shadow:0 20px 50px rgba(0,0,0,0.45); }
+.wiki-ai-landing .feat-card:hover { border-color:rgba(59,130,246,0.28); transform:translateY(-3px); box-shadow:0 20px 50px rgba(0,0,0,0.4); }
 .wiki-ai-landing .feat-card:hover::before { opacity:1; }
 
 /* ── Noise ── */
@@ -441,32 +445,27 @@ function useMobile(breakpoint = 768) {
 ═══════════════════════════════════════════════════════════ */
 function useReveal() {
   useEffect(() => {
-    const els = document.querySelectorAll(".r,.r-l,.r-r");
+    const els = document.querySelectorAll(".wai-r,.wai-rl,.wai-rr");
     const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); } }),
-      { threshold: 0.01, rootMargin: '50px' }
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            // Calculate delay based on element position (5vh intervals)
+            const rect = e.target.getBoundingClientRect();
+            const vh = window.innerHeight * 0.01; // 1vh in pixels
+            const delayFromTop = Math.max(0, rect.top / vh / 5); // Divide by 5vh intervals
+            const delay = Math.round(delayFromTop) * 10; // 5ms per 5vh interval
+            
+            (e.target as HTMLElement).style.transitionDelay = `${delay}ms`;
+            e.target.classList.add("on");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
     );
-    
-    // Check elements already in viewport
-    els.forEach((el) => {
-      const rect = el.getBoundingClientRect();
-      const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
-      if (isInViewport) {
-        el.classList.add("on");
-      } else {
-        io.observe(el);
-      }
-    });
-    
-    // Fallback: make any remaining elements visible after 1 second
-    const fallback = setTimeout(() => {
-      document.querySelectorAll(".r:not(.on), .r-l:not(.on), .r-r:not(.on)").forEach((el) => el.classList.add("on"));
-    }, 1000);
-    
-    return () => {
-      io.disconnect();
-      clearTimeout(fallback);
-    };
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
   }, []);
 }
 
@@ -850,7 +849,7 @@ function EmployeeJourney() {
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
       {steps.map((s, i) => (
-        <div key={i} className="r" style={{ transitionDelay:`${i*120}ms`, background:"var(--card)", border:"1px solid var(--border)", borderRadius:12, padding:"20px 22px" }}>
+        <div key={i} className="wai-r" style={{ transitionDelay:`${i*120}ms`, background:"var(--card)", border:"1px solid var(--border)", borderRadius:12, padding:"20px 22px" }}>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
             <div style={{ width:36,height:36,borderRadius:"50%",background:`${s.color}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18 }}>{s.who}</div>
             <span style={{ fontSize:13,fontWeight:600,color:"var(--journey-role)" }}>{s.role}</span>
@@ -1115,7 +1114,7 @@ export default function WikiAILanding() {
   );
 
   const SectionHead = ({ tag, tagStyle, title, sub, center=true }: { tag: string; tagStyle?: string; title: string; sub?: string; center?: boolean }) => (
-    <div className="r" style={{ textAlign:center?"center":"left", marginBottom:52, opacity:1, transform:"none" }}>
+    <div className="wai-r" style={{ textAlign:center?"center":"left", marginBottom:52, opacity:1, transform:"none" }}>
       <span className={`tag ${tagStyle||""}`} style={{ marginBottom:14, display:"inline-flex" }}>{tag}</span>
       <h2 className="h2" style={{ marginBottom:14 }} dangerouslySetInnerHTML={{ __html:title }} />
       {sub && <p style={{ color:"var(--text-muted)", maxWidth:480, margin:center?"0 auto":"0", lineHeight:1.7, fontSize:16 }}>{sub}</p>}
@@ -1359,7 +1358,7 @@ export default function WikiAILanding() {
       <section style={{ padding:"80px 6%" }}>
         <div className="divider-glow section-divider" style={{ height:"1px", marginBottom:80 }} />
         <div style={{ maxWidth:1060,margin:"0 auto" }}>
-          <div className="r" style={{ textAlign:"center",marginBottom:52 }}>
+          <div className="wai-r" style={{ textAlign:"center",marginBottom:52 }}>
             <h2 className="h2" style={{ marginBottom:16 }} dangerouslySetInnerHTML={{ __html: t('landing.problem.title') }} />
             <p style={{ color:"var(--text-muted)",maxWidth:520,margin:"0 auto",lineHeight:1.7 }}>
               {t('landing.problem.subtitle')}
@@ -1387,7 +1386,7 @@ export default function WikiAILanding() {
                 t('landing.problem.result.items.3')
               ] },
             ].map((col,i)=>(
-              <div key={i} className="r" style={{ background:col.hi?"rgba(59,130,246,0.05)":"var(--card)",padding:"32px 28px",transitionDelay:`${i*90}ms` }}>
+              <div key={i} className="wai-r" style={{ background:col.hi?"rgba(59,130,246,0.05)":"var(--card)",padding:"32px 28px",transitionDelay:`${i*90}ms` }}>
                 <div style={{ fontSize:28,marginBottom:14 }}>{col.icon}</div>
                 <div style={{ fontSize:14,fontWeight:700,color:col.hi?"#60a5fa":"var(--compare-lo-text)",marginBottom:18,fontFamily:"'Geist Mono',monospace",letterSpacing:".04em",textTransform:"uppercase" }}>{col.title}</div>
                 {col.items.map((item,j)=>(
@@ -1411,7 +1410,7 @@ export default function WikiAILanding() {
           title={t('landing.searchDemo.title')}
           sub={t('landing.searchDemo.subtitle')}
         />
-        <div className="r" style={{ transitionDelay:"80ms" }}>
+        <div className="wai-r" style={{ transitionDelay:"80ms" }}>
           <SearchDemo qa={QA} />
         </div>
       </section>
@@ -1427,7 +1426,7 @@ export default function WikiAILanding() {
         />
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(290px,1fr))",gap:18,maxWidth:1060,margin:"0 auto" }}>
           {FEATURES.map((f,i)=>(
-            <div key={i} className={`feat-card r`} style={{ transitionDelay:`${i*70}ms` }}>
+            <div key={i} className={`feat-card wai-r`} style={{ transitionDelay:`${i*70}ms` }}>
               <div style={{ fontSize:30,marginBottom:16 }}>{f.icon}</div>
               <div style={{ display:"flex",alignItems:"center",gap:9,marginBottom:10 }}>
                 <h3 style={{ fontSize:16,fontWeight:700,color:"var(--text)" }}>{f.title}</h3>
@@ -1442,7 +1441,7 @@ export default function WikiAILanding() {
       {/* ── EMPLOYEE JOURNEY ─────────────────────── */}
       <section style={{ padding:"80px 6%",background:"linear-gradient(180deg,transparent,rgba(59,130,246,0.025),transparent)" }}>
         <div className="two-col-grid" style={{ maxWidth:1060,margin:"0 auto" }}>
-          <div className="r-l">
+          <div className="wai-rl">
             <SectionHead
               tag={t('landing.employeeJourney.tag')}
               tagStyle="tag-blue"
@@ -1458,7 +1457,7 @@ export default function WikiAILanding() {
               ))}
             </div>
           </div>
-          <div className="r-r">
+          <div className="wai-rr">
             <EmployeeJourney />
           </div>
         </div>
@@ -1473,7 +1472,7 @@ export default function WikiAILanding() {
           title={`${t('landing.integrationHub.title')}`}
           sub={t('landing.integrationHub.subtitle')}
         />
-        <div className="r" style={{ transitionDelay:"60ms" }}>
+        <div className="wai-r" style={{ transitionDelay:"60ms" }}>
           {isMobile ? <MobileHubDiagram /> : <HubDiagram />}
         </div>
         {/* Extra detail row */}
@@ -1484,7 +1483,7 @@ export default function WikiAILanding() {
             { icon:"💬", title:"Telegram & Slack", desc:t('landing.integrationHub.detailCards.messaging') },
             { icon:"🛒", title:"Online Store", desc:t('landing.integrationHub.detailCards.store') },
           ].map((d,i)=>(
-            <div key={i} className={`r feat-card`} style={{ transitionDelay:`${i*80}ms` }}>
+            <div key={i} className={`wai-r feat-card`} style={{ transitionDelay:`${i*80}ms` }}>
               <div style={{ fontSize:24,marginBottom:12 }}>{d.icon}</div>
               <div style={{ fontSize:15,fontWeight:700,color:"var(--text)",marginBottom:7 }}>{d.title}</div>
               <p style={{ fontSize:13,color:"var(--text-muted)",lineHeight:1.6 }}>{d.desc}</p>
@@ -1496,7 +1495,7 @@ export default function WikiAILanding() {
       {/* ── TERMINAL ─────────────────────────────── */}
       <section style={{ padding:"80px 6%",background:"linear-gradient(180deg,transparent,rgba(59,130,246,0.025),transparent)" }}>
         <div className="two-col-grid" style={{ maxWidth:1060,margin:"0 auto" }}>
-          <div className="r-r" style={{ order:2 }}>
+          <div className="wai-rr" style={{ order:2 }}>
             <span className="tag tag-green" style={{ marginBottom:18,display:"inline-flex" }}>{t('landing.aiAgentBridge.tag')}</span>
             <h2 className="h2" style={{ marginBottom:18 }} dangerouslySetInnerHTML={{ __html: t('landing.aiAgentBridge.title') }} />
             <p style={{ color:"var(--text-muted)",fontSize:15,lineHeight:1.75,marginBottom:24 }}>
@@ -1511,7 +1510,7 @@ export default function WikiAILanding() {
               ))}
             </div>
           </div>
-          <div className="r-l" style={{ order:1 }}>
+          <div className="wai-rl" style={{ order:1 }}>
             <Terminal />
           </div>
         </div>
@@ -1528,7 +1527,7 @@ export default function WikiAILanding() {
         />
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:18,maxWidth:1060,margin:"0 auto" }}>
           {USECASES.map((u,i)=>(
-            <div key={i} className={`r feat-card`} style={{ transitionDelay:`${i*80}ms` }}>
+            <div key={i} className={`wai-r feat-card`} style={{ transitionDelay:`${i*80}ms` }}>
               <div style={{ fontSize:32,marginBottom:16 }}>{u.icon}</div>
               <h3 style={{ fontSize:16,fontWeight:700,color:"var(--text)",marginBottom:10 }}>{u.title}</h3>
               <p style={{ fontSize:14,color:"var(--text-muted)",lineHeight:1.65 }}>{u.desc}</p>
@@ -1541,7 +1540,7 @@ export default function WikiAILanding() {
       <section style={{ padding:"72px 6%",background:"linear-gradient(135deg,rgba(59,130,246,0.04),rgba(99,102,241,0.03))" }}>
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:1,maxWidth:900,margin:"0 auto",background:"var(--border)",borderRadius:16,overflow:"hidden" }}>
           {STATS.map((s,i)=>(
-            <div key={i} className="r" style={{ background:"var(--card)",textAlign:"center",padding:"40px 20px",transitionDelay:`${i*80}ms` }}>
+            <div key={i} className="wai-r" style={{ background:"var(--card)",textAlign:"center",padding:"40px 20px",transitionDelay:`${i*80}ms` }}>
               <div style={{ fontSize:"2.8rem",fontWeight:900,letterSpacing:"-.03em",color:"#60a5fa",lineHeight:1,marginBottom:8,fontFamily:"'Geist',sans-serif" }}>
                 <Counter to={s.n} suffix={s.s} decimals={s.dec} />
               </div>
@@ -1563,7 +1562,7 @@ export default function WikiAILanding() {
         />
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20,maxWidth:980,margin:"0 auto" }}>
           {PLANS.map((p,i)=>(
-            <div key={i} className={`price-card r ${p.hi?"featured":""}`} style={{ transitionDelay:`${i*80}ms` }}>
+            <div key={i} className={`price-card wai-r ${p.hi?"featured":""}`} style={{ transitionDelay:`${i*80}ms` }}>
               {p.hi && (
                 <div style={{ position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(90deg,#3b82f6,#0ea5e9)",color:"#fff",fontSize:10,fontWeight:700,padding:"4px 16px",borderRadius:"0 0 8px 8px",fontFamily:"'Geist Mono',monospace",letterSpacing:".08em",whiteSpace:"nowrap" }}>
                   {t('landing.pricing.mostPopular')}
@@ -1597,7 +1596,7 @@ export default function WikiAILanding() {
 
       {/* ── CTA ──────────────────────────────────── */}
       <section style={{ padding:"80px 6% 100px" }}>
-        <div className="r" style={{ maxWidth:780,margin:"0 auto",textAlign:"center" }}>
+        <div className="wai-r" style={{ maxWidth:780,margin:"0 auto",textAlign:"center" }}>
           <div className="mobile-cta-box" style={{ background:"linear-gradient(135deg,rgba(59,130,246,0.1),rgba(14,165,233,0.07),rgba(99,102,241,0.06))",border:"1px solid rgba(59,130,246,0.2)",borderRadius:22,position:"relative",overflow:"hidden" }}>
             <div style={{ position:"absolute",width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,0.12),transparent 70%)",top:"-30%",left:"50%",transform:"translateX(-50%)",pointerEvents:"none" }} />
             <SectionHead
