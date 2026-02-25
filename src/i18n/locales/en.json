@@ -932,6 +932,12 @@
       "deliveryChannels": "Delivery Channels",
       "knowledgeHub": "Knowledge Hub",
       "sources": {
+        "pdf": "PDF Documents",
+        "pdfSub": "Policy docs",
+        "docx": "Word Documents",
+        "docxSub": "Reports",
+        "website": "Websites",
+        "websiteSub": "Online docs",
         "bitrix": "Bitrix24",
         "bitrixSub": "CRM / Tasks",
         "erp": "1C ERP",
