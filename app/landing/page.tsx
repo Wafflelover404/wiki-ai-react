@@ -1021,9 +1021,10 @@ export default function WikiAILanding() {
   
   const [scrolled, setScrolled] = useState(false);
   const [splash, setSplash] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('wiki-ai-theme');
+      const saved = localStorage.getItem('theme');
       return saved === 'light' ? 'light' : 'dark';
     }
     return 'dark';
@@ -1039,6 +1040,15 @@ export default function WikiAILanding() {
     const fn = () => setScrolled(window.scrollY > 30);
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
+  }, []);
+  useEffect(() => { 
+    setMounted(true); 
+    if (!localStorage.getItem('theme')) {
+      localStorage.setItem('theme', 'dark');
+    }
+    if (!localStorage.getItem('wiki-ai-locale')) {
+      localStorage.setItem('wiki-ai-locale', 'en');
+    }
   }, []);
 
   // Close dropdown when clicking outside
@@ -1148,7 +1158,7 @@ export default function WikiAILanding() {
       r.style.setProperty('--indigo-border',   'rgba(99,102,241,0.2)');
     }
     // Save theme to localStorage
-    localStorage.setItem('wiki-ai-theme', theme);
+    localStorage.setItem('theme', theme);
   }, [theme]);
 
   const Check = () => (
@@ -1260,11 +1270,11 @@ export default function WikiAILanding() {
             onClick={() => {
               const newTheme = theme === 'dark' ? 'light' : 'dark';
               setTheme(newTheme);
-              localStorage.setItem('wiki-ai-theme', newTheme);
+              localStorage.setItem('theme', newTheme);
             }}
             title="Toggle theme"
           >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {mounted && (theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />)}
           </button>
           
           <button 
@@ -1313,8 +1323,8 @@ export default function WikiAILanding() {
               style={{ flex:1, justifyContent:"center", padding:"12px" }}
               onClick={() => { setTheme(theme === 'dark' ? 'light' : 'dark'); }}
             >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-              <span style={{ marginLeft:6 }}>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+              {mounted && (theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />)}
+              <span style={{ marginLeft:6 }}>{mounted && (theme === 'dark' ? 'Light' : 'Dark')}</span>
             </button>
             <button
               className="btn btn-outline"
