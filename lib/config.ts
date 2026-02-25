@@ -27,6 +27,19 @@ const getCmsPrefix = (): string => {
   return process.env.NEXT_PUBLIC_CMS_PREFIX || "/api/cms";
 };
 
+// Get site URL from environment variables
+const getSiteUrl = (): string => {
+  return process.env.NEXT_PUBLIC_SITE_URL || "";
+};
+
+// Get actual site URL (works on both server and client)
+export const getActualSiteUrl = (): string => {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return getSiteUrl() || "http://localhost:3000";
+};
+
 export const API_CONFIG = {
   // Base URL for all API connections (from environment)
   BASE_URL: getApiUrlFromEnv(),
@@ -36,6 +49,9 @@ export const API_CONFIG = {
   
   // CMS prefix (from environment)
   CMS_PREFIX: getCmsPrefix(),
+
+  // Site URL for generating links (from environment or derived from window in client)
+  SITE_URL: getSiteUrl(),
   
   // Additional configuration
   TIMEOUT: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || "30000"),
