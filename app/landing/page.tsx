@@ -58,6 +58,17 @@ const CSS = `
   --compare-lo-text: #64748b;
   --compare-lo-mark: #334155;
   --stat-num:        #334155;
+  --blue-dark:      #1e40af;
+  --blue-shadow:    rgba(59,130,246,0.25);
+  --green-dim:      rgba(34,197,94,0.06);
+  --green-light:     #4ade80;
+  --green-border:    rgba(34,197,94,0.15);
+  --amber-dim:      rgba(245,158,11,0.06);
+  --amber-light:     #fbbf24;
+  --amber-border:    rgba(245,158,11,0.15);
+  --indigo-dim:     rgba(99,102,241,0.08);
+  --indigo-light:    #a5b4fc;
+  --indigo-border:   rgba(99,102,241,0.2);
 }
 
 .wiki-ai-landing {
@@ -114,11 +125,11 @@ const CSS = `
 
 /* ── Gradient text ── */
 .wiki-ai-landing .g-blue {
-  background: linear-gradient(135deg, var(--blue-light) 0%, var(--sky) 60%, #38bdf8 100%);
+  background: linear-gradient(135deg, var(--blue-light) 0%, var(--sky) 60%, var(--blue-light) 100%);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
 }
 .wiki-ai-landing .g-indigo {
-  background: linear-gradient(135deg, #818cf8, var(--indigo), var(--blue));
+  background: linear-gradient(135deg, var(--blue-light), var(--indigo), var(--blue));
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
 }
 .wiki-ai-landing .g-shimmer {
@@ -157,7 +168,7 @@ const CSS = `
 .wiki-ai-landing .btn-blue {
   background: var(--blue); color:#fff;
 }
-.wiki-ai-landing .btn-blue:hover { background:#2563eb; box-shadow:0 8px 28px rgba(59,130,246,0.35); transform:translateY(-1px); }
+.wiki-ai-landing .btn-blue:hover { background:var(--blue-dark, #2563eb); box-shadow:0 8px 28px var(--blue-shadow, rgba(59,130,246,0.35)); transform:translateY(-1px); }
 .wiki-ai-landing .btn-outline {
   background:transparent; color:var(--text);
   border:1px solid var(--border); padding:11px 24px;
@@ -181,9 +192,9 @@ const CSS = `
   background: var(--blue-dim); color:var(--blue-light);
   border:1px solid rgba(59,130,246,0.22);
 }
-.wiki-ai-landing .tag-green { background:rgba(34,197,94,0.08); color:#4ade80; border-color:rgba(34,197,94,0.2); }
-.wiki-ai-landing .tag-amber { background:rgba(245,158,11,0.08); color:#fbbf24; border-color:rgba(245,158,11,0.2); }
-.wiki-ai-landing .tag-indigo{ background:rgba(99,102,241,0.1); color:#a5b4fc; border-color:rgba(99,102,241,0.25); }
+.wiki-ai-landing .tag-green { background:var(--green-dim, rgba(34,197,94,0.08)); color:var(--green-light, #4ade80); border-color:var(--green-border, rgba(34,197,94,0.2)); }
+.wiki-ai-landing .tag-amber { background:var(--amber-dim, rgba(245,158,11,0.08)); color:var(--amber-light, #fbbf24); border-color:var(--amber-border, rgba(245,158,11,0.2)); }
+.wiki-ai-landing .tag-indigo{ background:var(--indigo-dim, rgba(99,102,241,0.1)); color:var(--indigo-light, #a5b4fc); border-color:var(--indigo-border, rgba(99,102,241,0.25)); }
 
 /* ── Grid bg ── */
 .wiki-ai-landing .grid-bg {
@@ -240,8 +251,13 @@ const CSS = `
   text-align:center;
   padding:0 24px;
 }
-.wiki-ai-landing .splash-bar { width:200px; height:2px; background:var(--border); border-radius:2px; overflow:hidden; margin-top:32px; }
-.wiki-ai-landing .splash-bar-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--sky)); border-radius:2px; animation:typing 1.9s ease forwards; }
+.wiki-ai-landing .splash-bar { 
+  width:200px; height:2px; background:var(--border); border-radius:2px; overflow:hidden; margin-top:32px; 
+}
+.wiki-ai-landing .splash-bar-fill { 
+  height:100%; background:linear-gradient(90deg,var(--blue),var(--sky)); border-radius:2px; 
+  animation:typing 1.9s ease forwards; 
+}
 
 /* ── Nav ── */
 .wiki-ai-landing .nav {
@@ -504,16 +520,16 @@ function Terminal() {
   const ref = useRef(null);
   const started = useRef(false);
   const TERM = [
-    { d:0,    c:"#64748b", t:t('landing.aiAgentBridge.terminal.logs.0') },
-    { d:500,  c:"#94a3b8", t:t('landing.aiAgentBridge.terminal.logs.1') },
-    { d:1100, c:"#60a5fa", t:t('landing.aiAgentBridge.terminal.logs.2') },
-    { d:1700, c:"#64748b", t:t('landing.aiAgentBridge.terminal.logs.3') },
-    { d:2200, c:"#60a5fa", t:t('landing.aiAgentBridge.terminal.logs.4') },
-    { d:2800, c:"#22c55e", t:t('landing.aiAgentBridge.terminal.logs.5') },
-    { d:3300, c:"#f1f5f9", t:t('landing.aiAgentBridge.terminal.logs.6') },
-    { d:3400, c:"#f1f5f9", t:t('landing.aiAgentBridge.terminal.logs.7') },
-    { d:3900, c:"#94a3b8", t:t('landing.aiAgentBridge.terminal.logs.8') },
-    { d:4400, c:"#f59e0b", t:t('landing.aiAgentBridge.terminal.logs.9') },
+    { d:0,    c:"var(--terminal-btn)", t:t('landing.aiAgentBridge.terminal.logs.0') },
+    { d:500,  c:"var(--text-dim)", t:t('landing.aiAgentBridge.terminal.logs.1') },
+    { d:1100, c:"var(--blue-light)", t:t('landing.aiAgentBridge.terminal.logs.2') },
+    { d:1700, c:"var(--terminal-btn)", t:t('landing.aiAgentBridge.terminal.logs.3') },
+    { d:2200, c:"var(--blue-light)", t:t('landing.aiAgentBridge.terminal.logs.4') },
+    { d:2800, c:"var(--green-light)", t:t('landing.aiAgentBridge.terminal.logs.5') },
+    { d:3300, c:"var(--text)", t:t('landing.aiAgentBridge.terminal.logs.6') },
+    { d:3400, c:"var(--text)", t:t('landing.aiAgentBridge.terminal.logs.7') },
+    { d:3900, c:"var(--text-dim)", t:t('landing.aiAgentBridge.terminal.logs.8') },
+    { d:4400, c:"var(--amber-light)", t:t('landing.aiAgentBridge.terminal.logs.9') },
   ];
 
   useEffect(() => {
@@ -540,9 +556,9 @@ function Terminal() {
     <div ref={ref} style={{ background:"var(--terminal-bg)", border:"1px solid var(--terminal-border)", borderRadius:14, overflow:"hidden", boxShadow:"0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.06)", fontFamily:"'Geist Mono',monospace" }}>
       {/* Bar */}
       <div style={{ background:"var(--terminal-bar)", padding:"11px 16px", display:"flex", alignItems:"center", gap:8, borderBottom:"1px solid var(--terminal-divider)" }}>
-        <span style={{ width:11,height:11,borderRadius:"50%",background:"#ef4444",display:"block" }} />
-        <span style={{ width:11,height:11,borderRadius:"50%",background:"#f59e0b",display:"block" }} />
-        <span style={{ width:11,height:11,borderRadius:"50%",background:"#22c55e",display:"block" }} />
+        <span style={{ width:11,height:11,borderRadius:"50%",background:"var(--rose, #ef4444)",display:"block" }} />
+        <span style={{ width:11,height:11,borderRadius:"50%",background:"var(--amber)",display:"block" }} />
+        <span style={{ width:11,height:11,borderRadius:"50%",background:"var(--green-light)",display:"block" }} />
         <span style={{ marginLeft:10,fontSize:11,color:"var(--terminal-btn)" }}>{t('landing.aiAgentBridge.terminal.title')}</span>
         <button onClick={restart} style={{ marginLeft:"auto",background:"none",border:"none",color:"var(--terminal-btn)",cursor:"pointer",fontSize:11 }}>{t('landing.aiAgentBridge.terminal.replay')}</button>
       </div>
@@ -565,20 +581,20 @@ function HubDiagram() {
   useEffect(() => { const iv = setInterval(() => setTick(t => t + 1), 1200); return () => clearInterval(iv); }, []);
   
   const sources = [
-    { icon:"🔷", label:t('landing.integrationHub.sources.bitrix'), sub:t('landing.integrationHub.sources.bitrixSub'), color:"#3b82f6" },
-    { icon:"�", label:t('landing.integrationHub.sources.erp'), sub:t('landing.integrationHub.sources.erpSub'), color:"#3b82f6" },
-    { icon:"�", label:t('landing.integrationHub.sources.drive'), sub:t('landing.integrationHub.sources.driveSub'), color:"#3b82f6" },
-    { icon:"�", label:t('landing.integrationHub.sources.confluence'), sub:t('landing.integrationHub.sources.confluenceSub'), color:"#3b82f6" },
-    { icon:"�", label:t('landing.integrationHub.sources.email'), sub:t('landing.integrationHub.sources.emailSub'), color:"#3b82f6" },
-    { icon:"�", label:t('landing.integrationHub.sources.sharepoint'), sub:t('landing.integrationHub.sources.sharepointSub'), color:"#3b82f6" },
+    { icon:"🔷", label:t('landing.integrationHub.sources.bitrix'), sub:t('landing.integrationHub.sources.bitrixSub'), color:"var(--blue)" },
+    { icon:"�", label:t('landing.integrationHub.sources.erp'), sub:t('landing.integrationHub.sources.erpSub'), color:"var(--blue)" },
+    { icon:"�", label:t('landing.integrationHub.sources.drive'), sub:t('landing.integrationHub.sources.driveSub'), color:"var(--blue)" },
+    { icon:"�", label:t('landing.integrationHub.sources.confluence'), sub:t('landing.integrationHub.sources.confluenceSub'), color:"var(--blue)" },
+    { icon:"�", label:t('landing.integrationHub.sources.email'), sub:t('landing.integrationHub.sources.emailSub'), color:"var(--blue)" },
+    { icon:"�", label:t('landing.integrationHub.sources.sharepoint'), sub:t('landing.integrationHub.sources.sharepointSub'), color:"var(--blue)" },
   ];
   const outputs = [
-    { icon:"💬", label:t('landing.integrationHub.outputs.telegram'), sub:t('landing.integrationHub.outputs.telegramSub'), color:"#22c55e" },
-    { icon:"🛒", label:t('landing.integrationHub.outputs.shop'), sub:t('landing.integrationHub.outputs.shopSub'), color:"#22c55e" },
-    { icon:"📱", label:t('landing.integrationHub.outputs.slack'), sub:t('landing.integrationHub.outputs.slackSub'), color:"#22c55e" },
-    { icon:"🌐", label:t('landing.integrationHub.outputs.website'), sub:t('landing.integrationHub.outputs.websiteSub'), color:"#22c55e" },
-    { icon:"📞", label:t('landing.integrationHub.outputs.callCenter'), sub:t('landing.integrationHub.outputs.callCenterSub'), color:"#22c55e" },
-    { icon:"🔌", label:t('landing.integrationHub.outputs.api'), sub:t('landing.integrationHub.outputs.apiSub'), color:"#22c55e" },
+    { icon:"💬", label:t('landing.integrationHub.outputs.telegram'), sub:t('landing.integrationHub.outputs.telegramSub'), color:"var(--green-light)" },
+    { icon:"🛒", label:t('landing.integrationHub.outputs.shop'), sub:t('landing.integrationHub.outputs.shopSub'), color:"var(--green-light)" },
+    { icon:"📱", label:t('landing.integrationHub.outputs.slack'), sub:t('landing.integrationHub.outputs.slackSub'), color:"var(--green-light)" },
+    { icon:"🌐", label:t('landing.integrationHub.outputs.website'), sub:t('landing.integrationHub.outputs.websiteSub'), color:"var(--green-light)" },
+    { icon:"📞", label:t('landing.integrationHub.outputs.callCenter'), sub:t('landing.integrationHub.outputs.callCenterSub'), color:"var(--green-light)" },
+    { icon:"🔌", label:t('landing.integrationHub.outputs.api'), sub:t('landing.integrationHub.outputs.apiSub'), color:"var(--green-light)" },
   ];
 
   const activeIn = tick % sources.length;
@@ -620,7 +636,7 @@ function HubDiagram() {
           {/* Center */}
           <div style={{ position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center" }}>
             <div style={{ fontSize:28, lineHeight:1 }}>🧠</div>
-            <div style={{ fontSize:9, color:"#60a5fa", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", marginTop:3 }}>WikiAI</div>
+            <div style={{ fontSize:9, color:"var(--blue-light)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", marginTop:3 }}>WikiAI</div>
           </div>
         </div>
         {/* Lines down */}
@@ -658,20 +674,20 @@ function MobileHubDiagram() {
   useEffect(() => { const iv = setInterval(() => setTick(t => t + 1), 1200); return () => clearInterval(iv); }, []);
   
   const sources = [
-    { icon:"📄", label:t('landing.integrationHub.sources.pdf'), sub:t('landing.integrationHub.sources.pdfSub'), color:"#3b82f6" },
-    { icon:"📝", label:t('landing.integrationHub.sources.docx'), sub:t('landing.integrationHub.sources.docxSub'), color:"#3b82f6" },
-    { icon:"🌐", label:t('landing.integrationHub.sources.website'), sub:t('landing.integrationHub.sources.websiteSub'), color:"#3b82f6" },
-    { icon:"📧", label:t('landing.integrationHub.sources.email'), sub:t('landing.integrationHub.sources.emailSub'), color:"#3b82f6" },
-    { icon:"📂", label:t('landing.integrationHub.sources.sharepoint'), sub:t('landing.integrationHub.sources.sharepointSub'), color:"#3b82f6" },
+    { icon:"📄", label:t('landing.integrationHub.sources.pdf'), sub:t('landing.integrationHub.sources.pdfSub'), color:"var(--blue)" },
+    { icon:"📝", label:t('landing.integrationHub.sources.docx'), sub:t('landing.integrationHub.sources.docxSub'), color:"var(--blue)" },
+    { icon:"🌐", label:t('landing.integrationHub.sources.website'), sub:t('landing.integrationHub.sources.websiteSub'), color:"var(--blue)" },
+    { icon:"📧", label:t('landing.integrationHub.sources.email'), sub:t('landing.integrationHub.sources.emailSub'), color:"var(--blue)" },
+    { icon:"📂", label:t('landing.integrationHub.sources.sharepoint'), sub:t('landing.integrationHub.sources.sharepointSub'), color:"var(--blue)" },
   ];
   
   const outputs = [
-    { icon:"💬", label:t('landing.integrationHub.outputs.telegram'), sub:t('landing.integrationHub.outputs.telegramSub'), color:"#22c55e" },
-    { icon:"🛒", label:t('landing.integrationHub.outputs.shop'), sub:t('landing.integrationHub.outputs.shopSub'), color:"#22c55e" },
-    { icon:"📱", label:t('landing.integrationHub.outputs.slack'), sub:t('landing.integrationHub.outputs.slackSub'), color:"#22c55e" },
-    { icon:"🌐", label:t('landing.integrationHub.outputs.website'), sub:t('landing.integrationHub.outputs.websiteSub'), color:"#22c55e" },
-    { icon:"📞", label:t('landing.integrationHub.outputs.callCenter'), sub:t('landing.integrationHub.outputs.callCenterSub'), color:"#22c55e" },
-    { icon:"🔌", label:t('landing.integrationHub.outputs.api'), sub:t('landing.integrationHub.outputs.apiSub'), color:"#22c55e" },
+    { icon:"💬", label:t('landing.integrationHub.outputs.telegram'), sub:t('landing.integrationHub.outputs.telegramSub'), color:"var(--green-light)" },
+    { icon:"🛒", label:t('landing.integrationHub.outputs.shop'), sub:t('landing.integrationHub.outputs.shopSub'), color:"var(--green-light)" },
+    { icon:"📱", label:t('landing.integrationHub.outputs.slack'), sub:t('landing.integrationHub.outputs.slackSub'), color:"var(--green-light)" },
+    { icon:"🌐", label:t('landing.integrationHub.outputs.website'), sub:t('landing.integrationHub.outputs.websiteSub'), color:"var(--green-light)" },
+    { icon:"📞", label:t('landing.integrationHub.outputs.callCenter'), sub:t('landing.integrationHub.outputs.callCenterSub'), color:"var(--green-light)" },
+    { icon:"🔌", label:t('landing.integrationHub.outputs.api'), sub:t('landing.integrationHub.outputs.apiSub'), color:"var(--green-light)" },
   ];
   
   const activeIn  = tick % sources.length;
@@ -1005,7 +1021,13 @@ export default function WikiAILanding() {
   
   const [scrolled, setScrolled] = useState(false);
   const [splash, setSplash] = useState(true);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('wiki-ai-theme');
+      return saved === 'light' ? 'light' : 'dark';
+    }
+    return 'dark';
+  });
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -1033,7 +1055,7 @@ export default function WikiAILanding() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showLangDropdown]);
 
-  // Apply theme changes
+  // Apply theme changes and save to localStorage
   useEffect(() => {
     const r = document.documentElement;
     if (theme === 'light') {
@@ -1069,6 +1091,17 @@ export default function WikiAILanding() {
       r.style.setProperty('--compare-lo-text', '#64748b');
       r.style.setProperty('--compare-lo-mark', '#94a3b8');
       r.style.setProperty('--stat-num',        '#94a3b8');
+      r.style.setProperty('--blue-dark',      '#2563eb');
+      r.style.setProperty('--blue-shadow',    'rgba(59,130,246,0.35)');
+      r.style.setProperty('--green-dim',      'rgba(34,197,94,0.08)');
+      r.style.setProperty('--green-light',     '#4ade80');
+      r.style.setProperty('--green-border',    'rgba(34,197,94,0.2)');
+      r.style.setProperty('--amber-dim',      'rgba(245,158,11,0.08)');
+      r.style.setProperty('--amber-light',     '#fbbf24');
+      r.style.setProperty('--amber-border',    'rgba(245,158,11,0.2)');
+      r.style.setProperty('--indigo-dim',     'rgba(99,102,241,0.1)');
+      r.style.setProperty('--indigo-light',    '#a5b4fc');
+      r.style.setProperty('--indigo-border',   'rgba(99,102,241,0.25)');
     } else {
       r.style.setProperty('--bg',              '#09090b');
       r.style.setProperty('--bg2',             '#0f1117');
@@ -1102,7 +1135,20 @@ export default function WikiAILanding() {
       r.style.setProperty('--compare-lo-text', '#64748b');
       r.style.setProperty('--compare-lo-mark', '#334155');
       r.style.setProperty('--stat-num',        '#334155');
+      r.style.setProperty('--blue-dark',      '#1e40af');
+      r.style.setProperty('--blue-shadow',    'rgba(59,130,246,0.25)');
+      r.style.setProperty('--green-dim',      'rgba(34,197,94,0.06)');
+      r.style.setProperty('--green-light',     '#4ade80');
+      r.style.setProperty('--green-border',    'rgba(34,197,94,0.15)');
+      r.style.setProperty('--amber-dim',      'rgba(245,158,11,0.06)');
+      r.style.setProperty('--amber-light',     '#fbbf24');
+      r.style.setProperty('--amber-border',    'rgba(245,158,11,0.15)');
+      r.style.setProperty('--indigo-dim',     'rgba(99,102,241,0.08)');
+      r.style.setProperty('--indigo-light',    '#a5b4fc');
+      r.style.setProperty('--indigo-border',   'rgba(99,102,241,0.2)');
     }
+    // Save theme to localStorage
+    localStorage.setItem('wiki-ai-theme', theme);
   }, [theme]);
 
   const Check = () => (
@@ -1211,7 +1257,11 @@ export default function WikiAILanding() {
           <button 
             className="btn btn-outline" 
             style={{ padding:"8px 12px",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center" }}
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            onClick={() => {
+              const newTheme = theme === 'dark' ? 'light' : 'dark';
+              setTheme(newTheme);
+              localStorage.setItem('wiki-ai-theme', newTheme);
+            }}
             title="Toggle theme"
           >
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
