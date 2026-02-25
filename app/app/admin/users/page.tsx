@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi, filesApi } from "@/lib/api"
+import { getActualSiteUrl } from "@/lib/config"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -213,7 +214,10 @@ export default function UsersPage() {
 
       if (result.status === "success" && result.response) {
         toast.success(t('users.inviteLinkCreatedSuccessfully'))
-        setCreatedInvite(result.response)
+        // Use actual site URL instead of backend-generated localhost link
+        const siteUrl = getActualSiteUrl()
+        const inviteLink = `${siteUrl}/invite?token=${result.response.token}`
+        setCreatedInvite({ ...result.response, link: inviteLink })
         setIsInviteOpen(false)
         setInviteEmail("")
         setInviteRole("user")

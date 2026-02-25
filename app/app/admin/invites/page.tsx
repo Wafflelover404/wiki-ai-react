@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi } from "@/lib/api"
+import { getActualSiteUrl } from "@/lib/config"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -156,10 +157,13 @@ export default function InvitesPage() {
       if (result.status === "success" && result.response) {
         toast.success(t('invites.inviteLinkCreatedSuccessfully'))
         // Transform the response to match the Invite interface
+        // Use actual site URL instead of backend-generated localhost link
+        const siteUrl = getActualSiteUrl()
+        const inviteLink = `${siteUrl}/invite?token=${result.response.token}`
         const inviteData: Invite = {
           id: result.response.invite_id,
           token: result.response.token,
-          link: result.response.link,
+          link: inviteLink,
           email: result.response.email,
           role: result.response.role,
           expires_at: result.response.expires_at,
