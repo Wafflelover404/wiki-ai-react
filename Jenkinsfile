@@ -17,6 +17,49 @@ pipeline {
             }
         }
 
+        stage('Create .env') {
+            steps {
+                echo 'Writing .env file...'
+                writeFile file: '.env', text: """\
+# ========================================
+# UNIFIED BACKEND CONFIGURATION
+# ========================================
+
+# OPTION 1: Local Development (default)
+# NEXT_PUBLIC_API_URL=http://localhost:9001
+# NEXT_PUBLIC_WS_URL=ws://localhost:9001
+
+# OPTION 2: Production Server
+NEXT_PUBLIC_API_URL=https://api.wikiai.by
+NEXT_PUBLIC_WS_URL=wss://api.wikiai.by
+
+# ========================================
+# ADDITIONAL CONFIGURATION
+# ========================================
+
+# API Timeout (in milliseconds)
+NEXT_PUBLIC_API_TIMEOUT=30000
+
+# Enable Debug Mode (shows detailed API logs)
+NEXT_PUBLIC_DEBUG=true
+
+# CORS Fallback (enables mock responses when CORS fails)
+NEXT_PUBLIC_ENABLE_CORS_FALLBACK=true
+
+# ========================================
+# CMS SPECIFIC CONFIGURATION
+# ========================================
+
+# CMS API Prefix (usually /api/cms)
+NEXT_PUBLIC_CMS_PREFIX=/api/cms
+
+# CMS Admin Password (for admin login)
+# User must enter this manually - no default value
+"""
+                sh 'cat .env'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 echo "Building ${IMAGE_NAME}:${IMAGE_TAG} ..."
