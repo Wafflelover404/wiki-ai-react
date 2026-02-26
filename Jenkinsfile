@@ -1,47 +1,77 @@
+// Jenkinsfile (Frontend - wiki-ai-react)
 pipeline {
-  agent any
-  environment {
-    WORKDIR = "${env.WORKSPACE}"
-    SERVICE = "wiki-frontend.service"
-    NODE_ENV = "production"
-  }
-  stages {
-    stage('Checkout') {
-      steps { checkout scm }
+    agent any
+
+    environment {
+        IMAGE_NAME     = 'wikiai-frontend'
+        IMAGE_TAG      = 'latest'
+        CONTAINER_NAME = 'frontend'
+        HOST_PORT      = '3000'
+        CONTAINER_PORT = '3000'
     }
-    stage('Install') {
-      steps {
-        dir("${WORKDIR}") {
-          sh 'npm ci --no-audit --no-fund'
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
         }
-      }
-    }
-    stage('Build') {
-      steps {
-        dir("${WORKDIR}") {
-          sh 'npm run build'
+
+        stage('Build Docker Image') {
+            steps {
+                echo "Building ${IMAGE_NAME}:${IMAGE_TAG} ..."
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+            }
         }
-      }
-    }
-    stage('Deploy') {
-      steps {
-        // If you serve static files with nginx, copy build to site dir here instead of running npm start
-        dir("${WORKDIR}") {
-          // optional: install pm2 or serve; here we just ensure service restarted
-          sh "sudo systemctl restart ${SERVICE}"
+
+        stage('Stop & Remove Old Container') {
+            steps {
+                echo "Stopping and removing old container '${CONTAINER_NAME}' if it exists..."
+                sh """
+                    docker stop ${CONTAINER_NAME} || true
+                    docker rm   ${CONTAINER_NAME} || true
+                """
+            }
         }
-      }
+
+        stage('Run New Container') {
+            steps {
+                echo "Starting new container '${CONTAINER_NAME}' on port ${HOST_PORT}..."
+                sh """
+                    docker run -d \
+                        --name ${CONTAINER_NAME} \
+                        -p ${HOST_PORT}:${CONTAINER_PORT} \
+                        --restart unless-stopped \
+                        ${IMAGE_NAME}:${IMAGE_TAG}
+                """
+            }
+        }
+
+        stage('Healthcheck') {
+            steps {
+                echo 'Waiting for container to become healthy...'
+                sh """
+                    sleep 5
+                    docker ps --filter "name=${CONTAINER_NAME}" --filter "status=running" | grep ${CONTAINER_NAME}
+                """
+            }
+        }
+
+        stage('Cleanup Dangling Images') {
+            steps {
+                echo 'Removing dangling/unused images...'
+                sh 'docker image prune -f || true'
+            }
+        }
     }
-    stage('Smoke') {
-      steps {
-        // basic health check (adjust path/port)
-        sh 'sleep 2 || true'
-        // e.g., curl --fail http://localhost:3000 || exit 1
-      }
+
+    post {
+        success {
+            echo "✅ Frontend deployed successfully on port ${HOST_PORT}"
+        }
+        failure {
+            echo "❌ Frontend deployment failed — check logs"
+            sh "docker logs ${CONTAINER_NAME} || true"
+        }
     }
-  }
-  post {
-    failure { echo "Frontend pipeline failed" }
-    success { echo "Frontend deployed" }
-  }
 }
