@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    IMAGE = "wikiai:latest"
+    IMAGE   = "wikiai:latest"
     REPO_DIR = "${WORKSPACE}"
     APP_PORT = "3000"
   }
@@ -17,20 +17,6 @@ pipeline {
       steps {
         dir("${REPO_DIR}") {
           checkout scm
-        }
-      }
-    }
-
-    stage('Create .env') {
-      steps {
-        dir("${REPO_DIR}") {
-          sh '''
-            set -e
-            cat > .env <<'EOF'
-            CMS_PASSWORD=wafflelover_rulez
-            EOF
-            chmod 600 .env
-          '''
         }
       }
     }
@@ -88,7 +74,7 @@ pipeline {
   }
 
   post {
-    success { echo 'wikiai deploy succeeded.' }
+    success { echo 'wikiai deployed.' }
     failure { echo 'wikiai deploy failed.' }
   }
 }
