@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    IMAGE   = "wikiai:latest"
+    IMAGE    = "wikiai:latest"
     REPO_DIR = "${WORKSPACE}"
     APP_PORT = "3000"
   }
@@ -17,6 +17,33 @@ pipeline {
       steps {
         dir("${REPO_DIR}") {
           checkout scm
+        }
+      }
+    }
+
+    stage('Validate .env') {
+      steps {
+        dir("${REPO_DIR}") {
+          sh '''
+            set -e
+            if [ ! -f .env ]; then
+              echo ".env not found — creating minimal .env"
+              cat > .env <<'EOF'
+APP_PORT=3000
+# Add other variables here as KEY=VALUE
+EOF
+            fi
+            # Fail if any non-comment line does not contain an '=' (invalid for --env-file)
+            bad_lines=$(grep -n '^[[:space:]]*[^#[:space:]]' .env | awk -F: '$2 !~ /=/ {print $1":"$2}')
+            if [ -n "$bad_lines" ]; then
+              echo "Invalid lines in .env (lines without KEY=VALUE):"
+              echo "$bad_lines"
+              exit 1
+            fi
+            # Remove any stray CR characters and ensure file is readable only by owner
+            sed -i 's/\r$//' .env
+            chmod 600 .env || true
+          '''
         }
       }
     }
@@ -45,14 +72,18 @@ pipeline {
 
     stage('Run Container') {
       steps {
-        sh '''
-          set -e
-          docker run -d --name wikiai \
-            --env-file ${REPO_DIR}/.env \
-            -p ${APP_PORT}:${APP_PORT} \
-            --restart unless-stopped \
-            ${IMAGE}
-        '''
+        dir("${REPO_DIR}") {
+          sh '''
+            set -e
+            # Ensure .env is properly owned and has no invalid lines (defensive)
+            chmod 600 .env || true
+            docker run -d --name wikiai \
+              --env-file ${REPO_DIR}/.env \
+              -p ${APP_PORT}:${APP_PORT} \
+              --restart unless-stopped \
+              ${IMAGE}
+          '''
+        }
       }
     }
 
@@ -68,6 +99,7 @@ pipeline {
             sleep 1
           done
           echo "Warning: wikiai did not report listening port ${APP_PORT} in time."
+          exit 1
         '''
       }
     }
