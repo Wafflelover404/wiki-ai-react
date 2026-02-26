@@ -793,7 +793,7 @@
         "answers": "Answers in any messenger or chat",
         "seconds": "Employees find answers in seconds"
       },
-      "getStarted": "🚀 Start for Free",
+      "getStarted": "Start for Free",
       "learnMore": "▶ Watch Demo",
       "viewBrochure": "View Brochure",
       "noCreditCard": "No credit card required",
@@ -1091,7 +1091,7 @@
     "cta": {
       "title": "Ready to unite your<br/><span class=\"g-blue\">company's knowledge?</span>",
       "subtitle": "Join hundreds of companies who've replaced scattered wikis, folders, and endless colleague interruptions with WikiAI.",
-      "startNow": "🚀 Start Now",
+      "startNow": " Start Now",
       "bookDemo": "📅 Book a Demo"
     },
     "footer": {

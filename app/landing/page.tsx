@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Brain, Bot, Plug, Building, BarChart3, MessageSquare, ShoppingCart, Smartphone, Globe, Phone, FileText, Mail, Folder, User, Briefcase, Wrench, Zap, Sparkles, TrendingUp, Diamond, PenTool, Search, Handshake, Frown, Gauge } from "lucide-react";
 import { useTranslation } from "@/src/i18n";
 
 /* ═══════════════════════════════════════════════════════════
@@ -581,20 +581,20 @@ function HubDiagram() {
   useEffect(() => { const iv = setInterval(() => setTick(t => t + 1), 1200); return () => clearInterval(iv); }, []);
   
   const sources = [
-    { icon:"🔷", label:t('landing.integrationHub.sources.bitrix'), sub:t('landing.integrationHub.sources.bitrixSub'), color:"var(--blue)" },
-    { icon:"�", label:t('landing.integrationHub.sources.erp'), sub:t('landing.integrationHub.sources.erpSub'), color:"var(--blue)" },
-    { icon:"�", label:t('landing.integrationHub.sources.drive'), sub:t('landing.integrationHub.sources.driveSub'), color:"var(--blue)" },
-    { icon:"�", label:t('landing.integrationHub.sources.confluence'), sub:t('landing.integrationHub.sources.confluenceSub'), color:"var(--blue)" },
-    { icon:"�", label:t('landing.integrationHub.sources.email'), sub:t('landing.integrationHub.sources.emailSub'), color:"var(--blue)" },
-    { icon:"�", label:t('landing.integrationHub.sources.sharepoint'), sub:t('landing.integrationHub.sources.sharepointSub'), color:"var(--blue)" },
+    { icon: Diamond, label:t('landing.integrationHub.sources.bitrix'), sub:t('landing.integrationHub.sources.bitrixSub'), color:"var(--blue)" },
+    { icon: BarChart3, label:t('landing.integrationHub.sources.erp'), sub:t('landing.integrationHub.sources.erpSub'), color:"var(--blue)" },
+    { icon: Folder, label:t('landing.integrationHub.sources.drive'), sub:t('landing.integrationHub.sources.driveSub'), color:"var(--blue)" },
+    { icon: Globe, label:t('landing.integrationHub.sources.confluence'), sub:t('landing.integrationHub.sources.confluenceSub'), color:"var(--blue)" },
+    { icon: Mail, label:t('landing.integrationHub.sources.email'), sub:t('landing.integrationHub.sources.emailSub'), color:"var(--blue)" },
+    { icon: Folder, label:t('landing.integrationHub.sources.sharepoint'), sub:t('landing.integrationHub.sources.sharepointSub'), color:"var(--blue)" },
   ];
   const outputs = [
-    { icon:"💬", label:t('landing.integrationHub.outputs.telegram'), sub:t('landing.integrationHub.outputs.telegramSub'), color:"var(--green-light)" },
-    { icon:"🛒", label:t('landing.integrationHub.outputs.shop'), sub:t('landing.integrationHub.outputs.shopSub'), color:"var(--green-light)" },
-    { icon:"📱", label:t('landing.integrationHub.outputs.slack'), sub:t('landing.integrationHub.outputs.slackSub'), color:"var(--green-light)" },
-    { icon:"🌐", label:t('landing.integrationHub.outputs.website'), sub:t('landing.integrationHub.outputs.websiteSub'), color:"var(--green-light)" },
-    { icon:"📞", label:t('landing.integrationHub.outputs.callCenter'), sub:t('landing.integrationHub.outputs.callCenterSub'), color:"var(--green-light)" },
-    { icon:"🔌", label:t('landing.integrationHub.outputs.api'), sub:t('landing.integrationHub.outputs.apiSub'), color:"var(--green-light)" },
+    { icon: MessageSquare, label:t('landing.integrationHub.outputs.telegram'), sub:t('landing.integrationHub.outputs.telegramSub'), color:"var(--green-light)" },
+    { icon: ShoppingCart, label:t('landing.integrationHub.outputs.shop'), sub:t('landing.integrationHub.outputs.shopSub'), color:"var(--green-light)" },
+    { icon: Smartphone, label:t('landing.integrationHub.outputs.slack'), sub:t('landing.integrationHub.outputs.slackSub'), color:"var(--green-light)" },
+    { icon: Globe, label:t('landing.integrationHub.outputs.website'), sub:t('landing.integrationHub.outputs.websiteSub'), color:"var(--green-light)" },
+    { icon: Phone, label:t('landing.integrationHub.outputs.callCenter'), sub:t('landing.integrationHub.outputs.callCenterSub'), color:"var(--green-light)" },
+    { icon: Plug, label:t('landing.integrationHub.outputs.api'), sub:t('landing.integrationHub.outputs.apiSub'), color:"var(--green-light)" },
   ];
 
   const activeIn = tick % sources.length;
@@ -616,7 +616,7 @@ function HubDiagram() {
               <div style={{ fontSize:13, fontWeight:600, color: i===activeIn ? "var(--text)" : "var(--text-dim)" }}>{s.label}</div>
               <div style={{ fontSize:11, color:"var(--stat-num)" }}>{s.sub}</div>
             </div>
-            <div style={{ width:36,height:36,borderRadius:9,background:"rgba(59,130,246,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18, flexShrink:0 }}>{s.icon}</div>
+            <div style={{ width:36,height:36,borderRadius:9,background:"rgba(59,130,246,0.08)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}><s.icon size={18} color="#60a5fa" /></div>
           </div>
         ))}
       </div>
@@ -635,7 +635,7 @@ function HubDiagram() {
           <div style={{ position:"absolute",inset:0,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,0.18),transparent 70%)" }} />
           {/* Center */}
           <div style={{ position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center" }}>
-            <div style={{ fontSize:28, lineHeight:1 }}>🧠</div>
+            <div style={{ fontSize:28, lineHeight:1 }}><Brain size={28} color="#60a5fa" /></div>
             <div style={{ fontSize:9, color:"var(--blue-light)", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", marginTop:3 }}>WikiAI</div>
           </div>
         </div>
@@ -653,7 +653,7 @@ function HubDiagram() {
             boxShadow: i===activeOut ? "0 0 20px rgba(34,197,94,0.12)" : "none",
             transition:"all .4s ease"
           }}>
-            <div style={{ width:36,height:36,borderRadius:9,background:"rgba(34,197,94,0.07)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18, flexShrink:0 }}>{s.icon}</div>
+            <div style={{ width:36,height:36,borderRadius:9,background:"rgba(34,197,94,0.07)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}><s.icon size={18} color="#4ade80" /></div>
             <div>
               <div style={{ fontSize:13, fontWeight:600, color: i===activeOut ? "var(--text)" : "var(--text-dim)" }}>{s.label}</div>
               <div style={{ fontSize:11, color:"var(--stat-num)" }}>{s.sub}</div>
@@ -674,20 +674,20 @@ function MobileHubDiagram() {
   useEffect(() => { const iv = setInterval(() => setTick(t => t + 1), 1200); return () => clearInterval(iv); }, []);
   
   const sources = [
-    { icon:"📄", label:t('landing.integrationHub.sources.pdf'), sub:t('landing.integrationHub.sources.pdfSub'), color:"var(--blue)" },
-    { icon:"📝", label:t('landing.integrationHub.sources.docx'), sub:t('landing.integrationHub.sources.docxSub'), color:"var(--blue)" },
-    { icon:"🌐", label:t('landing.integrationHub.sources.website'), sub:t('landing.integrationHub.sources.websiteSub'), color:"var(--blue)" },
-    { icon:"📧", label:t('landing.integrationHub.sources.email'), sub:t('landing.integrationHub.sources.emailSub'), color:"var(--blue)" },
-    { icon:"📂", label:t('landing.integrationHub.sources.sharepoint'), sub:t('landing.integrationHub.sources.sharepointSub'), color:"var(--blue)" },
+    { icon: FileText, label:t('landing.integrationHub.sources.pdf'), sub:t('landing.integrationHub.sources.pdfSub'), color:"var(--blue)" },
+    { icon: PenTool, label:t('landing.integrationHub.sources.docx'), sub:t('landing.integrationHub.sources.docxSub'), color:"var(--blue)" },
+    { icon: Globe, label:t('landing.integrationHub.sources.website'), sub:t('landing.integrationHub.sources.websiteSub'), color:"var(--blue)" },
+    { icon: Mail, label:t('landing.integrationHub.sources.email'), sub:t('landing.integrationHub.sources.emailSub'), color:"var(--blue)" },
+    { icon: Folder, label:t('landing.integrationHub.sources.sharepoint'), sub:t('landing.integrationHub.sources.sharepointSub'), color:"var(--blue)" },
   ];
   
   const outputs = [
-    { icon:"💬", label:t('landing.integrationHub.outputs.telegram'), sub:t('landing.integrationHub.outputs.telegramSub'), color:"var(--green-light)" },
-    { icon:"🛒", label:t('landing.integrationHub.outputs.shop'), sub:t('landing.integrationHub.outputs.shopSub'), color:"var(--green-light)" },
-    { icon:"📱", label:t('landing.integrationHub.outputs.slack'), sub:t('landing.integrationHub.outputs.slackSub'), color:"var(--green-light)" },
-    { icon:"🌐", label:t('landing.integrationHub.outputs.website'), sub:t('landing.integrationHub.outputs.websiteSub'), color:"var(--green-light)" },
-    { icon:"📞", label:t('landing.integrationHub.outputs.callCenter'), sub:t('landing.integrationHub.outputs.callCenterSub'), color:"var(--green-light)" },
-    { icon:"🔌", label:t('landing.integrationHub.outputs.api'), sub:t('landing.integrationHub.outputs.apiSub'), color:"var(--green-light)" },
+    { icon: MessageSquare, label:t('landing.integrationHub.outputs.telegram'), sub:t('landing.integrationHub.outputs.telegramSub'), color:"var(--green-light)" },
+    { icon: ShoppingCart, label:t('landing.integrationHub.outputs.shop'), sub:t('landing.integrationHub.outputs.shopSub'), color:"var(--green-light)" },
+    { icon: Smartphone, label:t('landing.integrationHub.outputs.slack'), sub:t('landing.integrationHub.outputs.slackSub'), color:"var(--green-light)" },
+    { icon: Globe, label:t('landing.integrationHub.outputs.website'), sub:t('landing.integrationHub.outputs.websiteSub'), color:"var(--green-light)" },
+    { icon: Phone, label:t('landing.integrationHub.outputs.callCenter'), sub:t('landing.integrationHub.outputs.callCenterSub'), color:"var(--green-light)" },
+    { icon: Plug, label:t('landing.integrationHub.outputs.api'), sub:t('landing.integrationHub.outputs.apiSub'), color:"var(--green-light)" },
   ];
   
   const activeIn  = tick % sources.length;
@@ -706,7 +706,7 @@ function MobileHubDiagram() {
             boxShadow: i===activeIn ? "0 0 16px rgba(59,130,246,0.12)" : "none",
             transition:"all .4s ease"
           }}>
-            <div style={{ width:30,height:30,borderRadius:8,background:"rgba(59,130,246,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0 }}>{s.icon}</div>
+            <div style={{ width:30,height:30,borderRadius:8,background:"rgba(59,130,246,0.08)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}><s.icon size={16} color="#60a5fa" /></div>
             <div>
               <div style={{ fontSize:12, fontWeight:600, color: i===activeIn ? "var(--text)" : "var(--text-dim)" }}>{s.label}</div>
               <div style={{ fontSize:10, color:"var(--text-muted)" }}>{s.sub}</div>
@@ -722,7 +722,7 @@ function MobileHubDiagram() {
           <div style={{ position:"absolute",inset:8,borderRadius:"50%",border:"1px solid rgba(59,130,246,0.15)",animation:"spin-r 8s linear infinite" }} />
           <div style={{ position:"absolute",inset:0,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,0.18),transparent 70%)" }} />
           <div style={{ position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center" }}>
-            <div style={{ fontSize:22, lineHeight:1 }}>🧠</div>
+            <div style={{ fontSize:22, lineHeight:1 }}><Brain size={22} color="#60a5fa" /></div>
             <div style={{ fontSize:8, color:"#60a5fa", fontFamily:"'Geist Mono',monospace", fontWeight:600, letterSpacing:".08em", marginTop:2 }}>WikiAI</div>
           </div>
         </div>
@@ -739,7 +739,7 @@ function MobileHubDiagram() {
             boxShadow: i===activeOut ? "0 0 16px rgba(34,197,94,0.10)" : "none",
             transition:"all .4s ease"
           }}>
-            <div style={{ width:30,height:30,borderRadius:8,background:"rgba(34,197,94,0.07)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0 }}>{s.icon}</div>
+            <div style={{ width:30,height:30,borderRadius:8,background:"rgba(34,197,94,0.07)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}><s.icon size={16} color="#4ade80" /></div>
             <div>
               <div style={{ fontSize:12, fontWeight:600, color: i===activeOut ? "var(--text)" : "var(--text-dim)" }}>{s.label}</div>
               <div style={{ fontSize:10, color:"var(--text-muted)" }}>{s.sub}</div>
@@ -858,16 +858,16 @@ function SearchDemo({ qa }: { qa: any[] }) {
 function EmployeeJourney() {
   const { t } = useTranslation();
   const steps = [
-    { who:"👤", role:t('landing.employeeJourney.roles.newEmployee'), q:t('landing.employeeJourney.roles.questions.vacation'), a:t('landing.employeeJourney.roles.answers.vacation'), color:"#3b82f6" },
-    { who:"🧑‍💼", role:t('landing.employeeJourney.roles.salesManager'), q:t('landing.employeeJourney.roles.questions.discount'), a:t('landing.employeeJourney.roles.answers.discount'), color:"#6366f1" },
-    { who:"🧑‍🔧", role:t('landing.employeeJourney.roles.supportAgent'), q:t('landing.employeeJourney.roles.questions.reset2fa'), a:t('landing.employeeJourney.roles.answers.reset2fa'), color:"#8b5cf6" },
+    { who:User, role:t('landing.employeeJourney.roles.newEmployee'), q:t('landing.employeeJourney.roles.questions.vacation'), a:t('landing.employeeJourney.roles.answers.vacation'), color:"#3b82f6" },
+    { who:Briefcase, role:t('landing.employeeJourney.roles.salesManager'), q:t('landing.employeeJourney.roles.questions.discount'), a:t('landing.employeeJourney.roles.answers.discount'), color:"#6366f1" },
+    { who:Wrench, role:t('landing.employeeJourney.roles.supportAgent'), q:t('landing.employeeJourney.roles.questions.reset2fa'), a:t('landing.employeeJourney.roles.answers.reset2fa'), color:"#8b5cf6" },
   ];
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
       {steps.map((s, i) => (
         <div key={i} className="wai-r" style={{ transitionDelay:`${i*120}ms`, background:"var(--card)", border:"1px solid var(--border)", borderRadius:12, padding:"20px 22px" }}>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
-            <div style={{ width:36,height:36,borderRadius:"50%",background:`${s.color}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18 }}>{s.who}</div>
+            <div style={{ width:36,height:36,borderRadius:"50%",background:`${s.color}18`,display:"flex",alignItems:"center",justifyContent:"center" }}><s.who size={18} color={s.color} /></div>
             <span style={{ fontSize:13,fontWeight:600,color:"var(--journey-role)" }}>{s.role}</span>
           </div>
           {/* Question bubble */}
@@ -875,8 +875,8 @@ function EmployeeJourney() {
             {s.q}
           </div>
           {/* Answer bubble */}
-          <div style={{ background:"rgba(34,197,94,0.04)",border:"1px solid rgba(34,197,94,0.15)",borderRadius:8,padding:"10px 14px",fontSize:13,color:"var(--journey-a-text)" }}>
-            🧠 {s.a}
+            <div style={{ background:"rgba(34,197,94,0.04)",border:"1px solid rgba(34,197,94,0.15)",borderRadius:8,padding:"10px 14px",fontSize:13,color:"var(--journey-a-text)" }}>
+            <Brain size={14} className="inline" /> {s.a}
           </div>
         </div>
       ))}
@@ -897,12 +897,12 @@ export default function WikiAILanding() {
   
   // Define data arrays inside component where t function is available
   const FEATURES = [
-    { icon:"🧠", title:t('landing.features.singleHub.title'), desc:t('landing.features.singleHub.desc'), tag:t('landing.features.singleHub.tag'), tagStyle:"" },
-    { icon:"🔌", title:t('landing.features.integrations.title'), desc:t('landing.features.integrations.desc'), tag:t('landing.features.integrations.tag'), tagStyle:"tag-indigo" },
-    { icon:"🤖", title:t('landing.features.aiAgent.title'), desc:t('landing.features.aiAgent.desc'), tag:t('landing.features.aiAgent.tag'), tagStyle:"tag-green" },
-    { icon:"🔍", title:t('landing.features.semanticSearch.title'), desc:t('landing.features.semanticSearch.desc'), tag:t('landing.features.semanticSearch.tag'), tagStyle:"" },
-    { icon:"🏢", title:t('landing.features.multiDepartment.title'), desc:t('landing.features.multiDepartment.desc'), tag:t('landing.features.multiDepartment.tag'), tagStyle:"tag-indigo" },
-    { icon:"📊", title:t('landing.features.analytics.title'), desc:t('landing.features.analytics.desc'), tag:t('landing.features.analytics.tag'), tagStyle:"tag-amber" },
+    { icon:Brain, title:t('landing.features.singleHub.title'), desc:t('landing.features.singleHub.desc'), tag:t('landing.features.singleHub.tag'), tagStyle:"" },
+    { icon:Plug, title:t('landing.features.integrations.title'), desc:t('landing.features.integrations.desc'), tag:t('landing.features.integrations.tag'), tagStyle:"tag-indigo" },
+    { icon:Bot, title:t('landing.features.aiAgent.title'), desc:t('landing.features.aiAgent.desc'), tag:t('landing.features.aiAgent.tag'), tagStyle:"tag-green" },
+    { icon:Search, title:t('landing.features.semanticSearch.title'), desc:t('landing.features.semanticSearch.desc'), tag:t('landing.features.semanticSearch.tag'), tagStyle:"" },
+    { icon:Building, title:t('landing.features.multiDepartment.title'), desc:t('landing.features.multiDepartment.desc'), tag:t('landing.features.multiDepartment.tag'), tagStyle:"tag-indigo" },
+    { icon:BarChart3, title:t('landing.features.analytics.title'), desc:t('landing.features.analytics.desc'), tag:t('landing.features.analytics.tag'), tagStyle:"tag-amber" },
   ];
   
   const STATS = [
@@ -938,10 +938,10 @@ export default function WikiAILanding() {
   ];
   
   const USECASES = [
-    { icon:"🆕", title:t('landing.useCases.onboarding.title'), desc:t('landing.useCases.onboarding.desc') },
-    { icon:"🛒", title:t('landing.useCases.ecommerce.title'), desc:t('landing.useCases.ecommerce.desc') },
-    { icon:"📞", title:t('landing.useCases.callCenter.title'), desc:t('landing.useCases.callCenter.desc') },
-    { icon:"🤝", title:t('landing.useCases.sales.title'), desc:t('landing.useCases.sales.desc') },
+    { icon:Sparkles, title:t('landing.useCases.onboarding.title'), desc:t('landing.useCases.onboarding.desc') },
+    { icon:ShoppingCart, title:t('landing.useCases.ecommerce.title'), desc:t('landing.useCases.ecommerce.desc') },
+    { icon:Phone, title:t('landing.useCases.callCenter.title'), desc:t('landing.useCases.callCenter.desc') },
+    { icon:Handshake, title:t('landing.useCases.sales.title'), desc:t('landing.useCases.sales.desc') },
   ];
   
   const KNOWLEDGE_TYPES = [
@@ -1187,7 +1187,7 @@ export default function WikiAILanding() {
       {splash && (
         <div className="splash" style={{ animation:"fadeIn .3s ease" }}>
           <div style={{ position:"relative", marginBottom:24 }}>
-            <div style={{ width:68,height:68,borderRadius:18,background:"linear-gradient(135deg,#3b82f6,#0ea5e9)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,boxShadow:"0 0 60px rgba(59,130,246,0.45)",animation:"floatY 2s ease-in-out infinite" }}>🧠</div>
+            <div style={{ width:68,height:68,borderRadius:18,background:"linear-gradient(135deg,#3b82f6,#0ea5e9)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 60px rgba(59,130,246,0.45)",animation:"floatY 2s ease-in-out infinite" }}><Brain size={30} color="white" /></div>
             <div style={{ position:"absolute",inset:-10,borderRadius:24,border:"1px solid rgba(59,130,246,0.25)",animation:"spin 6s linear infinite" }} />
           </div>
           <div style={{ fontSize:22,fontWeight:800,letterSpacing:"-.02em",marginBottom:6 }}>
@@ -1201,7 +1201,7 @@ export default function WikiAILanding() {
       {/* ── NAV ─────────────────────────────────── */}
       <nav className={`nav ${scrolled?"scrolled":""}`}>
         <div style={{ display:"flex",alignItems:"center",gap:9 }}>
-          <div style={{ width:32,height:32,borderRadius:8,background:"linear-gradient(135deg,#3b82f6,#0ea5e9)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16 }}>🧠</div>
+          <div style={{ width:32,height:32,borderRadius:8,background:"linear-gradient(135deg,#3b82f6,#0ea5e9)",display:"flex",alignItems:"center",justifyContent:"center" }}><Brain size={16} color="white" /></div>
           <span style={{ fontWeight:800,fontSize:18,letterSpacing:"-.02em" }}>
             <span className="g-blue">Wiki</span>AI
           </span>
@@ -1315,7 +1315,7 @@ export default function WikiAILanding() {
             style={{ width:"100%", justifyContent:"center", padding:"14px", fontSize:15 }}
             onClick={() => { setMobileMenuOpen(false); router.push('/login'); }}
           >
-            🚀 {t('landing.nav.getStarted')}
+            {t('landing.nav.getStarted')}
           </button>
           <div style={{ display:"flex", gap:10 }}>
             <button
@@ -1331,7 +1331,7 @@ export default function WikiAILanding() {
               style={{ flex:1, justifyContent:"center", padding:"12px", fontSize:13 }}
               onClick={() => changeLanguage(locale === 'en' ? 'ru' : 'en')}
             >
-              🌐 {locale.toUpperCase()}
+              <Globe size={14} /> {locale.toUpperCase()}
             </button>
           </div>
         </div>
@@ -1427,19 +1427,19 @@ export default function WikiAILanding() {
 
           <div className="three-col-grid">
             {[
-              { icon:"😤", title:t('landing.problem.before.title'), items:[
+              { icon:Frown, title:t('landing.problem.before.title'), items:[
                 t('landing.problem.before.items.0'),
                 t('landing.problem.before.items.1'),
                 t('landing.problem.before.items.2'),
                 t('landing.problem.before.items.3')
               ] },
-              { icon:"⚡", title:t('landing.problem.with.title'), items:[
+              { icon:Zap, title:t('landing.problem.with.title'), items:[
                 t('landing.problem.with.items.0'),
                 t('landing.problem.with.items.1'),
                 t('landing.problem.with.items.2'),
                 t('landing.problem.with.items.3')
               ], hi:true },
-              { icon:"📈", title:t('landing.problem.result.title'), items:[
+              { icon:TrendingUp, title:t('landing.problem.result.title'), items:[
                 t('landing.problem.result.items.0'),
                 t('landing.problem.result.items.1'),
                 t('landing.problem.result.items.2'),
@@ -1447,7 +1447,7 @@ export default function WikiAILanding() {
               ] },
             ].map((col,i)=>(
               <div key={i} className="wai-r" style={{ background:col.hi?"rgba(59,130,246,0.05)":"var(--card)",padding:"32px 28px",transitionDelay:`${i*90}ms` }}>
-                <div style={{ fontSize:28,marginBottom:14 }}>{col.icon}</div>
+                <div style={{ marginBottom:14 }}><col.icon size={28} color={col.hi ? "#60a5fa" : "#64748b"} /></div>
                 <div style={{ fontSize:14,fontWeight:700,color:col.hi?"#60a5fa":"var(--compare-lo-text)",marginBottom:18,fontFamily:"'Geist Mono',monospace",letterSpacing:".04em",textTransform:"uppercase" }}>{col.title}</div>
                 {col.items.map((item,j)=>(
                   <div key={j} style={{ display:"flex",alignItems:"flex-start",gap:9,marginBottom:12,fontSize:14,color:col.hi?"var(--compare-hi-text)":"var(--compare-lo-text)",lineHeight:1.5 }}>
@@ -1487,7 +1487,7 @@ export default function WikiAILanding() {
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(290px,1fr))",gap:18,maxWidth:1060,margin:"0 auto" }}>
           {FEATURES.map((f,i)=>(
             <div key={i} className={`feat-card wai-r`} style={{ transitionDelay:`${i*70}ms` }}>
-              <div style={{ fontSize:30,marginBottom:16 }}>{f.icon}</div>
+              <div style={{ marginBottom:16 }}><f.icon size={30} color="#60a5fa" /></div>
               <div style={{ display:"flex",alignItems:"center",gap:9,marginBottom:10 }}>
                 <h3 style={{ fontSize:16,fontWeight:700,color:"var(--text)" }}>{f.title}</h3>
                 <span className={`tag ${f.tagStyle}`} style={{ fontSize:10,padding:"2px 8px" }}>{f.tag}</span>
@@ -1538,13 +1538,13 @@ export default function WikiAILanding() {
         {/* Extra detail row */}
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:16,maxWidth:900,margin:"48px auto 0" }}>
           {[
-            { icon:"🔷", title:"Bitrix24", desc:t('landing.integrationHub.detailCards.bitrix24') },
-            { icon:"📊", title:"1C / ERP", desc:t('landing.integrationHub.detailCards.erp') },
-            { icon:"💬", title:"Telegram & Slack", desc:t('landing.integrationHub.detailCards.messaging') },
-            { icon:"🛒", title:"Online Store", desc:t('landing.integrationHub.detailCards.store') },
+            { icon:Diamond, title:"Bitrix24", desc:t('landing.integrationHub.detailCards.bitrix24') },
+            { icon:BarChart3, title:"1C / ERP", desc:t('landing.integrationHub.detailCards.erp') },
+            { icon:MessageSquare, title:"Telegram & Slack", desc:t('landing.integrationHub.detailCards.messaging') },
+            { icon:ShoppingCart, title:"Online Store", desc:t('landing.integrationHub.detailCards.store') },
           ].map((d,i)=>(
             <div key={i} className={`wai-r feat-card`} style={{ transitionDelay:`${i*80}ms` }}>
-              <div style={{ fontSize:24,marginBottom:12 }}>{d.icon}</div>
+              <div style={{ marginBottom:12 }}><d.icon size={24} color="#60a5fa" /></div>
               <div style={{ fontSize:15,fontWeight:700,color:"var(--text)",marginBottom:7 }}>{d.title}</div>
               <p style={{ fontSize:13,color:"var(--text-muted)",lineHeight:1.6 }}>{d.desc}</p>
             </div>
@@ -1588,7 +1588,7 @@ export default function WikiAILanding() {
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:18,maxWidth:1060,margin:"0 auto" }}>
           {USECASES.map((u,i)=>(
             <div key={i} className={`wai-r feat-card`} style={{ transitionDelay:`${i*80}ms` }}>
-              <div style={{ fontSize:32,marginBottom:16 }}>{u.icon}</div>
+              <div style={{ marginBottom:16 }}><u.icon size={32} color="#60a5fa" /></div>
               <h3 style={{ fontSize:16,fontWeight:700,color:"var(--text)",marginBottom:10 }}>{u.title}</h3>
               <p style={{ fontSize:14,color:"var(--text-muted)",lineHeight:1.65 }}>{u.desc}</p>
             </div>
@@ -1660,7 +1660,7 @@ export default function WikiAILanding() {
           <div className="mobile-cta-box" style={{ background:"linear-gradient(135deg,rgba(59,130,246,0.1),rgba(14,165,233,0.07),rgba(99,102,241,0.06))",border:"1px solid rgba(59,130,246,0.2)",borderRadius:22,position:"relative",overflow:"hidden" }}>
             <div style={{ position:"absolute",width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,0.12),transparent 70%)",top:"-30%",left:"50%",transform:"translateX(-50%)",pointerEvents:"none" }} />
             <SectionHead
-              tag="🧠"
+              tag="AI"
               tagStyle="tag-blue-large"
               title={`${t('landing.cta.title')}`}
               sub={t('landing.cta.subtitle')}
