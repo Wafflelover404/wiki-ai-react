@@ -6,10 +6,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Handle browser extension interference and hydration issues
-  experimental: {
-    optimizeCss: true,
-  },
 }
 
 export default nextConfig
