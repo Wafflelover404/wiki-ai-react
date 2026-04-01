@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi, filesApi, metricsApi, reportsApi } from "@/lib/api"
