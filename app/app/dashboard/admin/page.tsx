@@ -1,7 +1,5 @@
 "use client"
-
-export const dynamic = "force-dynamic"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi, filesApi, metricsApi, reportsApi } from "@/lib/api"
@@ -44,7 +42,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
-
 interface SystemStats {
   totalUsers: number
   activeUsers: number
@@ -55,7 +52,6 @@ interface SystemStats {
   storageUsed: number
   storageTotal: number
 }
-
 interface RecentActivity {
   id: string
   type: "user" | "file" | "query" | "system"
@@ -63,7 +59,6 @@ interface RecentActivity {
   timestamp: string
   user?: string
 }
-
 interface SystemAlert {
   id: string
   type: "warning" | "error" | "info"
@@ -71,7 +66,6 @@ interface SystemAlert {
   timestamp: string
   resolved: boolean
 }
-
 export default function AdminDashboard() {
   const { token, user } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
@@ -88,21 +82,17 @@ export default function AdminDashboard() {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [alerts, setAlerts] = useState<SystemAlert[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-
   const fetchSystemStats = async () => {
     if (!token) return
-
     try {
       const [usersRes, filesRes, metricsRes] = await Promise.all([
         adminApi.listAccounts(token),
         filesApi.list(token),
         metricsApi.summary(token, "24h", "global"),
       ])
-
       const totalUsers = usersRes.status === "success" ? usersRes.response?.accounts?.length || 0 : 0
       const totalFiles = filesRes.status === "success" ? filesRes.response?.documents?.length || 0 : 0
       const metrics = metricsRes.status === "success" ? metricsRes.response || {} : {}
-
       setStats({
         totalUsers,
         activeUsers: Math.floor(totalUsers * 0.7), // Simulate active users
@@ -117,10 +107,8 @@ export default function AdminDashboard() {
       console.error("Failed to fetch system stats:", error)
     }
   }
-
   const fetchRecentActivity = async () => {
     if (!token) return
-
     // Simulate recent activity data
     const activity: RecentActivity[] = [
       {
@@ -152,10 +140,8 @@ export default function AdminDashboard() {
     ]
     setRecentActivity(activity)
   }
-
   const fetchAlerts = async () => {
     if (!token) return
-
     // Simulate system alerts
     const systemAlerts: SystemAlert[] = [
       {
@@ -175,7 +161,6 @@ export default function AdminDashboard() {
     ]
     setAlerts(systemAlerts)
   }
-
   useEffect(() => {
     const loadData = async () => {
       await Promise.all([
@@ -185,20 +170,16 @@ export default function AdminDashboard() {
       ])
       setIsLoading(false)
     }
-
     loadData()
   }, [token])
-
   const getHealthColor = (health: number) => {
     if (health >= 90) return "text-green-600"
     if (health >= 70) return "text-yellow-600"
     return "text-red-600"
   }
-
   const getStoragePercentage = () => {
     return (stats.storageUsed / stats.storageTotal) * 100
   }
-
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "user":
@@ -213,7 +194,6 @@ export default function AdminDashboard() {
         return <Activity className="w-4 h-4" />
     }
   }
-
   const getAlertIcon = (type: string) => {
     switch (type) {
       case "error":
@@ -226,7 +206,6 @@ export default function AdminDashboard() {
         return <Activity className="w-4 h-4" />
     }
   }
-
   if (isLoading) {
     return (
       <>
@@ -237,7 +216,6 @@ export default function AdminDashboard() {
       </>
     )
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "Admin Dashboard" }]} />
@@ -269,7 +247,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-
         {/* System Overview Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -285,7 +262,6 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Documents</CardTitle>
@@ -296,7 +272,6 @@ export default function AdminDashboard() {
               <p className="text-xs text-muted-foreground">In knowledge base</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Queries</CardTitle>
@@ -307,7 +282,6 @@ export default function AdminDashboard() {
               <p className="text-xs text-muted-foreground">All time searches</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">System Health</CardTitle>
@@ -321,7 +295,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-
         {/* Storage Overview */}
         <Card>
           <CardHeader>
@@ -345,7 +318,6 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -354,7 +326,6 @@ export default function AdminDashboard() {
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
             <TabsTrigger value="quick-actions">Quick Actions</TabsTrigger>
           </TabsList>
-
           <TabsContent value="overview" className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Performance Metrics */}
@@ -394,7 +365,6 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
-
               {/* System Information */}
               <Card>
                 <CardHeader>
@@ -422,7 +392,6 @@ export default function AdminDashboard() {
               </Card>
             </div>
           </TabsContent>
-
           <TabsContent value="activity" className="space-y-6">
             <Card>
               <CardHeader>
@@ -466,7 +435,6 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="alerts" className="space-y-6">
             <Card>
               <CardHeader>
@@ -501,7 +469,6 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="quick-actions" className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
@@ -519,7 +486,6 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Link>
               </Card>
-
               <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                 <Link href="/app/admin/management">
                   <CardContent className="p-6">
@@ -535,7 +501,6 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Link>
               </Card>
-
               <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                 <Link href="/app/files">
                   <CardContent className="p-6">
@@ -551,7 +516,6 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Link>
               </Card>
-
               <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                 <Link href="/app/admin?tab=reports">
                   <CardContent className="p-6">
@@ -567,7 +531,6 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Link>
               </Card>
-
               <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                 <Link href="/app/admin/management">
                   <CardContent className="p-6">
@@ -583,7 +546,6 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Link>
               </Card>
-
               <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                 <Link href="/app/admin/management">
                   <CardContent className="p-6">
@@ -599,7 +561,6 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Link>
               </Card>
-
               <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                 <Link href="/app/settings">
                   <CardContent className="p-6">

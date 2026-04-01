@@ -1,7 +1,6 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import type React from "react"
-
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { catalogsApi, opencartApi } from "@/lib/api"
@@ -42,20 +41,17 @@ import {
   DollarSign,
 } from "lucide-react"
 import { toast } from "sonner"
-
 interface Catalog {
   id: string
   name: string
   product_count: number
 }
-
 interface Product {
   id: string
   name: string
   description: string
   price: number
 }
-
 export default function CatalogsPage() {
   const { token } = useAuth()
   const [catalogs, setCatalogs] = useState<Catalog[]>([])
@@ -65,21 +61,17 @@ export default function CatalogsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteCatalogId, setDeleteCatalogId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-
   // Search state
   const [selectedCatalog, setSelectedCatalog] = useState<Catalog | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<Product[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false)
-
   // Import state
   const [importCatalogId, setImportCatalogId] = useState<string | null>(null)
   const [isImporting, setIsImporting] = useState(false)
-
   const fetchCatalogs = useCallback(async () => {
     if (!token) return
-
     try {
       const result = await catalogsApi.list(token)
       if (result.status === "success" && result.response) {
@@ -92,18 +84,14 @@ export default function CatalogsPage() {
       setIsLoading(false)
     }
   }, [token])
-
   useEffect(() => {
     fetchCatalogs()
   }, [fetchCatalogs])
-
   const handleCreateCatalog = async () => {
     if (!token || !newCatalogName.trim()) return
-
     setIsCreating(true)
     try {
       const result = await catalogsApi.create(token, newCatalogName.trim())
-
       if (result.status === "success") {
         toast.success("Catalog created successfully")
         setIsDialogOpen(false)
@@ -119,14 +107,11 @@ export default function CatalogsPage() {
       setIsCreating(false)
     }
   }
-
   const handleDeleteCatalog = async () => {
     if (!token || !deleteCatalogId) return
-
     setIsDeleting(true)
     try {
       const result = await catalogsApi.delete(token, deleteCatalogId)
-
       if (result.status === "success") {
         toast.success("Catalog deleted successfully")
         setDeleteCatalogId(null)
@@ -141,15 +126,12 @@ export default function CatalogsPage() {
       setIsDeleting(false)
     }
   }
-
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!token || !selectedCatalog || !searchQuery.trim()) return
-
     setIsSearching(true)
     try {
       const result = await catalogsApi.search(token, selectedCatalog.id, searchQuery.trim())
-
       if (result.status === "success" && result.response) {
         setSearchResults(result.response.products || [])
       } else {
@@ -163,15 +145,12 @@ export default function CatalogsPage() {
       setIsSearching(false)
     }
   }
-
   const handleImport = async (catalogId: string) => {
     if (!token) return
-
     setImportCatalogId(catalogId)
     setIsImporting(true)
     try {
       const result = await opencartApi.importProducts(token, catalogId)
-
       if (result.status === "success") {
         toast.success("Products imported successfully")
         fetchCatalogs()
@@ -186,14 +165,12 @@ export default function CatalogsPage() {
       setImportCatalogId(null)
     }
   }
-
   const openSearchDialog = (catalog: Catalog) => {
     setSelectedCatalog(catalog)
     setSearchQuery("")
     setSearchResults([])
     setIsSearchDialogOpen(true)
   }
-
   if (isLoading) {
     return (
       <>
@@ -204,7 +181,6 @@ export default function CatalogsPage() {
       </>
     )
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "Catalogs" }]} />
@@ -255,7 +231,6 @@ export default function CatalogsPage() {
             </DialogContent>
           </Dialog>
         </div>
-
         {catalogs.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -330,7 +305,6 @@ export default function CatalogsPage() {
             ))}
           </div>
         )}
-
         {/* Search Dialog */}
         <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[80vh]">
@@ -356,7 +330,6 @@ export default function CatalogsPage() {
                 </Button>
               </div>
             </form>
-
             {searchResults.length > 0 && (
               <div className="space-y-3 max-h-[400px] overflow-y-auto">
                 {searchResults.map((product) => (
@@ -380,7 +353,6 @@ export default function CatalogsPage() {
                 ))}
               </div>
             )}
-
             {searchResults.length === 0 && searchQuery && !isSearching && (
               <div className="text-center py-8">
                 <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
@@ -389,7 +361,6 @@ export default function CatalogsPage() {
             )}
           </DialogContent>
         </Dialog>
-
         {/* Delete Confirmation */}
         <AlertDialog open={!!deleteCatalogId} onOpenChange={() => setDeleteCatalogId(null)}>
           <AlertDialogContent>

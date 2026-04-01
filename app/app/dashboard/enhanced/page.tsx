@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react"
 import { useAuth, PERMISSIONS } from "@/lib/auth-context"
 import { usePermissions } from "@/lib/permission-context"
@@ -41,7 +41,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
-
 interface UserRoleStats {
   totalUsers: number
   adminUsers: number
@@ -49,7 +48,6 @@ interface UserRoleStats {
   activeUsers: number
   newUsersThisMonth: number
 }
-
 interface DocumentStats {
   totalDocuments: number
   publicDocuments: number
@@ -58,7 +56,6 @@ interface DocumentStats {
   totalViews: number
   totalDownloads: number
 }
-
 interface SystemMetrics {
   systemHealth: number
   apiResponseTime: number
@@ -66,7 +63,6 @@ interface SystemMetrics {
   storageUsage: number
   querySuccessRate: number
 }
-
 export default function EnhancedRoleBasedDashboard() {
   const { user, token, isAdmin, hasPermission } = useAuth()
   const {
@@ -83,7 +79,6 @@ export default function EnhancedRoleBasedDashboard() {
     canViewReports,
     canManageOrganizations,
   } = usePermissions()
-
   const [isLoading, setIsLoading] = useState(true)
   const [userStats, setUserStats] = useState<UserRoleStats>({
     totalUsers: 0,
@@ -107,11 +102,9 @@ export default function EnhancedRoleBasedDashboard() {
     storageUsage: 65,
     querySuccessRate: 98.5,
   })
-
   useEffect(() => {
     const loadDashboardData = async () => {
       if (!token) return
-
       try {
         // Simulate loading role-based dashboard data
         // In real implementation, this would fetch actual data from your APIs
@@ -160,20 +153,16 @@ export default function EnhancedRoleBasedDashboard() {
         setIsLoading(false)
       }
     }
-
     loadDashboardData()
   }, [token, isAdmin])
-
   const getHealthColor = (health: number) => {
     if (health >= 90) return "text-green-600"
     if (health >= 70) return "text-yellow-600"
     return "text-red-600"
   }
-
   const getStoragePercentage = () => {
     return systemMetrics.storageUsage
   }
-
   if (isLoading) {
     return (
       <>
@@ -184,7 +173,6 @@ export default function EnhancedRoleBasedDashboard() {
       </>
     )
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "Dashboard" }]} />
@@ -223,7 +211,6 @@ export default function EnhancedRoleBasedDashboard() {
             </div>
           </div>
         </div>
-
         {/* Permission Status Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -240,7 +227,6 @@ export default function EnhancedRoleBasedDashboard() {
               </p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">User Management</CardTitle>
@@ -255,7 +241,6 @@ export default function EnhancedRoleBasedDashboard() {
               </p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">System Stats</CardTitle>
@@ -270,7 +255,6 @@ export default function EnhancedRoleBasedDashboard() {
               </p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">API Keys</CardTitle>
@@ -286,7 +270,6 @@ export default function EnhancedRoleBasedDashboard() {
             </CardContent>
           </Card>
         </div>
-
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -295,7 +278,6 @@ export default function EnhancedRoleBasedDashboard() {
             {canManageUsers && <TabsTrigger value="users">Users</TabsTrigger>}
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
-
           <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -315,7 +297,6 @@ export default function EnhancedRoleBasedDashboard() {
                   </p>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Documents</CardTitle>
@@ -326,7 +307,6 @@ export default function EnhancedRoleBasedDashboard() {
                   <p className="text-xs text-muted-foreground">Total files</p>
                 </CardContent>
               </Card>
-
               {canViewSystemStats && (
                 <>
                   <Card>
@@ -341,7 +321,6 @@ export default function EnhancedRoleBasedDashboard() {
                       <Progress value={systemMetrics.systemHealth} className="mt-2" />
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                       <CardTitle className="text-sm font-medium">Response Time</CardTitle>
@@ -355,7 +334,6 @@ export default function EnhancedRoleBasedDashboard() {
                 </>
               )}
             </div>
-
             {/* Quick Actions */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {canSearchFiles && (
@@ -375,7 +353,6 @@ export default function EnhancedRoleBasedDashboard() {
                   </Link>
                 </Card>
               )}
-
               {canViewFiles && (
                 <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                   <Link href="/app/files">
@@ -393,7 +370,6 @@ export default function EnhancedRoleBasedDashboard() {
                   </Link>
                 </Card>
               )}
-
               {canManageUsers && (
                 <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                   <Link href="/app/admin">
@@ -411,7 +387,6 @@ export default function EnhancedRoleBasedDashboard() {
                   </Link>
                 </Card>
               )}
-
               {canUploadFiles && (
                 <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                   <Link href="/app/documents/editor">
@@ -429,7 +404,6 @@ export default function EnhancedRoleBasedDashboard() {
                   </Link>
                 </Card>
               )}
-
               {canManageApiKeys && (
                 <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                   <Link href="/app/admin?tab=api-keys">
@@ -447,7 +421,6 @@ export default function EnhancedRoleBasedDashboard() {
                   </Link>
                 </Card>
               )}
-
               {canViewReports && (
                 <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                   <Link href="/app/admin?tab=reports">
@@ -467,7 +440,6 @@ export default function EnhancedRoleBasedDashboard() {
               )}
             </div>
           </TabsContent>
-
           <TabsContent value="documents" className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Document Statistics */}
@@ -530,7 +502,6 @@ export default function EnhancedRoleBasedDashboard() {
                   </div>
                 </CardContent>
               </Card>
-
               {/* Storage Overview */}
               <Card>
                 <CardHeader>
@@ -569,7 +540,6 @@ export default function EnhancedRoleBasedDashboard() {
               </Card>
             </div>
           </TabsContent>
-
           {canManageUsers && (
             <TabsContent value="users" className="space-y-6">
               <div className="grid gap-6 lg:grid-cols-2">
@@ -621,7 +591,6 @@ export default function EnhancedRoleBasedDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-
                 {/* Quick User Actions */}
                 <Card>
                   <CardHeader>
@@ -650,7 +619,6 @@ export default function EnhancedRoleBasedDashboard() {
               </div>
             </TabsContent>
           )}
-
           <TabsContent value="activity" className="space-y-6">
             <Card>
               <CardHeader>

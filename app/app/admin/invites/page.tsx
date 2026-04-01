@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi } from "@/lib/api"
@@ -59,7 +59,6 @@ import {
 import { toast } from "sonner"
 import { redirect } from "next/navigation"
 import { useTranslation } from "@/src/i18n"
-
 interface Invite {
   id: string
   token: string
@@ -72,7 +71,6 @@ interface Invite {
   is_used: boolean
   organization_id?: string
 }
-
 export default function InvitesPage() {
   const { token, isAdmin, isLoading: authLoading, user: currentUser } = useAuth()
   const { t } = useTranslation()
@@ -81,7 +79,6 @@ export default function InvitesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [allFiles, setAllFiles] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
-
   // Create invite state
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [email, setEmail] = useState("")
@@ -92,17 +89,13 @@ export default function InvitesPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState("")
   const [createdInvite, setCreatedInvite] = useState<Invite | null>(null)
-
   // Delete invite state
   const [deleteInviteId, setDeleteInviteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-
   const fetchData = useCallback(async () => {
     if (!token) return
-
     try {
       const invitesRes = await adminApi.listInvites(token)
-
       if (invitesRes.status === "success" && invitesRes.response) {
         setInvites(invitesRes.response.invites || [])
         setFilteredInvites(invitesRes.response.invites || [])
@@ -113,19 +106,16 @@ export default function InvitesPage() {
       setIsLoading(false)
     }
   }, [token])
-
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       redirect("/app")
     }
   }, [authLoading, isAdmin])
-
   useEffect(() => {
     if (isAdmin) {
       fetchData()
     }
   }, [isAdmin, fetchData])
-
   useEffect(() => {
     if (searchQuery) {
       const filtered = invites.filter(
@@ -139,10 +129,8 @@ export default function InvitesPage() {
       setFilteredInvites(invites)
     }
   }, [searchQuery, invites])
-
   const handleCreateInvite = async () => {
     if (!token) return
-
     setIsCreating(true)
     setCreateError("")
     try {
@@ -153,7 +141,6 @@ export default function InvitesPage() {
         expires_in_days: expiresInDays,
         message: message.trim() || undefined,
       })
-
       if (result.status === "success" && result.response) {
         toast.success(t('invites.inviteLinkCreatedSuccessfully'))
         // Transform the response to match the Invite interface
@@ -193,19 +180,15 @@ export default function InvitesPage() {
       setIsCreating(false)
     }
   }
-
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(link)
     toast.success(t('invites.inviteLinkCopiedToClipboard'))
   }
-
   const handleDeleteInvite = async () => {
     if (!token || !deleteInviteId) return
-
     setIsDeleting(true)
     try {
       const result = await adminApi.revokeInvite(token, deleteInviteId)
-
       if (result.status === "success") {
         toast.success(t('invites.inviteRevokedSuccessfully'))
         setDeleteInviteId(null)
@@ -220,13 +203,11 @@ export default function InvitesPage() {
       setIsDeleting(false)
     }
   }
-
   const toggleFilePermission = (filename: string) => {
     setAllowedFiles((prev) =>
       prev.includes(filename) ? prev.filter((f) => f !== filename) : [...prev, filename]
     )
   }
-
   const toggleAllFiles = () => {
     if (allowedFiles.length === allFiles.length) {
       setAllowedFiles([])
@@ -234,15 +215,12 @@ export default function InvitesPage() {
       setAllowedFiles(allFiles)
     }
   }
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString() + " " + new Date(dateString).toLocaleTimeString()
   }
-
   const isExpired = (expiresAt: string) => {
     return new Date(expiresAt) < new Date()
   }
-
   if (authLoading || isLoading) {
     return (
       <>
@@ -253,11 +231,9 @@ export default function InvitesPage() {
       </>
     )
   }
-
   if (!isAdmin) {
     return null
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "Admin", href: "/app/admin" }, { label: "Invites" }]} />
@@ -272,7 +248,6 @@ export default function InvitesPage() {
             Create Invite
           </Button>
         </div>
-
         {/* Create Invite Modal */}
         {isCreateOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -397,7 +372,6 @@ export default function InvitesPage() {
             </div>
           </div>
         )}
-
         {/* Created Invite Success Modal */}
         {createdInvite && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -458,7 +432,6 @@ export default function InvitesPage() {
             </div>
           </div>
         )}
-
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -471,7 +444,6 @@ export default function InvitesPage() {
           </div>
           <Badge variant="secondary">{filteredInvites.length} invites</Badge>
         </div>
-
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -563,7 +535,6 @@ export default function InvitesPage() {
             </Table>
           </CardContent>
         </Card>
-
         {/* Delete Invite Confirmation */}
         <AlertDialog open={!!deleteInviteId} onOpenChange={() => setDeleteInviteId(null)}>
           <AlertDialogContent>

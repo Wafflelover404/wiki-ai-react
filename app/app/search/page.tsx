@@ -1,7 +1,6 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { filesApi, queryApi, pluginsApi, catalogsApi } from "@/lib/api"
@@ -50,7 +49,6 @@ import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
 import { useTranslation } from "@/src/i18n"
 import { UnifiedFileReader } from "@/components/ui/file-reader"
-
 interface SearchResult {
   id: string
   type: 'document' | 'product'
@@ -66,7 +64,6 @@ interface SearchResult {
   relevance?: 'high' | 'medium' | 'low'
   enhanced_context?: boolean
 }
-
 interface FileReaderItem {
   filename: string
   size: number
@@ -75,7 +72,6 @@ interface FileReaderItem {
   metadata?: any
   indexed: boolean
 }
-
 interface Message {
   id: string
   role: "user" | "assistant" | "sources" | "overview"
@@ -84,13 +80,11 @@ interface Message {
   searchResults?: SearchResult[]
   timestamp: Date
 }
-
 interface Catalog {
   catalog_id: string
   shop_name: string
   total_products: number
 }
-
 export default function AdminSearchPage() {
   const { token, user } = useAuth()
   const { t } = useTranslation()
@@ -119,18 +113,15 @@ export default function AdminSearchPage() {
   const [selectedCatalogs, setSelectedCatalogs] = useState<string[]>([])
   const [showAiOverview, setShowAiOverview] = useState(true)
   const [copilotMode, setCopilotMode] = useState(false)
-
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
-
   useEffect(() => {
     loadSettings()
     loadPluginStatus()
   }, [])
-
   const loadSettings = () => {
     const saved = localStorage.getItem('searchSettings')
     if (saved) {
@@ -144,7 +135,6 @@ export default function AdminSearchPage() {
       }
     }
   }
-
   const saveSettings = () => {
     const settings = {
       searchType,
@@ -153,7 +143,6 @@ export default function AdminSearchPage() {
     }
     localStorage.setItem('searchSettings', JSON.stringify(settings))
   }
-
   const loadPluginStatus = async () => {
     if (!token) return
     
@@ -172,7 +161,6 @@ export default function AdminSearchPage() {
       setLoadingPlugins(false)
     }
   }
-
   const loadCatalogs = async () => {
     if (!token) return
     
@@ -191,7 +179,6 @@ export default function AdminSearchPage() {
       setLoadingCatalogs(false)
     }
   }
-
   // Handle document click to open/view content
   const handleDocumentClick = async (result: SearchResult) => {
     if (!token) return
@@ -225,7 +212,6 @@ export default function AdminSearchPage() {
       toast.error('Failed to open document')
     }
   }
-
   // Helper function to determine content type from filename
   const getContentTypeFromFilename = (filename: string): string => {
     const ext = filename.split('.').pop()?.toLowerCase()
@@ -253,7 +239,6 @@ export default function AdminSearchPage() {
       default: return 'application/octet-stream'
     }
   }
-
   const handleSearchUpdate = (data: any) => {
     console.log('Search update received:', data)
     
@@ -304,19 +289,15 @@ export default function AdminSearchPage() {
       })
     }
   }
-
   const handleQueryStatus = (data: any) => {
     console.log('Query status update:', data)
     // Update loading states or show progress
   }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || !token || isLoading) return
-
     console.log('Starting search for:', input.trim())
     console.log('User:', user?.username, 'Session:', sessionId)
-
     // Add user message to the conversation
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -325,7 +306,6 @@ export default function AdminSearchPage() {
       timestamp: new Date(Date.now()),
     }
     setMessages(prev => [...prev, userMessage])
-
     try {
       // Use WebSocket for real-time search (like Vue implementation)
       if (typeof WebSocket !== 'undefined') {
@@ -349,7 +329,6 @@ export default function AdminSearchPage() {
       setIsLoading(false)
     }
   }
-
   const performWebSocketQuery = async (query: string) => {
     return new Promise((resolve, reject) => {
       try {
@@ -599,7 +578,6 @@ export default function AdminSearchPage() {
       }
     })
   }
-
   const performHttpQuery = async (query: string) => {
     if (!token) {
       throw new Error('No token available')
@@ -647,10 +625,8 @@ export default function AdminSearchPage() {
       }
     }
   }
-
   const handleFeedback = async () => {
     if (!token || !feedbackMessage || !feedbackText.trim()) return
-
     try {
       // Note: This would need to be adapted to the new API structure
       toast.success("Feedback submitted successfully")
@@ -662,7 +638,6 @@ export default function AdminSearchPage() {
       toast.error("Failed to submit feedback")
     }
   }
-
   const formatPrice = (price: number | string) => {
     if (typeof price === 'number') {
       return `$${price.toFixed(2)}`
@@ -672,14 +647,12 @@ export default function AdminSearchPage() {
     }
     return '$0.00'
   }
-
   const suggestedQuestions = [
     t('search.whatProductsDoWeHaveInStock'),
     t('search.howDoIConfigureTheSystemSettings'),
     t('search.whatAreTheMainFeaturesOfThePlatform'),
     t('search.showMeRecentOrderStatistics'),
   ]
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('search.title') }]} />
@@ -697,7 +670,6 @@ export default function AdminSearchPage() {
                       <p className="text-muted-foreground mb-8">
                         {t('search.askQuestionsAboutYourDocuments')}
                       </p>
-
                       <div className="grid gap-3 w-full max-w-lg">
                         <p className="text-sm font-medium text-muted-foreground">{t('search.tryAsking')}:</p>
                         {suggestedQuestions.map((question, index) => (
@@ -841,7 +813,6 @@ export default function AdminSearchPage() {
                                 )}
                               </div>
                             )}
-
                             {/* AI Overview */}
                             {message.role === "overview" && (
                               <div className="w-full">
@@ -854,7 +825,6 @@ export default function AdminSearchPage() {
                                 </div>
                               </div>
                             )}
-
                             {/* Regular Assistant Message */}
                             {message.role === "assistant" && (
                               <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground">
@@ -865,12 +835,10 @@ export default function AdminSearchPage() {
                                 )}
                               </div>
                             )}
-
                             {/* User Message */}
                             {message.role === "user" && (
                               <p>{message.content}</p>
                             )}
-
                             {/* Feedback button only for main assistant messages */}
                             {message.role === "assistant" && (
                               <div className="mt-3 flex items-center gap-2">
@@ -917,7 +885,6 @@ export default function AdminSearchPage() {
                           </div>
                         </div>
                       ))}
-
                       {isLoading && (
                         <div className="flex gap-4">
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -934,7 +901,6 @@ export default function AdminSearchPage() {
                     </div>
                   )}
                 </ScrollArea>
-
                 {/* Search Input Area */}
                 <div className="fixed bottom-0 left-64 right-0 border-t bg-background p-4 z-50 shadow-lg">
                   <div className="px-4 md:px-6">

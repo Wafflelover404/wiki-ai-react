@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic";
 
 import { useState } from "react"
 import CMSLogin from "@/components/cms-login"

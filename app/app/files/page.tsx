@@ -1,7 +1,6 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import type React from "react"
-
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useTranslation } from "@/src/i18n"
@@ -71,7 +70,6 @@ import {
   Brain,
 } from "lucide-react"
 import { toast } from "sonner"
-
 // Helper function to determine content type from filename
 const getContentType = (filename: string): string => {
   const ext = filename.split('.').pop()?.toLowerCase()
@@ -90,13 +88,11 @@ const getContentType = (filename: string): string => {
     default: return 'application/octet-stream'
   }
 }
-
 interface FileItem {
   name: string
   type: string
   size?: number
 }
-
 interface FileReaderItem {
   filename: string
   size: number
@@ -105,7 +101,6 @@ interface FileReaderItem {
   metadata?: any
   indexed: boolean
 }
-
 function getFileIcon(filename: string) {
   const ext = filename.split(".").pop()?.toLowerCase()
   switch (ext) {
@@ -138,7 +133,6 @@ function getFileIcon(filename: string) {
       return <File className="w-4 h-4 text-muted-foreground" />
   }
 }
-
 function getFileType(filename: string) {
   const ext = filename.split(".").pop()?.toLowerCase()
   switch (ext) {
@@ -171,16 +165,13 @@ function getFileType(filename: string) {
       return ext?.toUpperCase() || "File"
   }
 }
-
 // Enhanced PDF Viewer Component
 function normalizePdfBase64Content(content: string) {
   let base64 = (content || "").trim()
-
   if (base64.startsWith("data:")) {
     const commaIndex = base64.indexOf(",")
     if (commaIndex >= 0) base64 = base64.slice(commaIndex + 1)
   }
-
   if (base64.includes("%")) {
     try {
       base64 = decodeURIComponent(base64)
@@ -188,17 +179,13 @@ function normalizePdfBase64Content(content: string) {
       // ignore
     }
   }
-
   base64 = base64.replace(/\s/g, "").replace(/-/g, "+").replace(/_/g, "/")
-
   const missingPadding = base64.length % 4
   if (missingPadding) {
     base64 = base64 + "=".repeat(4 - missingPadding)
   }
-
   return base64
 }
-
 function PDFViewer({ filename, content }: { filename: string; content: string }) {
   const [pdfUrl, setPdfUrl] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
@@ -209,31 +196,23 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const viewerRef = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
     console.log("PDFViewer: Starting to load PDF", { filename, contentLength: content?.length })
-
     setIsLoading(true)
     setError("")
-
     try {
       const base64Content = normalizePdfBase64Content(content)
-
       console.log("PDFViewer: Processing base64 content", { base64Length: base64Content.length })
-
       const binaryString = atob(base64Content)
       const bytes = new Uint8Array(binaryString.length)
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i)
       }
-
       const blob = new Blob([bytes], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
-
       console.log("PDFViewer: Created blob URL", { url })
       setPdfUrl(url)
       setIsLoading(false)
-
       return () => {
         URL.revokeObjectURL(url)
       }
@@ -243,12 +222,10 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
       setIsLoading(false)
     }
   }, [content])
-
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 3))
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5))
   const handleRotate = () => setRotation(prev => (prev + 90) % 360)
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen)
-
   const shareFile = async () => {
     if (navigator.share) {
       try {
@@ -264,12 +241,10 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
       toast.success('PDF link copied to clipboard')
     }
   }
-
   const printPDF = () => {
     const printWindow = window.open(pdfUrl, '_blank')
     printWindow?.print()
   }
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -280,7 +255,6 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
       </div>
     )
   }
-
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-96 text-center">
@@ -304,11 +278,9 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
       </div>
     )
   }
-
   const containerClass = isFullscreen 
     ? "fixed inset-0 z-50 bg-background flex flex-col" 
     : "w-full h-full flex flex-col"
-
   return (
     <div className={containerClass}>
       {/* Enhanced Toolbar */}
@@ -331,7 +303,6 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
               <ChevronRight className="w-3 h-3" />
             </Button>
           </div>
-
           {/* Zoom Controls */}
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" onClick={handleZoomOut} className="h-8 w-8 p-0">
@@ -344,7 +315,6 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
               <ZoomIn className="w-3 h-3" />
             </Button>
           </div>
-
           {/* Actions */}
           <Button variant="ghost" size="sm" onClick={handleRotate} className="h-8 w-8 p-0">
             <RotateCw className="w-3 h-3" />
@@ -360,7 +330,6 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
           </Button>
         </div>
       </div>
-
       {/* PDF Container */}
       <div className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900" ref={viewerRef}>
         <div className="flex justify-center p-4">
@@ -379,7 +348,6 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
           />
         </div>
       </div>
-
       {/* Fullscreen Exit Hint */}
       {isFullscreen && (
         <div className="absolute top-4 left-4 bg-background/80 backdrop-blur-sm rounded-lg px-3 py-2 text-sm">
@@ -389,39 +357,30 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
     </div>
   )
 }
-
 // Enhanced Word Document Viewer Component
 function WordViewer({ filename, content }: { filename: string; content: string }) {
   const [docxUrl, setDocxUrl] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string>("")
   const [isFullscreen, setIsFullscreen] = useState(false)
-
   useEffect(() => {
     console.log("WordViewer: Starting to load Word document", { filename, contentLength: content?.length })
-
     setIsLoading(true)
     setError("")
-
     try {
       const base64Content = normalizePdfBase64Content(content)
-
       console.log("WordViewer: Processing base64 content", { base64Length: base64Content.length })
-
       const binaryString = atob(base64Content)
       const bytes = new Uint8Array(binaryString.length)
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i)
       }
-
       const mimeType = filename.endsWith('.doc') ? 'application/msword' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       const blob = new Blob([bytes], { type: mimeType })
       const url = URL.createObjectURL(blob)
-
       console.log("WordViewer: Created blob URL", { url, mimeType })
       setDocxUrl(url)
       setIsLoading(false)
-
       return () => {
         URL.revokeObjectURL(url)
       }
@@ -431,7 +390,6 @@ function WordViewer({ filename, content }: { filename: string; content: string }
       setIsLoading(false)
     }
   }, [content, filename])
-
   const handleDownload = () => {
     if (docxUrl) {
       const a = document.createElement('a')
@@ -442,13 +400,11 @@ function WordViewer({ filename, content }: { filename: string; content: string }
       document.body.removeChild(a)
     }
   }
-
   const handleOpenInNewTab = () => {
     if (docxUrl) {
       window.open(docxUrl, '_blank')
     }
   }
-
   const shareFile = async () => {
     if (navigator.share) {
       try {
@@ -464,9 +420,7 @@ function WordViewer({ filename, content }: { filename: string; content: string }
       toast.success('Document link copied to clipboard')
     }
   }
-
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen)
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -477,7 +431,6 @@ function WordViewer({ filename, content }: { filename: string; content: string }
       </div>
     )
   }
-
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-96 text-center">
@@ -495,11 +448,9 @@ function WordViewer({ filename, content }: { filename: string; content: string }
       </div>
     )
   }
-
   const containerClass = isFullscreen 
     ? "fixed inset-0 z-50 bg-background flex flex-col" 
     : "flex flex-col h-full"
-
   return (
     <div className={containerClass}>
       {/* Enhanced Toolbar */}
@@ -524,7 +475,6 @@ function WordViewer({ filename, content }: { filename: string; content: string }
           </Button>
         </div>
       </div>
-
       {/* Content Area */}
       <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center justify-center h-full p-8">
@@ -573,7 +523,6 @@ function WordViewer({ filename, content }: { filename: string; content: string }
           </div>
         </div>
       </div>
-
       {/* Fullscreen Exit Hint */}
       {isFullscreen && (
         <div className="absolute top-4 left-4 bg-background/80 backdrop-blur-sm rounded-lg px-3 py-2 text-sm">
@@ -583,7 +532,6 @@ function WordViewer({ filename, content }: { filename: string; content: string }
     </div>
   )
 }
-
 export default function FilesPage() {
   const { t } = useTranslation()
   const { token, isAdmin } = useAuth()
@@ -592,7 +540,6 @@ export default function FilesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
-
   // View/Edit state
   const [selectedFile, setSelectedFile] = useState<FileReaderItem | null>(null)
   const [fileContent, setFileContent] = useState("")
@@ -601,18 +548,14 @@ export default function FilesPage() {
   const [isLoadingContent, setIsLoadingContent] = useState(false)
   const [editedContent, setEditedContent] = useState("")
   const [isSaving, setIsSaving] = useState(false)
-
   // Delete state
   const [deleteFile, setDeleteFile] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-
   // AI Response state
   const [aiResponse, setAiResponse] = useState("")
   const [isAiLoading, setIsAiLoading] = useState(false)
-
   const fetchFiles = useCallback(async () => {
     if (!token) return
-
     try {
       const result = await filesApi.list(token)
       if (result.status === "success" && result.response?.documents) {
@@ -631,11 +574,9 @@ export default function FilesPage() {
       setIsLoading(false)
     }
   }, [token])
-
   useEffect(() => {
     fetchFiles()
   }, [fetchFiles])
-
   useEffect(() => {
     if (searchQuery) {
       const filtered = files.filter((file) => file.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -644,11 +585,9 @@ export default function FilesPage() {
       setFilteredFiles(files)
     }
   }, [searchQuery, files])
-
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = e.target.files
     if (!uploadedFiles || !token) return
-
     setIsUploading(true)
     try {
       const result = await filesApi.upload(token, Array.from(uploadedFiles))
@@ -666,13 +605,10 @@ export default function FilesPage() {
       e.target.value = ""
     }
   }
-
   const handleViewFile = async (filename: string) => {
     if (!token) return
-
     setIsLoadingContent(true)
     setIsViewOpen(true)
-
     try {
       const result = await filesApi.list(token)
       if (result.status === "success" && result.response?.documents) {
@@ -706,13 +642,10 @@ export default function FilesPage() {
       setIsLoadingContent(false)
     }
   }
-
   const handleEditFile = async (filename: string) => {
     if (!token || !isAdmin) return
-
     setIsLoadingContent(true)
     setIsEditOpen(true)
-
     try {
       const result = await filesApi.list(token)
       if (result.status === "success" && result.response?.documents) {
@@ -746,10 +679,8 @@ export default function FilesPage() {
       setIsLoadingContent(false)
     }
   }
-
   const handleSaveFile = async () => {
     if (!token || !selectedFile || !isAdmin) return
-
     setIsSaving(true)
     try {
       const result = await filesApi.edit(token, selectedFile.filename, editedContent)
@@ -767,10 +698,8 @@ export default function FilesPage() {
       setIsSaving(false)
     }
   }
-
   const handleDeleteFile = async () => {
     if (!token || !deleteFile || !isAdmin) return
-
     setIsDeleting(true)
     try {
       const result = await filesApi.deleteByFilename(token, deleteFile)
@@ -788,7 +717,6 @@ export default function FilesPage() {
       setIsDeleting(false)
     }
   }
-
   const filesByType = filteredFiles.reduce(
     (acc, file) => {
       const type = file.type
@@ -798,7 +726,6 @@ export default function FilesPage() {
     },
     {} as Record<string, FileItem[]>,
   )
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: t("nav.files") }]} />
@@ -830,7 +757,6 @@ export default function FilesPage() {
             </div>
           </div>
         </div>
-
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="relative w-full sm:max-w-sm flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -843,7 +769,6 @@ export default function FilesPage() {
           </div>
           <Badge variant="secondary" className="shrink-0">{filteredFiles.length} {t("files.files")}</Badge>
         </div>
-
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -877,7 +802,6 @@ export default function FilesPage() {
                 </TabsTrigger>
               ))}
             </TabsList>
-
             <TabsContent value="all">
               <Card>
                 <CardHeader>
@@ -988,7 +912,6 @@ export default function FilesPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-
             {Object.entries(filesByType).map(([type, typeFiles]) => (
               <TabsContent key={type} value={type}>
                 <Card>
@@ -1105,7 +1028,6 @@ export default function FilesPage() {
             ))}
           </Tabs>
         )}
-
         {/* View File Dialog */}
         <UnifiedFileReader
           file={selectedFile}
@@ -1114,7 +1036,6 @@ export default function FilesPage() {
           onOpenChange={setIsViewOpen}
           content={fileContent}
         />
-
         {/* Edit File Dialog */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] w-full">
@@ -1153,7 +1074,6 @@ export default function FilesPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
         {/* Delete Confirmation */}
         <AlertDialog open={!!deleteFile} onOpenChange={() => setDeleteFile(null)}>
           <AlertDialogContent>

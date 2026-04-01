@@ -1,7 +1,6 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import type React from "react"
-
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { filesApi, apiRequest } from "@/lib/api"
@@ -64,7 +63,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { useTranslation } from "@/src/i18n"
-
 // Helper function to normalize PDF base64 content
 function normalizePdfBase64Content(content: string): string {
   const trimmed = content.trim()
@@ -83,7 +81,6 @@ function normalizePdfBase64Content(content: string): string {
   
   return trimmed
 }
-
 interface FileItem {
   id?: number
   filename: string
@@ -93,8 +90,6 @@ interface FileItem {
   metadata?: any
   indexed: boolean
 }
-
-
 export default function AdminFilesPage() {
   const { token, user } = useAuth()
   const { t } = useTranslation()
@@ -115,7 +110,6 @@ export default function AdminFilesPage() {
   // Multi-select state
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
-
   const fetchFiles = useCallback(async () => {
     if (!token) return
     
@@ -141,19 +135,15 @@ export default function AdminFilesPage() {
       setLoading(false)
     }
   }, [token])
-
   useEffect(() => {
     fetchFiles()
   }, [fetchFiles])
-
   // Filter files based on search query
   const filteredFiles = files.filter(file =>
     file.filename.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
   const handleFileUpload = async () => {
     if (!uploadedFiles.length || !token) return
-
     setUploading(true)
     const uploadPromises = uploadedFiles.map(async (file) => {
       const formData = new FormData()
@@ -167,7 +157,6 @@ export default function AdminFilesPage() {
           },
           body: formData,
         })
-
         if (response.ok) {
           toast.success(`Uploaded ${file.name}`)
         } else {
@@ -177,23 +166,19 @@ export default function AdminFilesPage() {
         toast.error(`Failed to upload ${file.name}`)
       }
     })
-
     await Promise.all(uploadPromises)
     setUploadedFiles([])
     setUploading(false)
     fetchFiles()
   }
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(true)
   }
-
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
   }
-
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
@@ -201,7 +186,6 @@ export default function AdminFilesPage() {
     const droppedFiles = Array.from(e.dataTransfer.files)
     setUploadedFiles(prev => [...prev, ...droppedFiles])
   }
-
   const handleDeleteFile = async () => {
     if (!fileToDelete || !token) return
     
@@ -227,7 +211,6 @@ export default function AdminFilesPage() {
     }
     setFileToDelete(null)
   }
-
   // Multi-select functions
   const handleFileSelect = (fileId: number, event: React.MouseEvent) => {
     event.stopPropagation()
@@ -239,7 +222,6 @@ export default function AdminFilesPage() {
     }
     setSelectedFiles(newSelected)
   }
-
   const handleSelectAll = () => {
     if (selectedFiles.size === filteredFiles.length) {
       setSelectedFiles(new Set())
@@ -247,7 +229,6 @@ export default function AdminFilesPage() {
       setSelectedFiles(new Set(filteredFiles.map(f => f.id!).filter(id => id !== undefined)))
     }
   }
-
   const handleBulkDelete = async () => {
     if (selectedFiles.size === 0 || !token) return
     
@@ -273,10 +254,8 @@ export default function AdminFilesPage() {
       toast.error(t('files.failedToDeleteSomeFiles'))
     }
   }
-
   const handleEditMetadata = async () => {
     if (!editingFile) return
-
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'}/files/${editingFile.filename}/metadata`, {
         method: "PUT",
@@ -288,7 +267,6 @@ export default function AdminFilesPage() {
           metadata: editMetadata ? JSON.parse(editMetadata) : {}
         }),
       })
-
       if (response.ok) {
         toast.success(t('files.fileMetadataUpdated'))
         fetchFiles()
@@ -302,7 +280,6 @@ export default function AdminFilesPage() {
       toast.error("Failed to update metadata")
     }
   }
-
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes"
     const k = 1024
@@ -310,11 +287,9 @@ export default function AdminFilesPage() {
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
   }
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString() + " " + new Date(dateString).toLocaleTimeString()
   }
-
   const getFileIcon = (contentType: string) => {
     if (contentType.startsWith("image/")) return <Image className="h-4 w-4" />
     if (contentType.includes("pdf")) return <FileText className="h-4 w-4" />
@@ -322,10 +297,8 @@ export default function AdminFilesPage() {
     if (contentType.includes("zip") || contentType.includes("archive")) return <FileArchive className="h-4 w-4" />
     return <File className="h-4 w-4" />
   }
-
   const totalSize = files.reduce((acc, file) => acc + file.size, 0)
   const indexedCount = files.filter(file => file.indexed).length
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('fileManagement.title') }]} />
@@ -336,7 +309,6 @@ export default function AdminFilesPage() {
             {t('fileManagement.uploadViewAndManageAllDocuments')}
           </p>
         </div>
-
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -349,7 +321,6 @@ export default function AdminFilesPage() {
               <p className="text-xs text-muted-foreground">{t('fileManagement.documentsUploaded')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('fileManagement.totalSize')}</CardTitle>
@@ -360,7 +331,6 @@ export default function AdminFilesPage() {
               <p className="text-xs text-muted-foreground">{t('fileManagement.storageUsed')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('fileManagement.indexed')}</CardTitle>
@@ -371,7 +341,6 @@ export default function AdminFilesPage() {
               <p className="text-xs text-muted-foreground">{t('fileManagement.searchableFiles')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('fileManagement.uploadProgress')}</CardTitle>
@@ -383,7 +352,6 @@ export default function AdminFilesPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Upload Section */}
         <Card>
           <CardHeader>
@@ -446,7 +414,6 @@ export default function AdminFilesPage() {
                   )}
                 </div>
               </div>
-
               {uploadedFiles.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">{t('fileManagement.selectedFiles', { count: uploadedFiles.length })}:</h4>
@@ -471,7 +438,6 @@ export default function AdminFilesPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Files List */}
         <Card>
           <CardHeader>
@@ -715,7 +681,6 @@ export default function AdminFilesPage() {
             )}
           </CardContent>
         </Card>
-
         {/* File Viewer Dialog */}
         <UnifiedFileReader
           file={selectedFile}
@@ -723,7 +688,6 @@ export default function AdminFilesPage() {
           open={!!selectedFile}
           onOpenChange={(open) => !open && setSelectedFile(null)}
         />
-
         {/* Edit Metadata Dialog */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="max-w-2xl">
@@ -755,7 +719,6 @@ export default function AdminFilesPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
@@ -773,7 +736,6 @@ export default function AdminFilesPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
         {/* Bulk Delete Confirmation Dialog */}
         <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
           <AlertDialogContent>

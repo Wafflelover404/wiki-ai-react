@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi, filesApi, dashboardApi } from "@/lib/api"
@@ -37,7 +37,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { useTranslation } from "@/src/i18n"
-
 interface Quiz {
   id: string
   title: string
@@ -51,7 +50,6 @@ interface Quiz {
   updated_at: string
   organization_id: string
 }
-
 interface Question {
   id: string
   type: "multiple-choice" | "true-false" | "text"
@@ -61,7 +59,6 @@ interface Question {
   explanation?: string
   points: number
 }
-
 interface QuizStats {
   total_submissions: number
   pass_rate: number
@@ -74,7 +71,6 @@ interface QuizStats {
     submitted_at: string
   }>
 }
-
 interface QuizFormData {
   title: string
   description: string
@@ -84,7 +80,6 @@ interface QuizFormData {
   passing_score: number
   questions: Question[]
 }
-
 export default function AdminQuizzesPage() {
   const { token, user } = useAuth()
   const { t } = useTranslation()
@@ -108,11 +103,9 @@ export default function AdminQuizzesPage() {
     passing_score: 70,
     questions: []
   })
-
   useEffect(() => {
     fetchQuizzes()
   }, [])
-
   const fetchQuizzes = async () => {
     try {
       setLoading(true)
@@ -127,7 +120,6 @@ export default function AdminQuizzesPage() {
       setLoading(false)
     }
   }
-
   const fetchQuizStats = async (quizId: string) => {
     try {
       if (!token) return
@@ -145,7 +137,6 @@ export default function AdminQuizzesPage() {
       setLoading(false)
     }
   }
-
   const createQuiz = async () => {
     try {
       if (!token) return
@@ -216,7 +207,6 @@ export default function AdminQuizzesPage() {
       toast.error("Failed to create quiz")
     }
   }
-
   const updateQuiz = async () => {
     if (!selectedQuiz || !token) return
     
@@ -273,7 +263,6 @@ export default function AdminQuizzesPage() {
       toast.error("Failed to update quiz")
     }
   }
-
   const deleteQuiz = async (quizId: string) => {
     if (!confirm("Are you sure you want to delete this quiz?") || !token) return
     
@@ -287,13 +276,11 @@ export default function AdminQuizzesPage() {
       toast.error("Failed to delete quiz")
     }
   }
-
   const generateQuizFromAI = async () => {
     // First fetch available files and show selection dialog
     await fetchFiles()
     setShowFileSelectDialog(true)
   }
-
   const fetchFiles = async () => {
     try {
       if (!token) return
@@ -305,7 +292,6 @@ export default function AdminQuizzesPage() {
       toast.error("Failed to fetch files")
     }
   }
-
   const generateQuizFromSelectedFile = async () => {
     if (!selectedFile || !token) {
       toast.error("Please select a file first")
@@ -423,7 +409,6 @@ export default function AdminQuizzesPage() {
       setGeneratingQuiz(false)
     }
   }
-
   const addQuestion = () => {
     const newQuestion: Question = {
       id: Date.now().toString(),
@@ -440,7 +425,6 @@ export default function AdminQuizzesPage() {
       questions: [...prev.questions, newQuestion]
     }))
   }
-
   const updateQuestion = (index: number, field: keyof Question, value: any) => {
     setFormData(prev => ({
       ...prev,
@@ -449,14 +433,12 @@ export default function AdminQuizzesPage() {
       )
     }))
   }
-
   const removeQuestion = (index: number) => {
     setFormData(prev => ({
       ...prev,
       questions: prev.questions.filter((_, i) => i !== index)
     }))
   }
-
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "easy": return "bg-green-100 text-green-800"
@@ -465,7 +447,6 @@ export default function AdminQuizzesPage() {
       default: return "bg-gray-100 text-gray-800"
     }
   }
-
   if (loading) {
     return (
       <>
@@ -476,7 +457,6 @@ export default function AdminQuizzesPage() {
       </>
     )
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('quizManagement.title') }]} />
@@ -540,7 +520,6 @@ export default function AdminQuizzesPage() {
                       placeholder={t('quizManagement.enterQuizDescription')}
                     />
                   </div>
-
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="difficulty">{t('quizManagement.difficulty')}</Label>
@@ -579,9 +558,7 @@ export default function AdminQuizzesPage() {
                       />
                     </div>
                   </div>
-
                   <Separator />
-
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold">{t('quizManagement.questions')}</h3>
@@ -590,7 +567,6 @@ export default function AdminQuizzesPage() {
                         {t('quizManagement.addQuestion')}
                       </Button>
                     </div>
-
                     <ScrollArea className="h-64">
                       <div className="space-y-4">
                         {formData.questions.map((question, index) => (
@@ -607,7 +583,6 @@ export default function AdminQuizzesPage() {
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
                                 </div>
-
                                 <div className="grid grid-cols-2 gap-4">
                                   <div className="space-y-2">
                                     <Label>{t('quizManagement.questionType')}</Label>
@@ -636,7 +611,6 @@ export default function AdminQuizzesPage() {
                                     />
                                   </div>
                                 </div>
-
                                 <div className="space-y-2">
                                   <Label>{t('quizManagement.question')}</Label>
                                   <Textarea
@@ -645,7 +619,6 @@ export default function AdminQuizzesPage() {
                                     placeholder={t('quizManagement.enterYourQuestion')}
                                   />
                                 </div>
-
                                 {question.type === "multiple-choice" && (
                                   <div className="space-y-2">
                                     <Label>{t('quizManagement.options')}</Label>
@@ -671,7 +644,6 @@ export default function AdminQuizzesPage() {
                                     ))}
                                   </div>
                                 )}
-
                                 {question.type === "true-false" && (
                                   <div className="space-y-2">
                                     <Label>{t('quizManagement.correctAnswer')}</Label>
@@ -689,7 +661,6 @@ export default function AdminQuizzesPage() {
                                     </Select>
                                   </div>
                                 )}
-
                                 {question.type === "text" && (
                                   <div className="space-y-2">
                                     <Label>{t('quizManagement.correctAnswer')}</Label>
@@ -700,7 +671,6 @@ export default function AdminQuizzesPage() {
                                     />
                                   </div>
                                 )}
-
                                 <div className="space-y-2">
                                   <Label>{t('quizManagement.explanationOptional')}</Label>
                                   <Textarea
@@ -727,7 +697,6 @@ export default function AdminQuizzesPage() {
             </Dialog>
           </div>
         </div>
-
         {/* Quiz Stats Overview */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -740,7 +709,6 @@ export default function AdminQuizzesPage() {
               <p className="text-xs text-muted-foreground">{t('quizManagement.activeQuizzes')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('quizManagement.totalQuestions')}</CardTitle>
@@ -753,7 +721,6 @@ export default function AdminQuizzesPage() {
               <p className="text-xs text-muted-foreground">{t('quizManagement.questionsAcrossAllQuizzes')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('quizManagement.categories')}</CardTitle>
@@ -766,7 +733,6 @@ export default function AdminQuizzesPage() {
               <p className="text-xs text-muted-foreground">{t('quizManagement.quizCategories')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('quizManagement.avgDifficulty')}</CardTitle>
@@ -783,7 +749,6 @@ export default function AdminQuizzesPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Quiz List */}
         <div className="grid gap-4">
           {quizzes.map((quiz) => {
@@ -887,7 +852,6 @@ export default function AdminQuizzesPage() {
             )
           })}
         </div>
-
         {/* Edit Quiz Dialog */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -925,7 +889,6 @@ export default function AdminQuizzesPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
               </div>
-
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-difficulty">{t('quizManagement.difficulty')}</Label>
@@ -973,7 +936,6 @@ export default function AdminQuizzesPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
         {/* Stats Dialog */}
         <Dialog open={showStatsDialog} onOpenChange={setShowStatsDialog}>
           <DialogContent className="max-w-2xl">
@@ -1003,7 +965,6 @@ export default function AdminQuizzesPage() {
                     </CardContent>
                   </Card>
                 </div>
-
                 <div className="space-y-2">
                   <h3 className="font-semibold">{t('quizManagement.recentSubmissions')}</h3>
                   <ScrollArea className="h-64">
@@ -1033,7 +994,6 @@ export default function AdminQuizzesPage() {
             )}
           </DialogContent>
         </Dialog>
-
         {/* File Selection Dialog for AI Quiz Generation */}
         <Dialog open={showFileSelectDialog} onOpenChange={setShowFileSelectDialog}>
           <DialogContent className="max-w-2xl">

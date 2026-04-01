@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { pluginsApi } from "@/lib/api"
@@ -32,13 +32,11 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ShoppingCart, Key, Plus, Copy, Trash2, Loader2, CheckCircle, XCircle, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
-
 interface PluginToken {
   id: string
   name: string
   created_at: string
 }
-
 export default function PluginsPage() {
   const { token } = useAuth()
   const [isEnabled, setIsEnabled] = useState(false)
@@ -52,18 +50,14 @@ export default function PluginsPage() {
   const [deleteTokenId, setDeleteTokenId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-
   const fetchStatus = useCallback(async () => {
     if (!token) return
-
     try {
       const [statusRes, tokensRes] = await Promise.all([pluginsApi.status(token), pluginsApi.listTokens(token)])
-
       if (statusRes.status === "success" && statusRes.response) {
         setIsEnabled(statusRes.response.enabled)
         setStatus(statusRes.response.status)
       }
-
       if (tokensRes.status === "success" && tokensRes.response) {
         setTokens(tokensRes.response.tokens || [])
       }
@@ -73,18 +67,14 @@ export default function PluginsPage() {
       setIsLoading(false)
     }
   }, [token])
-
   useEffect(() => {
     fetchStatus()
   }, [fetchStatus])
-
   const handleToggle = async (enabled: boolean) => {
     if (!token) return
-
     setIsToggling(true)
     try {
       const result = enabled ? await pluginsApi.enable(token) : await pluginsApi.disable(token)
-
       if (result.status === "success") {
         setIsEnabled(enabled)
         toast.success(`OpenCart plugin ${enabled ? "enabled" : "disabled"}`)
@@ -99,14 +89,11 @@ export default function PluginsPage() {
       setIsToggling(false)
     }
   }
-
   const handleCreateToken = async () => {
     if (!token || !newTokenName.trim()) return
-
     setIsCreating(true)
     try {
       const result = await pluginsApi.createToken(token, newTokenName.trim())
-
       if (result.status === "success" && result.response) {
         setNewToken(result.response.token)
         toast.success("Token created successfully")
@@ -121,14 +108,11 @@ export default function PluginsPage() {
       setIsCreating(false)
     }
   }
-
   const handleDeleteToken = async () => {
     if (!token || !deleteTokenId) return
-
     setIsDeleting(true)
     try {
       const result = await pluginsApi.deleteToken(token, deleteTokenId)
-
       if (result.status === "success") {
         toast.success("Token deleted successfully")
         setDeleteTokenId(null)
@@ -143,18 +127,15 @@ export default function PluginsPage() {
       setIsDeleting(false)
     }
   }
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast.success("Copied to clipboard")
   }
-
   const closeDialog = () => {
     setIsDialogOpen(false)
     setNewTokenName("")
     setNewToken(null)
   }
-
   if (isLoading) {
     return (
       <>
@@ -165,7 +146,6 @@ export default function PluginsPage() {
       </>
     )
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "OpenCart Plugins" }]} />
@@ -174,7 +154,6 @@ export default function PluginsPage() {
           <h1 className="text-2xl font-bold tracking-tight">OpenCart Integration</h1>
           <p className="text-muted-foreground">Manage your OpenCart plugin and API tokens</p>
         </div>
-
         {/* Plugin Status Card */}
         <Card>
           <CardHeader>
@@ -227,7 +206,6 @@ export default function PluginsPage() {
             </Button>
           </CardFooter>
         </Card>
-
         {/* API Tokens Card */}
         <Card>
           <CardHeader>
@@ -253,7 +231,6 @@ export default function PluginsPage() {
                     <DialogTitle>Create API Token</DialogTitle>
                     <DialogDescription>Create a new token for OpenCart integration</DialogDescription>
                   </DialogHeader>
-
                   {newToken ? (
                     <div className="space-y-4">
                       <div className="p-4 rounded-lg bg-success/10 border border-success/20">
@@ -349,7 +326,6 @@ export default function PluginsPage() {
             )}
           </CardContent>
         </Card>
-
         {/* Delete Token Confirmation */}
         <AlertDialog open={!!deleteTokenId} onOpenChange={() => setDeleteTokenId(null)}>
           <AlertDialogContent>

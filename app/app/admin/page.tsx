@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { metricsApi, reportsApi, filesApi, adminApi } from "@/lib/api"
@@ -34,21 +34,18 @@ import {
 } from "recharts"
 import { redirect } from "next/navigation"
 import { useTranslation } from "@/src/i18n"
-
 interface MetricsSummary {
   total_queries: number
   successful_queries: number
   failed_queries: number
   avg_response_time: number
 }
-
 interface Report {
   id: string
   question?: string
   feedback?: string
   timestamp: string
 }
-
 export default function AdminDashboardPage() {
   const { token, isAdmin, isLoading: authLoading } = useAuth()
   const { t } = useTranslation()
@@ -61,19 +58,15 @@ export default function AdminDashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState(7)
   const [isLoading, setIsLoading] = useState(true)
   const [isVolumeLoading, setIsVolumeLoading] = useState(false)
-
   // Add a separate state to trigger re-fetch when period changes
   const [refreshKey, setRefreshKey] = useState(0)
-
   const handlePeriodChange = (newPeriod: number) => {
     setSelectedPeriod(newPeriod);
     setRefreshKey(prev => prev + 1); // Force re-fetch
     setIsVolumeLoading(true); // Show loading state for volume data
   }
-
   const fetchData = useCallback(async () => {
     if (!token || !isAdmin) return
-
     try {
       // Fetch basic admin data and volume data
       const [metricsRes, filesRes, usersRes, volumeRes] = await Promise.all([
@@ -117,30 +110,24 @@ export default function AdminDashboardPage() {
       setIsLoading(false)
     }
   }, [token, isAdmin, selectedPeriod])
-
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       redirect("/app")
     }
   }, [authLoading, isAdmin])
-
   useEffect(() => {
     if (isAdmin) {
       fetchData()
     }
   }, [isAdmin, selectedPeriod, refreshKey, fetchData])
-
   // Add 30-second polling for real-time updates
   useEffect(() => {
     if (!isAdmin || !token) return
-
     const interval = setInterval(() => {
       fetchData()
     }, 30000) // 30 seconds
-
     return () => clearInterval(interval)
   }, [isAdmin, token, fetchData])
-
   if (authLoading || isLoading) {
     return (
       <>
@@ -151,25 +138,20 @@ export default function AdminDashboardPage() {
       </>
     )
   }
-
   if (!isAdmin) {
     return null
   }
-
   const successRate = metrics ? Math.round((metrics.successful_queries / (metrics.total_queries || 1)) * 100) : 0
   const failureRate = 100 - successRate
-
   const pieData = [
     { name: t('admin.successful'), value: metrics?.successful_queries || 0, color: "var(--color-success)" },
     { name: t('admin.failed'), value: metrics?.failed_queries || 0, color: "var(--color-destructive)" },
   ]
-
   // Transform volume data for chart - only show total queries
   const chartData = volumeData.map(day => ({
     date: day.date,
     queries: day.queries,
   }))
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: t('admin.adminDashboard') }]} />
@@ -178,7 +160,6 @@ export default function AdminDashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t('admin.title')}</h1>
           <p className="text-muted-foreground">{t('admin.systemAnalyticsAndPerformanceMonitoring')}</p>
         </div>
-
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -191,7 +172,6 @@ export default function AdminDashboardPage() {
               <p className="text-xs text-muted-foreground">{t('admin.queriesProcessedToday')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('admin.successRate')}</CardTitle>
@@ -204,7 +184,6 @@ export default function AdminDashboardPage() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('admin.avgResponse')}</CardTitle>
@@ -215,7 +194,6 @@ export default function AdminDashboardPage() {
               <p className="text-xs text-muted-foreground">{t('admin.averageLatency')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('admin.activeUsers')}</CardTitle>
@@ -227,7 +205,6 @@ export default function AdminDashboardPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
@@ -290,7 +267,6 @@ export default function AdminDashboardPage() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>{t('admin.queryDistribution')}</CardTitle>
@@ -336,7 +312,6 @@ export default function AdminDashboardPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Reports */}
         <Card>
           <CardHeader>
@@ -363,7 +338,6 @@ export default function AdminDashboardPage() {
                 <TabsTrigger value="auto">{t('admin.autoReports')} ({autoReports.length})</TabsTrigger>
                 <TabsTrigger value="manual">{t('admin.manualReports')} ({manualReports.length})</TabsTrigger>
               </TabsList>
-
               <TabsContent value="auto" className="mt-4">
                 <ScrollArea className="h-[300px]">
                   {autoReports.length > 0 ? (
@@ -394,7 +368,6 @@ export default function AdminDashboardPage() {
                   )}
                 </ScrollArea>
               </TabsContent>
-
               <TabsContent value="manual" className="mt-4">
                 <ScrollArea className="h-[300px]">
                   {manualReports.length > 0 ? (
@@ -428,7 +401,6 @@ export default function AdminDashboardPage() {
             </Tabs>
           </CardContent>
         </Card>
-
         {/* Quick Stats */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
@@ -444,7 +416,6 @@ export default function AdminDashboardPage() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
@@ -458,7 +429,6 @@ export default function AdminDashboardPage() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">

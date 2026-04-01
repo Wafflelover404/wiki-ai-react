@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi, filesApi, apiKeysApi, pluginsApi, catalogsApi } from "@/lib/api"
@@ -56,21 +56,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { redirect } from "next/navigation"
-
 interface User {
   username: string
   role: string
   last_login?: string
   allowed_files?: string[]
 }
-
 interface File {
   filename: string
   original_filename?: string
   size?: number
   uploaded_at?: string
 }
-
 interface ApiKey {
   id: string
   key_id: string
@@ -78,7 +75,6 @@ interface ApiKey {
   created_at: string
   last_used?: string
 }
-
 interface Integration {
   id: string
   name: string
@@ -87,12 +83,10 @@ interface Integration {
   description?: string
   config?: Record<string, any>
 }
-
 export default function AdminManagementPage() {
   const { token, isAdmin, isLoading: authLoading } = useAuth()
   const [activeTab, setActiveTab] = useState("users")
   const [isLoading, setIsLoading] = useState(true)
-
   // Users state
   const [users, setUsers] = useState<User[]>([])
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false)
@@ -100,39 +94,32 @@ export default function AdminManagementPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [newUser, setNewUser] = useState({ username: "", password: "", role: "user" })
   const [showPassword, setShowPassword] = useState(false)
-
   // Files state
   const [files, setFiles] = useState<File[]>([])
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-
   // API Keys state
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
   const [isCreateKeyOpen, setIsCreateKeyOpen] = useState(false)
   const [newKeyName, setNewKeyName] = useState("")
   const [createdKey, setCreatedKey] = useState<string | null>(null)
-
   // Integrations state
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [catalogs, setCatalogs] = useState<any[]>([])
   const [pluginsEnabled, setPluginsEnabled] = useState(false)
-
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       redirect("/app")
     }
   }, [authLoading, isAdmin])
-
   useEffect(() => {
     if (isAdmin) {
       loadData()
     }
   }, [isAdmin])
-
   const loadData = async () => {
     if (!token) return
-
     try {
       const [usersRes, filesRes, keysRes, catalogsRes, pluginsRes] = await Promise.all([
         adminApi.listAccounts(token),
@@ -141,7 +128,6 @@ export default function AdminManagementPage() {
         catalogsApi.list(token),
         pluginsApi.status(token),
       ])
-
       if (usersRes.status === "success") {
         setUsers(usersRes.response?.accounts || [])
       }
@@ -157,7 +143,6 @@ export default function AdminManagementPage() {
       if (pluginsRes.status === "success") {
         setPluginsEnabled(pluginsRes.response?.enabled || false)
       }
-
       // Build integrations list
       const integrationList: Integration[] = [
         ...(catalogsRes.response?.catalogs?.map((catalog: any) => ({
@@ -183,11 +168,9 @@ export default function AdminManagementPage() {
       setIsLoading(false)
     }
   }
-
   // User management functions
   const handleCreateUser = async () => {
     if (!token || !newUser.username || !newUser.password) return
-
     try {
       const result = await adminApi.createUser(token, newUser)
       if (result.status === "success") {
@@ -202,10 +185,8 @@ export default function AdminManagementPage() {
       toast.error("Failed to create user")
     }
   }
-
   const handleEditUser = async () => {
     if (!token || !selectedUser) return
-
     try {
       const result = await adminApi.editUser(token, {
         username: selectedUser.username,
@@ -223,10 +204,8 @@ export default function AdminManagementPage() {
       toast.error("Failed to update user")
     }
   }
-
   const handleDeleteUser = async (username: string) => {
     if (!token || !confirm(`Are you sure you want to delete user "${username}"?`)) return
-
     try {
       const result = await adminApi.deleteUser(token, username)
       if (result.status === "success") {
@@ -239,11 +218,9 @@ export default function AdminManagementPage() {
       toast.error("Failed to delete user")
     }
   }
-
   // File management functions
   const handleFileUpload = async () => {
     if (!token || !selectedFiles || selectedFiles.length === 0) return
-
     setIsUploading(true)
     try {
       const filesArray = Array.from(selectedFiles)
@@ -261,10 +238,8 @@ export default function AdminManagementPage() {
       setIsUploading(false)
     }
   }
-
   const handleDeleteFile = async (filename: string) => {
     if (!token || !confirm(`Are you sure you want to delete "${filename}"?`)) return
-
     try {
       const result = await filesApi.deleteByFilename(token, filename)
       if (result.status === "success") {
@@ -277,11 +252,9 @@ export default function AdminManagementPage() {
       toast.error("Failed to delete file")
     }
   }
-
   // API Key management functions
   const handleCreateApiKey = async () => {
     if (!token || !newKeyName) return
-
     try {
       const result = await apiKeysApi.create(token, newKeyName)
       if (result.status === "success") {
@@ -296,10 +269,8 @@ export default function AdminManagementPage() {
       toast.error("Failed to create API key")
     }
   }
-
   const handleDeleteApiKey = async (keyId: string) => {
     if (!token || !confirm("Are you sure you want to delete this API key?")) return
-
     try {
       const result = await apiKeysApi.delete(token, keyId)
       if (result.status === "success") {
@@ -312,16 +283,13 @@ export default function AdminManagementPage() {
       toast.error("Failed to delete API key")
     }
   }
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast.success("Copied to clipboard")
   }
-
   // Integration management functions
   const togglePlugin = async () => {
     if (!token) return
-
     try {
       const result = pluginsEnabled
         ? await pluginsApi.disable(token)
@@ -338,10 +306,8 @@ export default function AdminManagementPage() {
       toast.error("Failed to toggle plugin")
     }
   }
-
   const deleteCatalog = async (catalogId: string) => {
     if (!token || !confirm("Are you sure you want to delete this catalog?")) return
-
     try {
       const result = await catalogsApi.delete(token, catalogId)
       if (result.status === "success") {
@@ -354,7 +320,6 @@ export default function AdminManagementPage() {
       toast.error("Failed to delete catalog")
     }
   }
-
   if (authLoading || isLoading) {
     return (
       <>
@@ -365,16 +330,13 @@ export default function AdminManagementPage() {
       </>
     )
   }
-
   if (!isAdmin) {
     return null
   }
-
   const filteredFiles = files.filter(file =>
     file.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
     file.original_filename?.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "Admin Management" }]} />
@@ -391,7 +353,6 @@ export default function AdminManagementPage() {
             </Button>
           </div>
         </div>
-
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -404,7 +365,6 @@ export default function AdminManagementPage() {
               <p className="text-xs text-muted-foreground">Registered accounts</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Documents</CardTitle>
@@ -415,7 +375,6 @@ export default function AdminManagementPage() {
               <p className="text-xs text-muted-foreground">Uploaded files</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">API Keys</CardTitle>
@@ -426,7 +385,6 @@ export default function AdminManagementPage() {
               <p className="text-xs text-muted-foreground">Active keys</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Integrations</CardTitle>
@@ -438,7 +396,6 @@ export default function AdminManagementPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Management Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -447,7 +404,6 @@ export default function AdminManagementPage() {
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
           </TabsList>
-
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-6">
             <Card>
@@ -577,7 +533,6 @@ export default function AdminManagementPage() {
                 </ScrollArea>
               </CardContent>
             </Card>
-
             {/* Edit User Dialog */}
             <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
               <DialogContent>
@@ -617,7 +572,6 @@ export default function AdminManagementPage() {
               </DialogContent>
             </Dialog>
           </TabsContent>
-
           {/* Files Tab */}
           <TabsContent value="files" className="space-y-6">
             <Card>
@@ -737,7 +691,6 @@ export default function AdminManagementPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* API Keys Tab */}
           <TabsContent value="api-keys" className="space-y-6">
             <Card>
@@ -845,7 +798,6 @@ export default function AdminManagementPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Integrations Tab */}
           <TabsContent value="integrations" className="space-y-6">
             <Card>

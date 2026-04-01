@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi, filesApi } from "@/lib/api"
@@ -45,7 +45,6 @@ import { Users, Plus, Search, MoreVertical, Edit, Trash2, Loader2, Shield, User,
 import { toast } from "sonner"
 import { redirect } from "next/navigation"
 import { useTranslation } from "@/src/i18n"
-
 interface UserAccount {
   id?: number
   username: string
@@ -54,7 +53,6 @@ interface UserAccount {
   allowed_files?: string[]
   created_at?: string
 }
-
 export default function UsersPage() {
   const { token, isAdmin, isLoading: authLoading, user: currentUser } = useAuth()
   const { t } = useTranslation()
@@ -63,7 +61,6 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [allFiles, setAllFiles] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
-
   // Create user state
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [newUsername, setNewUsername] = useState("")
@@ -74,7 +71,6 @@ export default function UsersPage() {
   const [createError, setCreateError] = useState("")
   const createDialogRef = useRef<HTMLDivElement>(null)
   const editDialogRef = useRef<HTMLDivElement>(null)
-
   // Create invite state
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState("")
@@ -84,26 +80,21 @@ export default function UsersPage() {
   const [isCreatingInvite, setIsCreatingInvite] = useState(false)
   const [inviteError, setInviteError] = useState("")
   const [createdInvite, setCreatedInvite] = useState<any>(null)
-
   // Edit user state
   const [editUser, setEditUser] = useState<UserAccount | null>(null)
   const [editRole, setEditRole] = useState("")
   const [editPermittedFiles, setEditPermittedFiles] = useState<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
-
   // Delete user state
   const [deleteUsername, setDeleteUsername] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-
   const fetchData = useCallback(async () => {
     if (!token) return
-
     try {
       const [usersRes, filesRes] = await Promise.all([
         adminApi.listAccounts(token), 
         filesApi.list(token)
       ])
-
       if (usersRes.status === "success" && usersRes.response) {
         setUsers(usersRes.response.accounts || [])
         setFilteredUsers(usersRes.response.accounts || [])
@@ -119,30 +110,24 @@ export default function UsersPage() {
       setIsLoading(false)
     }
   }, [token])
-
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       redirect("/app")
     }
   }, [authLoading, isAdmin])
-
   useEffect(() => {
     if (isAdmin) {
       fetchData()
     }
   }, [isAdmin, fetchData])
-
   // Add 30-second polling for real-time updates
   useEffect(() => {
     if (!isAdmin || !token) return
-
     const interval = setInterval(() => {
       fetchData()
     }, 30000) // 30 seconds
-
     return () => clearInterval(interval)
   }, [isAdmin, token, fetchData])
-
   useEffect(() => {
     if (searchQuery) {
       const filtered = users.filter(
@@ -155,18 +140,15 @@ export default function UsersPage() {
       setFilteredUsers(users)
     }
   }, [searchQuery, users])
-
   const handleCreateUser = async () => {
     if (!token || !newUsername.trim() || !newPassword.trim()) {
       setCreateError(t('users.usernameAndPasswordAreRequired'))
       return
     }
-
     if (newPassword.length < 6) {
       setCreateError("Password must be at least 6 characters long")
       return
     }
-
     setIsCreating(true)
     setCreateError("")
     try {
@@ -176,7 +158,6 @@ export default function UsersPage() {
         role: newRole,
         allowed_files: newAllowedFiles,
       })
-
       if (result.status === "success") {
         toast.success(t('users.userCreatedSuccessfully'))
         setIsCreateOpen(false)
@@ -198,10 +179,8 @@ export default function UsersPage() {
       setIsCreating(false)
     }
   }
-
   const handleCreateInvite = async () => {
     if (!token) return
-
     setIsCreatingInvite(true)
     setInviteError("")
     try {
@@ -211,7 +190,6 @@ export default function UsersPage() {
         expires_in_days: inviteExpiresInDays,
         message: inviteMessage.trim() || undefined,
       })
-
       if (result.status === "success" && result.response) {
         toast.success(t('users.inviteLinkCreatedSuccessfully'))
         // Use actual site URL instead of backend-generated localhost link
@@ -236,21 +214,17 @@ export default function UsersPage() {
       setIsCreatingInvite(false)
     }
   }
-
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(link)
     toast.success("Invite link copied to clipboard")
   }
-
   const handleEditUser = (user: UserAccount) => {
     setEditUser(user)
     setEditRole(user.role)
     setEditPermittedFiles(user.allowed_files || [])
   }
-
   const handleSaveUser = async () => {
     if (!token || !editUser) return
-
     setIsSaving(true)
     try {
       const result = await adminApi.editUser(token, {
@@ -258,7 +232,6 @@ export default function UsersPage() {
         role: editRole,
         allowed_files: editPermittedFiles,
       })
-
       if (result.status === "success") {
         toast.success("User updated successfully")
         setEditUser(null)
@@ -273,14 +246,11 @@ export default function UsersPage() {
       setIsSaving(false)
     }
   }
-
   const handleDeleteUser = async () => {
     if (!token || !deleteUsername) return
-
     setIsDeleting(true)
     try {
       const result = await adminApi.deleteUser(token, deleteUsername)
-
       if (result.status === "success") {
         toast.success("User deleted successfully")
         setDeleteUsername(null)
@@ -295,7 +265,6 @@ export default function UsersPage() {
       setIsDeleting(false)
     }
   }
-
   const toggleFilePermission = (filename: string, isCreating = false) => {
     if (isCreating) {
       setNewAllowedFiles((prev) =>
@@ -307,7 +276,6 @@ export default function UsersPage() {
       )
     }
   }
-
   const toggleAllFiles = (isCreating = false) => {
     if (isCreating) {
       if (newAllowedFiles.length === allFiles.length) {
@@ -323,7 +291,6 @@ export default function UsersPage() {
       }
     }
   }
-
   if (authLoading || isLoading) {
     return (
       <>
@@ -334,11 +301,9 @@ export default function UsersPage() {
       </>
     )
   }
-
   if (!isAdmin) {
     return null
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: t('nav.admin'), href: "/app/admin" }, { label: t('userManagement.title') }]} />
@@ -359,7 +324,6 @@ export default function UsersPage() {
             </Button>
           </div>
         </div>
-
         {/* Create User Modal */}
         {isCreateOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -503,7 +467,6 @@ export default function UsersPage() {
             </div>
           </div>
         )}
-
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -516,7 +479,6 @@ export default function UsersPage() {
           </div>
           <Badge variant="secondary">{filteredUsers.length} {t('userManagement.users2')}</Badge>
         </div>
-
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -600,7 +562,6 @@ export default function UsersPage() {
             </Table>
           </CardContent>
         </Card>
-
         {/* Edit User Modal */}
         {editUser && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -716,7 +677,6 @@ export default function UsersPage() {
             </div>
           </div>
         )}
-
         {/* Create Invite Modal */}
         {isInviteOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -860,7 +820,6 @@ export default function UsersPage() {
             </div>
           </div>
         )}
-
         {/* Created Invite Success Modal */}
         {createdInvite && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -921,7 +880,6 @@ export default function UsersPage() {
             </div>
           </div>
         )}
-
         {/* Delete User Confirmation */}
         <AlertDialog open={!!deleteUsername} onOpenChange={() => setDeleteUsername(null)}>
           <AlertDialogContent>

@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { filesApi, metricsApi, reportsApi } from "@/lib/api"
@@ -32,7 +32,6 @@ import {
 import { toast } from "sonner"
 import Link from "next/link"
 import { useTranslation } from "@/src/i18n"
-
 interface FileItem {
   name: string
   type: string
@@ -41,14 +40,12 @@ interface FileItem {
   tags?: string[]
   starred?: boolean
 }
-
 interface QuickStats {
   totalFiles: number
   recentUploads: number
   totalQueries: number
   avgResponseTime: number
 }
-
 export default function UserDashboard() {
   const { token, user } = useAuth()
   const { t } = useTranslation()
@@ -64,10 +61,8 @@ export default function UserDashboard() {
     totalQueries: 0,
     avgResponseTime: 0,
   })
-
   const fetchFiles = async () => {
     if (!token) return
-
     try {
       const result = await filesApi.list(token)
       if (result.status === "success" && result.response) {
@@ -102,10 +97,8 @@ export default function UserDashboard() {
       setIsLoading(false)
     }
   }
-
   const fetchStats = async () => {
     if (!token) return
-
     try {
       const result = await metricsApi.summary(token, "24h", "user")
       if (result.status === "success" && result.response) {
@@ -120,44 +113,34 @@ export default function UserDashboard() {
       console.error("Failed to fetch stats:", error)
     }
   }
-
   useEffect(() => {
     fetchFiles()
     fetchStats()
   }, [token])
-
   // Add 30-second polling for real-time updates
   useEffect(() => {
     if (!token) return
-
     const interval = setInterval(() => {
       fetchFiles()
       fetchStats()
     }, 30000) // 30 seconds
-
     return () => clearInterval(interval)
   }, [token])
-
   useEffect(() => {
     let filtered = files
-
     if (searchQuery) {
       filtered = filtered.filter((file) =>
         file.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     }
-
     if (selectedTags.length > 0) {
       filtered = filtered.filter((file) =>
         selectedTags.some(tag => file.tags?.includes(tag))
       )
     }
-
     setFilteredFiles(filtered)
   }, [searchQuery, selectedTags, files])
-
   const allTags = Array.from(new Set(files.flatMap(file => file.tags || [])))
-
   const getFileIcon = (filename: string) => {
     const ext = filename.split(".").pop()?.toLowerCase()
     switch (ext) {
@@ -176,19 +159,16 @@ export default function UserDashboard() {
         return <FileText className="w-4 h-4 text-gray-400" />
     }
   }
-
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return t('dashboard.unknownSize')
     const sizes = ["B", "KB", "MB", "GB"]
     const i = Math.floor(Math.log(bytes) / Math.log(1024))
     return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
   }
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return t('dashboard.unknownDate')
     return new Date(dateString).toLocaleDateString()
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: t('dashboard.title') }]} />
@@ -204,7 +184,6 @@ export default function UserDashboard() {
             </p>
           </div>
         </div>
-
         {/* Quick Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -217,7 +196,6 @@ export default function UserDashboard() {
               <p className="text-xs text-muted-foreground">{t('dashboard2.inYourKnowledgeBase')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('dashboard2.recentUploads')}</CardTitle>
@@ -228,7 +206,6 @@ export default function UserDashboard() {
               <p className="text-xs text-muted-foreground">{t('dashboard2.last7Days')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('dashboard2.queriesMade')}</CardTitle>
@@ -239,7 +216,6 @@ export default function UserDashboard() {
               <p className="text-xs text-muted-foreground">{t('dashboard2.totalSearches')}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('dashboard2.responseTime')}</CardTitle>
@@ -251,7 +227,6 @@ export default function UserDashboard() {
             </CardContent>
           </Card>
         </div>
-
         {/* Quick Actions */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
@@ -269,7 +244,6 @@ export default function UserDashboard() {
               </CardContent>
             </Link>
           </Card>
-
           <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
             <Link href="/app/files">
               <CardContent className="p-6">
@@ -285,7 +259,6 @@ export default function UserDashboard() {
               </CardContent>
             </Link>
           </Card>
-
           <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
             <Link href="/app/catalogs">
               <CardContent className="p-6">
@@ -302,7 +275,6 @@ export default function UserDashboard() {
             </Link>
           </Card>
         </div>
-
         {/* Recent Files Section */}
         <Card>
           <CardHeader>
@@ -356,7 +328,6 @@ export default function UserDashboard() {
                 ))}
               </div>
             </div>
-
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

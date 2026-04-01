@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
@@ -31,7 +31,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
-
 interface SearchResult {
   id: string
   type: 'document' | 'product'
@@ -47,7 +46,6 @@ interface SearchResult {
   relevance?: 'high' | 'medium' | 'low'
   enhanced_context?: boolean
 }
-
 interface Message {
   id: string
   role: "user" | "assistant" | "sources" | "overview"
@@ -56,7 +54,6 @@ interface Message {
   searchResults?: SearchResult[]
   timestamp?: Date
 }
-
 export default function AdminSearchPage() {
   const { token, user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
@@ -76,9 +73,7 @@ export default function AdminSearchPage() {
   } | null>(null)
   const [showAiAgentHelp, setShowAiAgentHelp] = useState(false)
   const [availableFiles, setAvailableFiles] = useState<Array<{id: number, filename: string}>>([])
-
   const [isBatchLoading, setIsBatchLoading] = useState(false)
-
   const handleBatchOverview = async () => {
     const sourcesToProcess: { index: number; message: Message }[] = []
     
@@ -90,25 +85,19 @@ export default function AdminSearchPage() {
         }
       }
     })
-
     if (sourcesToProcess.length === 0) {
       toast.info("No new search results to analyze")
       return
     }
-
     setIsBatchLoading(true)
     try {
       if (!token) throw new Error("No token available")
-
       const queries = sourcesToProcess.map(s => s.message.content)
       const results = sourcesToProcess.map(s => s.message.searchResults)
-
       const response = await aiAgentApi.batchOverviews(token, queries, results)
-
       if (response.status === "success" && response.response?.overviews) {
         const newMessages = [...messages]
         const overviews = response.response.overviews
-
         for (let i = sourcesToProcess.length - 1; i >= 0; i--) {
           const { index } = sourcesToProcess[i]
           const overviewMsg: Message = {
@@ -121,7 +110,6 @@ export default function AdminSearchPage() {
           }
           newMessages.splice(index + 1, 0, overviewMsg)
         }
-
         setMessages(newMessages)
         toast.success(`Generated ${overviews.length} overviews`)
       } else {
@@ -133,20 +121,17 @@ export default function AdminSearchPage() {
       setIsBatchLoading(false)
     }
   }
-
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
-
   const handleAiAgentCommand = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!aiAgentInput.trim()) {
       toast.error("Please enter a command")
       return
     }
-
     setIsAiAgentLoading(true)
     setAiAgentOutput("Processing your command...")
     
@@ -215,7 +200,6 @@ export default function AdminSearchPage() {
       setIsAiAgentLoading(false)
     }
   }
-
   const loadAvailableFiles = async () => {
     if (!token) {
       toast.error("No token available")
@@ -235,7 +219,6 @@ export default function AdminSearchPage() {
       toast.error(error instanceof Error ? error.message : "Failed to load files")
     }
   }
-
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || !token || isLoading) return
@@ -265,7 +248,6 @@ export default function AdminSearchPage() {
                 }])
               }
               break;
-
             case 'immediate':
               let searchResults: SearchResult[] = []
               if (message.data && (message.data.snippets || message.data.results)) {
@@ -306,7 +288,6 @@ export default function AdminSearchPage() {
                 timestamp: new Date()
               }])
               break;
-
             case 'stream_token':
               console.log('Got token:', message.token);
               setActiveAnalysis(prev => {
@@ -323,7 +304,6 @@ export default function AdminSearchPage() {
                 };
               });
               break;
-
             case 'overview':
               const finalContent = aiAgentMode ? `🤖 **AI-Agent Analysis:** ${message.data}` : message.data;
               setActiveAnalysis(null)
@@ -337,12 +317,10 @@ export default function AdminSearchPage() {
                 }]
               })
               break;
-
             case 'error':
               setActiveAnalysis(null)
               toast.error(message.message || "Search error")
               break;
-
             case 'complete':
               setActiveAnalysis(null)
               break;
@@ -360,7 +338,6 @@ export default function AdminSearchPage() {
       setIsLoading(false)
     }
   }
-
   return (
     <>
       <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
@@ -459,7 +436,6 @@ export default function AdminSearchPage() {
                     )}
                   </form>
                 </div>
-
                 <div className="space-y-4">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">AI Agent Commands</h2>
@@ -629,7 +605,6 @@ export default function AdminSearchPage() {
                       </div>
                     </div>
                   )}
-
                   {activeAnalysis && activeAnalysis.type === 'streaming' && (
                     <div key="active-streaming" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 shadow-sm transition-all duration-200">
                       <div className="flex items-start gap-3">

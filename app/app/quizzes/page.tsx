@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { AppHeader } from "@/components/app-header"
@@ -29,7 +29,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { useTranslation } from "@/src/i18n"
-
 export default function QuizzesPage() {
   const { token, user } = useAuth()
   const { t } = useTranslation()
@@ -44,11 +43,9 @@ export default function QuizzesPage() {
   const [userQuizHistory, setUserQuizHistory] = useState<QuizResult[]>([])
   const [bestScores, setBestScores] = useState<Record<string, QuizResult>>({})
   const [loading, setLoading] = useState(true)
-
   useEffect(() => {
     fetchQuizzes()
   }, [])
-
   const fetchQuizzes = async () => {
     try {
       setLoading(true)
@@ -65,10 +62,8 @@ export default function QuizzesPage() {
           'ngrok-skip-browser-warning': 'true',
         }
       })
-
       console.log("Response status:", response.status)
       console.log("Response ok:", response.ok)
-
       if (response.ok) {
         const data = await response.json()
         console.log("Response data:", data)
@@ -92,10 +87,8 @@ export default function QuizzesPage() {
       setLoading(false)
     }
   }
-
   const submitQuizResults = async () => {
     if (!selectedQuiz || !token) return
-
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
       const response = await fetch(`${apiUrl}/quizzes/${selectedQuiz.id}/submit`, {
@@ -109,7 +102,6 @@ export default function QuizzesPage() {
           time_spent: selectedQuiz.time_limit * 60 - timeRemaining
         })
       })
-
       if (response.ok) {
         const result = await response.json()
         if (result.success) {
@@ -139,7 +131,6 @@ export default function QuizzesPage() {
       toast.error(t('quizzes.failedToSubmitQuiz'))
     }
   }
-
   // Timer effect
   useEffect(() => {
     if (quizStarted && !quizCompleted && timeRemaining > 0) {
@@ -151,7 +142,6 @@ export default function QuizzesPage() {
       handleQuizSubmit()
     }
   }, [quizStarted, quizCompleted, timeRemaining])
-
   const startQuiz = (quiz: Quiz) => {
     if (!quiz.questions) {
       toast.error(t('quizzes.quizHasNoQuestions'))
@@ -166,26 +156,22 @@ export default function QuizzesPage() {
     setQuizCompleted(false)
     setQuizResults(null)
   }
-
   const handleAnswerChange = (questionId: string, answer: string | number) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: answer
     }))
   }
-
   const nextQuestion = () => {
     if (selectedQuiz && selectedQuiz.questions && currentQuestionIndex < selectedQuiz.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
     }
   }
-
   const previousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1)
     }
   }
-
   const calculateScore = () => {
     if (!selectedQuiz || !selectedQuiz.questions) return { score: 0, totalPoints: 0, passed: false }
     
@@ -203,7 +189,6 @@ export default function QuizzesPage() {
     
     return { score, totalPoints, passed }
   }
-
   const handleQuizSubmit = () => {
     if (!selectedQuiz || !selectedQuiz.questions) return
     
@@ -242,7 +227,6 @@ export default function QuizzesPage() {
       toast.error(`${t('quizzes.quizCompletedYouScored')} ${score}/${totalPoints} ${t('quizzes.pointsTryAgain')}`)
     }
   }
-
   const resetQuiz = () => {
     setSelectedQuiz(null)
     setQuizStarted(false)
@@ -252,13 +236,11 @@ export default function QuizzesPage() {
     setTimeRemaining(0)
     setQuizResults(null)
   }
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
-
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "easy": return "bg-green-100 text-green-800"
@@ -267,7 +249,6 @@ export default function QuizzesPage() {
       default: return "bg-gray-100 text-gray-800"
     }
   }
-
   const renderQuestion = (question: Question) => {
     switch (question.type) {
       case "multiple-choice":
@@ -318,7 +299,6 @@ export default function QuizzesPage() {
         return null
     }
   }
-
   if (!selectedQuiz) {
     return (
       <>
@@ -328,7 +308,6 @@ export default function QuizzesPage() {
             <h1 className="text-2xl font-bold tracking-tight">{t('quizzes.title')}</h1>
             <p className="text-muted-foreground">{t('quizzes.testYourKnowledgeAndTrackYourProgress')}</p>
           </div>
-
           {/* Quiz Stats */}
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
@@ -341,7 +320,6 @@ export default function QuizzesPage() {
                 <p className="text-xs text-muted-foreground">{t('quizzes.availableQuizzes')}</p>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">{t('quizzes.quizzesFinished')}</CardTitle>
@@ -352,7 +330,6 @@ export default function QuizzesPage() {
                 <p className="text-xs text-muted-foreground">{t('quizzes.quizzesFinished')}</p>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">{t('quizzes.passRate')}</CardTitle>
@@ -367,7 +344,6 @@ export default function QuizzesPage() {
                 <p className="text-xs text-muted-foreground">{t('quizzes.quizzesPassed')}</p>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">{t('quizzes.avgScore')}</CardTitle>
@@ -383,7 +359,6 @@ export default function QuizzesPage() {
               </CardContent>
             </Card>
           </div>
-
           {/* Quiz List */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {quizzes.map((quiz) => {
@@ -393,7 +368,6 @@ export default function QuizzesPage() {
                 ? (bestScoreResult.score / bestScoreResult.totalPoints) * 100
                 : null
               const passed = attempts.some(r => r.passed)
-
               return (
                 <Card key={quiz.id} className="hover:shadow-md transition-shadow">
                   <CardHeader>
@@ -418,7 +392,6 @@ export default function QuizzesPage() {
                         {quiz.passing_score}% {t('quizzes.toPass')}
                       </div>
                     </div>
-
                     {attempts.length > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
@@ -434,7 +407,6 @@ export default function QuizzesPage() {
                         </div>
                       </div>
                     )}
-
                     <div className="mb-4">
                       <Button 
                         onClick={() => startQuiz(quiz)} 
@@ -454,10 +426,8 @@ export default function QuizzesPage() {
       </>
     )
   }
-
   if (quizCompleted && quizResults) {
     const percentage = (quizResults.score / quizResults.totalPoints) * 100
-
     return (
       <>
         <AppHeader breadcrumbs={[{ label: t('navigation.quizzes') }]} />
@@ -506,7 +476,6 @@ export default function QuizzesPage() {
                 </div>
               </div>
             </div>
-
             {/* Right Section - Questions and Actions */}
             <div className="flex-1 flex flex-col h-full">
               {/* Questions Rectangular Field - Right */}
@@ -522,7 +491,6 @@ export default function QuizzesPage() {
                       {selectedQuiz.questions?.map((question, index) => {
                         const userAnswer = answers[question.id]
                         const isCorrect = userAnswer === question.correct_answer
-
                         return (
                           <div key={question.id} className="bg-background rounded-lg border p-3">
                             <div className="flex items-start gap-2">
@@ -565,7 +533,6 @@ export default function QuizzesPage() {
                   </div>
                 </div>
               </div>
-
               {/* Actions Bar - Right Bottom */}
               <div className="flex-shrink-0 p-4 border-t bg-background">
                 <div className="flex gap-3">
@@ -585,10 +552,8 @@ export default function QuizzesPage() {
       </>
     )
   }
-
   const currentQuestion: Question | undefined = selectedQuiz.questions?.[currentQuestionIndex]
   const progress = ((currentQuestionIndex + 1) / (selectedQuiz.questions?.length || 1)) * 100
-
   return (
     <>
       <AppHeader />
@@ -613,7 +578,6 @@ export default function QuizzesPage() {
             
             <Progress value={progress} className="h-2" />
           </div>
-
           {/* Question Card */}
           <Card>
             <CardHeader>
@@ -635,7 +599,6 @@ export default function QuizzesPage() {
               )}
             </CardContent>
           </Card>
-
           {/* Navigation */}
           <div className="flex items-center justify-between">
             <Button
@@ -645,7 +608,6 @@ export default function QuizzesPage() {
             >
               {t('quizzes.previous')}
             </Button>
-
             <div className="flex items-center gap-2">
               {(selectedQuiz.questions || []).map((_, index) => (
                 <div
@@ -662,7 +624,6 @@ export default function QuizzesPage() {
                 </div>
               ))}
             </div>
-
             {currentQuestionIndex === (selectedQuiz.questions?.length || 0) - 1 ? (
               <Button onClick={handleQuizSubmit}>
                 {t('quizzes.submitQuiz')}

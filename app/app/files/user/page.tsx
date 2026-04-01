@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { AppHeader } from "@/components/app-header"
@@ -30,7 +30,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
-
 interface UserFile {
   id: string
   name: string
@@ -42,7 +41,6 @@ interface UserFile {
   downloads: number
   views: number
 }
-
 interface UserStats {
   totalFiles: number
   totalSize: number
@@ -50,7 +48,6 @@ interface UserStats {
   totalViews: number
   totalDownloads: number
 }
-
 export default function UserFilesPage() {
   const { token, user } = useAuth()
   const [files, setFiles] = useState<UserFile[]>([])
@@ -67,10 +64,8 @@ export default function UserFilesPage() {
     totalViews: 0,
     totalDownloads: 0,
   })
-
   const fetchFiles = async () => {
     if (!token) return
-
     try {
       // Simulate fetching user files - in real implementation, this would call filesApi.list(token)
       const mockFiles: UserFile[] = [
@@ -155,27 +150,22 @@ export default function UserFilesPage() {
       setIsLoading(false)
     }
   }
-
   useEffect(() => {
     fetchFiles()
   }, [token])
-
   useEffect(() => {
     let filtered = files
-
     if (searchQuery) {
       filtered = filtered.filter((file) =>
         file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         file.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     }
-
     if (selectedTags.length > 0) {
       filtered = filtered.filter((file) =>
         selectedTags.some(tag => file.tags.includes(tag))
       )
     }
-
     // Sort files
     filtered.sort((a, b) => {
       switch (sortBy) {
@@ -191,20 +181,16 @@ export default function UserFilesPage() {
           return 0
       }
     })
-
     setFilteredFiles(filtered)
   }, [searchQuery, selectedTags, files, sortBy])
-
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
-
     // Simulate file upload - in real implementation, this would call filesApi.upload
     toast.success(`${files.length} file(s) uploaded successfully`)
     fetchFiles()
     e.target.value = ""
   }
-
   const handleViewFile = (file: UserFile) => {
     // Increment view count
     setFiles(prev => prev.map(f => 
@@ -212,7 +198,6 @@ export default function UserFilesPage() {
     ))
     toast.info(`Viewing ${file.name}`)
   }
-
   const handleDownloadFile = (file: UserFile) => {
     // Increment download count
     setFiles(prev => prev.map(f => 
@@ -220,13 +205,11 @@ export default function UserFilesPage() {
     ))
     toast.success(`Downloading ${file.name}`)
   }
-
   const toggleStar = (fileId: string) => {
     setFiles(prev => prev.map(f => 
       f.id === fileId ? { ...f, starred: !f.starred } : f
     ))
   }
-
   const getFileIcon = (type: string) => {
     switch (type) {
       case "pdf":
@@ -244,19 +227,15 @@ export default function UserFilesPage() {
         return <FileText className="w-4 h-4 text-gray-400" />
     }
   }
-
   const formatFileSize = (bytes: number) => {
     const sizes = ["B", "KB", "MB", "GB"]
     const i = Math.floor(Math.log(bytes) / Math.log(1024))
     return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
   }
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString()
   }
-
   const allTags = Array.from(new Set(files.flatMap(file => file.tags)))
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "Files" }]} />
@@ -285,7 +264,6 @@ export default function UserFilesPage() {
             </div>
           </div>
         </div>
-
         {/* User Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card>
@@ -298,7 +276,6 @@ export default function UserFilesPage() {
               <p className="text-xs text-muted-foreground">Documents uploaded</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Size</CardTitle>
@@ -309,7 +286,6 @@ export default function UserFilesPage() {
               <p className="text-xs text-muted-foreground">Storage used</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Recent Uploads</CardTitle>
@@ -320,7 +296,6 @@ export default function UserFilesPage() {
               <p className="text-xs text-muted-foreground">Last 7 days</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Views</CardTitle>
@@ -331,7 +306,6 @@ export default function UserFilesPage() {
               <p className="text-xs text-muted-foreground">Document views</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Downloads</CardTitle>
@@ -343,7 +317,6 @@ export default function UserFilesPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Search and Filter Section */}
         <Card>
           <CardContent className="p-4 space-y-4">
@@ -358,7 +331,6 @@ export default function UserFilesPage() {
                   className="pl-10"
                 />
               </div>
-
               {/* Sort */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Sort by:</span>
@@ -373,7 +345,6 @@ export default function UserFilesPage() {
                   <option value="views">Views</option>
                 </select>
               </div>
-
               {/* View Mode */}
               <Button
                 variant="outline"
@@ -383,7 +354,6 @@ export default function UserFilesPage() {
                 {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
               </Button>
             </div>
-
             {/* Tag Filter */}
             {allTags.length > 0 && (
               <div className="space-y-2">
@@ -409,7 +379,6 @@ export default function UserFilesPage() {
             )}
           </CardContent>
         </Card>
-
         {/* Files Display */}
         <Card>
           <CardHeader>

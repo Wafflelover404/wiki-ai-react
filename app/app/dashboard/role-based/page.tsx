@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { AppHeader } from "@/components/app-header"
@@ -41,7 +41,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
-
 interface UserRoleStats {
   totalUsers: number
   adminUsers: number
@@ -49,7 +48,6 @@ interface UserRoleStats {
   activeUsers: number
   newUsersThisMonth: number
 }
-
 interface DocumentStats {
   totalDocuments: number
   publicDocuments: number
@@ -58,7 +56,6 @@ interface DocumentStats {
   totalViews: number
   totalDownloads: number
 }
-
 interface SystemMetrics {
   systemHealth: number
   apiResponseTime: number
@@ -66,7 +63,6 @@ interface SystemMetrics {
   storageUsage: number
   querySuccessRate: number
 }
-
 export default function RoleBasedDashboard() {
   const { token, user, isAdmin } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
@@ -92,11 +88,9 @@ export default function RoleBasedDashboard() {
     storageUsage: 65,
     querySuccessRate: 98.5,
   })
-
   useEffect(() => {
     const loadDashboardData = async () => {
       if (!token) return
-
       try {
         // Simulate loading role-based dashboard data
         // In real implementation, this would fetch actual data from your APIs
@@ -145,20 +139,16 @@ export default function RoleBasedDashboard() {
         setIsLoading(false)
       }
     }
-
     loadDashboardData()
   }, [token, isAdmin])
-
   const getHealthColor = (health: number) => {
     if (health >= 90) return "text-green-600"
     if (health >= 70) return "text-yellow-600"
     return "text-red-600"
   }
-
   const getStoragePercentage = () => {
     return systemMetrics.storageUsage
   }
-
   if (isLoading) {
     return (
       <>
@@ -169,7 +159,6 @@ export default function RoleBasedDashboard() {
       </>
     )
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "Dashboard" }]} />
@@ -203,7 +192,6 @@ export default function RoleBasedDashboard() {
             </div>
           </div>
         </div>
-
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -212,7 +200,6 @@ export default function RoleBasedDashboard() {
             {isAdmin && <TabsTrigger value="users">Users</TabsTrigger>}
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
-
           <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -232,7 +219,6 @@ export default function RoleBasedDashboard() {
                   </p>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Documents</CardTitle>
@@ -243,7 +229,6 @@ export default function RoleBasedDashboard() {
                   <p className="text-xs text-muted-foreground">Total files</p>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">System Health</CardTitle>
@@ -256,7 +241,6 @@ export default function RoleBasedDashboard() {
                   <Progress value={systemMetrics.systemHealth} className="mt-2" />
                 </CardContent>
               </Card>
-
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Response Time</CardTitle>
@@ -268,7 +252,6 @@ export default function RoleBasedDashboard() {
                 </CardContent>
               </Card>
             </div>
-
             {/* Quick Actions */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
@@ -286,7 +269,6 @@ export default function RoleBasedDashboard() {
                   </CardContent>
                 </Link>
               </Card>
-
               <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                 <Link href="/app/files">
                   <CardContent className="p-6">
@@ -302,7 +284,6 @@ export default function RoleBasedDashboard() {
                   </CardContent>
                 </Link>
               </Card>
-
               {isAdmin && (
                 <Card className="group hover:border-primary/50 transition-colors cursor-pointer">
                   <Link href="/app/admin">
@@ -322,7 +303,6 @@ export default function RoleBasedDashboard() {
               )}
             </div>
           </TabsContent>
-
           <TabsContent value="documents" className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Document Statistics */}
@@ -385,7 +365,6 @@ export default function RoleBasedDashboard() {
                   </div>
                 </CardContent>
               </Card>
-
               {/* Storage Overview */}
               <Card>
                 <CardHeader>
@@ -424,7 +403,6 @@ export default function RoleBasedDashboard() {
               </Card>
             </div>
           </TabsContent>
-
           {isAdmin && (
             <TabsContent value="users" className="space-y-6">
               <div className="grid gap-6 lg:grid-cols-2">
@@ -476,7 +454,6 @@ export default function RoleBasedDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-
                 {/* Quick User Actions */}
                 <Card>
                   <CardHeader>
@@ -505,7 +482,6 @@ export default function RoleBasedDashboard() {
               </div>
             </TabsContent>
           )}
-
           <TabsContent value="activity" className="space-y-6">
             <Card>
               <CardHeader>

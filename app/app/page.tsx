@@ -1,12 +1,10 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { redirect } from "next/navigation"
-
 export default function DashboardPage() {
   const { isAdmin, isLoading } = useAuth()
-
   useEffect(() => {
     if (!isLoading) {
       // Redirect admins to admin dashboard, users to user dashboard
@@ -17,7 +15,6 @@ export default function DashboardPage() {
       }
     }
   }, [isAdmin, isLoading])
-
   // Show loading state while checking auth
   if (isLoading) {
     return (
@@ -26,6 +23,5 @@ export default function DashboardPage() {
       </div>
     )
   }
-
   return null
 }

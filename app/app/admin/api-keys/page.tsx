@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { apiKeysApi } from "@/lib/api"
@@ -38,7 +38,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
-
 interface ApiKeyDetails {
   id: string
   key_id: string
@@ -58,7 +57,6 @@ interface ApiKeyDetails {
   max_tokens_per_day?: number
   current_llm_tokens_used?: number
 }
-
 interface UsageStats {
   total_requests: number
   avg_response_time_ms: number
@@ -68,7 +66,6 @@ interface UsageStats {
   total_response_bytes: number
   period_days: number
 }
-
 interface AuditEvent {
   id: number
   event_type: string
@@ -77,7 +74,6 @@ interface AuditEvent {
   timestamp: string
   reason?: string
 }
-
 export default function ApiKeysPage() {
   const { token, isAdmin, isLoading: authLoading } = useAuth()
   const { t } = useTranslation()
@@ -121,7 +117,6 @@ export default function ApiKeysPage() {
   
   // State for updates
   const [isUpdating, setIsUpdating] = useState(false)
-
   // Commented out - tier support coming soon
   // const tierDefaults = useMemo(() => ({
   //   free: { rate_limit: 1000, llm_tokens: 5000, llm_cost: 10 },
@@ -129,7 +124,6 @@ export default function ApiKeysPage() {
   //   business: { rate_limit: 500000, llm_tokens: 5000000, llm_cost: 5000 },
   //   enterprise: { rate_limit: 1000000, llm_tokens: 10000000, llm_cost: 50000 },
   // }), [])
-
   const fetchKeys = useCallback(async () => {
     if (!token) return
     try {
@@ -144,7 +138,6 @@ export default function ApiKeysPage() {
       setIsLoading(false)
     }
   }, [token])
-
   const fetchKeyDetails = useCallback(async (keyId: string) => {
     if (!token) return
     setIsLoadingDetails(true)
@@ -154,7 +147,6 @@ export default function ApiKeysPage() {
         apiKeysApi.getUsageStats(token, keyId, 7),
         apiKeysApi.getAuditLog(token, keyId, 20),
       ])
-
       if (detailsResult.status === "success" && detailsResult.response) {
         setSelectedKeyDetails(detailsResult.response as ApiKeyDetails)
       }
@@ -171,29 +163,24 @@ export default function ApiKeysPage() {
       setIsLoadingDetails(false)
     }
   }, [token])
-
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       redirect("/app")
     }
   }, [authLoading, isAdmin])
-
   useEffect(() => {
     if (isAdmin) {
       fetchKeys()
     }
   }, [isAdmin, fetchKeys])
-
   useEffect(() => {
     if (selectedKeyId) {
       fetchKeyDetails(selectedKeyId)
     }
   }, [selectedKeyId, fetchKeyDetails])
-
   // Countdown timer for API key display
   useEffect(() => {
     if (keyCountdown <= 0) return
-
     const timer = setInterval(() => {
       setKeyCountdown((prev) => {
         if (prev <= 1) {
@@ -203,20 +190,16 @@ export default function ApiKeysPage() {
         return prev - 1
       })
     }, 1000)
-
     return () => clearInterval(timer)
   }, [keyCountdown])
-
   // Commented out - tier support coming soon
   // const handleTierChange = (tier: "free" | "pro" | "business" | "enterprise") => {
   //   setNewKeyPriorityTier(tier)
   //   const defaults = tierDefaults[tier]
   //   setNewKeyRateLimit(defaults.rate_limit.toString())
   // }
-
   const handleCreateKey = async () => {
     if (!token || !newKeyName.trim()) return
-
     setIsCreating(true)
     try {
       const requestData: any = {
@@ -226,17 +209,13 @@ export default function ApiKeysPage() {
         rate_limit_requests: parseInt(newKeyRateLimit),
         llm_enabled: newKeyLLMEnabled,
       }
-
       if (newKeyDescription.trim()) {
         requestData.description = newKeyDescription.trim()
       }
-
       if (newKeyExpiresInDays.trim() && !isNaN(Number(newKeyExpiresInDays))) {
         requestData.expires_in_days = Number(newKeyExpiresInDays)
       }
-
       const result = await apiKeysApi.create(token, requestData)
-
       if (result.status === "success" && result.response) {
         setNewKey(result.response.key || result.response.full_key)
         setKeyCountdown(15)  // Start 15-second countdown
@@ -254,7 +233,6 @@ export default function ApiKeysPage() {
       setIsCreating(false)
     }
   }
-
   const handleDeleteKey = async () => {
     if (!token || !deleteKeyId) return
     setIsDeleting(true)
@@ -277,12 +255,10 @@ export default function ApiKeysPage() {
       setIsDeleting(false)
     }
   }
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast.success("Copied to clipboard")
   }
-
   const closeDialog = () => {
     setIsDialogOpen(false)
     setNewKeyName("")
@@ -294,13 +270,11 @@ export default function ApiKeysPage() {
     setNewKeyLLMEnabled(true)
     setNewKey(null)
   }
-
   const handleEditPermissions = (keyId: string) => {
     if (!selectedKeyDetails) return
     setEditingPermissions([...selectedKeyDetails.permissions])
     setIsEditingPermissions(true)
   }
-
   const handleSavePermissions = async () => {
     if (!token || !selectedKeyId || !selectedKeyDetails) return
     setIsUpdating(true)
@@ -327,7 +301,6 @@ export default function ApiKeysPage() {
       setIsUpdating(false)
     }
   }
-
   const togglePermission = (permission: string) => {
     setEditingPermissions((prev) =>
       prev.includes(permission)
@@ -335,7 +308,6 @@ export default function ApiKeysPage() {
         : [...prev, permission]
     )
   }
-
   const handleEditMode = () => {
     if (!selectedKeyDetails) return
     setEditData({
@@ -351,12 +323,10 @@ export default function ApiKeysPage() {
     })
     setIsEditMode(true)
   }
-
   const handleCancelEdit = () => {
     setIsEditMode(false)
     setEditData({})
   }
-
   const handleSaveEdit = async () => {
     if (!token || !selectedKeyId || !selectedKeyDetails) return
     setIsUpdating(true)
@@ -381,11 +351,9 @@ export default function ApiKeysPage() {
       setIsUpdating(false)
     }
   }
-
   const getUsagePercent = (current: number = 0, limit: number = 1) => {
     return Math.min(100, Math.round((current / limit) * 100))
   }
-
   const getStatusBadge = (status?: string, isActive?: boolean) => {
     if (status === "revoked" || !isActive) {
       return <Badge variant="destructive">Revoked</Badge>
@@ -395,7 +363,6 @@ export default function ApiKeysPage() {
     }
     return <Badge className="bg-green-500">Active</Badge>
   }
-
   if (authLoading || isLoading) {
     return (
       <>
@@ -406,11 +373,9 @@ export default function ApiKeysPage() {
       </>
     )
   }
-
   if (!isAdmin) {
     return null
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "Admin", href: "/app/admin" }, { label: "API Keys" }]} />
@@ -432,7 +397,6 @@ export default function ApiKeysPage() {
                 <DialogTitle>Create API Key</DialogTitle>
                 <DialogDescription>Configure a new API key for programmatic access</DialogDescription>
               </DialogHeader>
-
               {newKey ? (
                 <div className="space-y-4">
                   <div className="p-4 rounded-lg bg-green-50 border border-green-200">
@@ -475,7 +439,6 @@ export default function ApiKeysPage() {
                         onChange={(e) => setNewKeyName(e.target.value)}
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="keyDescription" className="text-sm font-medium">Description</Label>
                       <textarea
@@ -505,7 +468,6 @@ export default function ApiKeysPage() {
                         ))}
                       </div>
                     </div> */}
-
                     {/* Permissions */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Permissions</Label>
@@ -529,7 +491,6 @@ export default function ApiKeysPage() {
                         ))}
                       </div>
                     </div>
-
                     {/* Expiration */}
                     <div className="space-y-2">
                       <Label htmlFor="expiresInDays" className="text-sm font-medium">Expires In (days)</Label>
@@ -542,7 +503,6 @@ export default function ApiKeysPage() {
                         min="1"
                       />
                     </div>
-
                     {/* LLM Toggle */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
@@ -581,7 +541,6 @@ export default function ApiKeysPage() {
             </DialogContent>
           </Dialog>
         </div>
-
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Keys List */}
@@ -620,7 +579,6 @@ export default function ApiKeysPage() {
               )}
             </CardContent>
           </Card>
-
           {/* Details View */}
           {selectedKeyId && selectedKeyDetails ? (
             <Card className="lg:col-span-2">
@@ -648,7 +606,6 @@ export default function ApiKeysPage() {
                     <TabsTrigger value="llm" className="text-xs">AI</TabsTrigger>
                     <TabsTrigger value="audit" className="text-xs">Audit</TabsTrigger>
                   </TabsList>
-
                   {/* Overview Tab */}
                   <TabsContent value="overview" className="space-y-4">
                     {!isEditMode ? (
@@ -663,7 +620,6 @@ export default function ApiKeysPage() {
                             Edit
                           </Button>
                         </div>
-
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
                             <p className="text-xs text-muted-foreground">Status</p>
@@ -683,7 +639,6 @@ export default function ApiKeysPage() {
                             <p className="text-sm">{selectedKeyDetails.last_used ? new Date(selectedKeyDetails.last_used).toLocaleDateString() : "Never"}</p>
                           </div>
                         </div>
-
                         {selectedKeyDetails.expires_at && (
                           <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-200">
                             <p className="text-xs text-yellow-900">
@@ -691,7 +646,6 @@ export default function ApiKeysPage() {
                             </p>
                           </div>
                         )}
-
                         <div className="pt-4 border-t">
                           <div className="space-y-3">
                             <div>
@@ -728,7 +682,6 @@ export default function ApiKeysPage() {
                             </div>
                           </div>
                         </div>
-
                         <div className="space-y-2 pt-4 border-t">
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium">Permissions</p>
@@ -803,7 +756,6 @@ export default function ApiKeysPage() {
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="text-sm font-medium">Edit Details</h4>
                         </div>
-
                         <div className="space-y-3">
                           <div>
                             <label className="text-xs text-muted-foreground block mb-1">Name</label>
@@ -814,7 +766,6 @@ export default function ApiKeysPage() {
                               className="text-sm"
                             />
                           </div>
-
                           <div>
                             <label className="text-xs text-muted-foreground block mb-1">Description</label>
                             <Input
@@ -824,7 +775,6 @@ export default function ApiKeysPage() {
                               className="text-sm"
                             />
                           </div>
-
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="text-xs text-muted-foreground block mb-1">Rate Limit (Requests)</label>
@@ -849,7 +799,6 @@ export default function ApiKeysPage() {
                               </select>
                             </div>
                           </div>
-
                           {/* Tier editing commented out - coming soon */}
                           {/* <div className="grid grid-cols-2 gap-3">
                             <div>
@@ -885,7 +834,6 @@ export default function ApiKeysPage() {
                               className="text-sm"
                             />
                           </div>
-
                           <div className="p-3 rounded-lg border bg-muted/50 space-y-3">
                             <div className="flex items-center justify-between">
                               <label className="text-sm font-medium">AI Features Enabled</label>
@@ -896,7 +844,6 @@ export default function ApiKeysPage() {
                                 className="w-4 h-4"
                               />
                             </div>
-
                             {editData.llm_enabled && (
                               <>
                                 <div>
@@ -924,7 +871,6 @@ export default function ApiKeysPage() {
                             )}
                           </div>
                         </div>
-
                         <div className="flex gap-2 pt-4 border-t">
                           <Button
                             size="sm"
@@ -945,7 +891,6 @@ export default function ApiKeysPage() {
                       </div>
                     )}
                   </TabsContent>
-
                   {/* Quota Tab */}
                   <TabsContent value="quota" className="space-y-4">
                     {usageStats && (
@@ -970,7 +915,6 @@ export default function ApiKeysPage() {
                             </p>
                           </div>
                         </div>
-
                         <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-muted/50">
                           <div>
                             <p className="text-xs text-muted-foreground">Total Requests (7d)</p>
@@ -992,7 +936,6 @@ export default function ApiKeysPage() {
                       </>
                     )}
                   </TabsContent>
-
                   {/* AI Tab */}
                   <TabsContent value="llm" className="space-y-4">
                     <div className="space-y-3">
@@ -1003,7 +946,6 @@ export default function ApiKeysPage() {
                           <p className="text-xs text-blue-800">{selectedKeyDetails.llm_enabled ? "This key can use AI features" : "This key cannot use AI features"}</p>
                         </div>
                       </div>
-
                       {selectedKeyDetails.llm_enabled && (
                         <>
                           <div>
@@ -1021,7 +963,6 @@ export default function ApiKeysPage() {
                               {getUsagePercent(selectedKeyDetails.current_llm_tokens_used, selectedKeyDetails.max_tokens_per_day)}% used
                             </p>
                           </div>
-
                           {usageStats && (
                             <div className="p-3 rounded-lg bg-muted/50">
                               <div className="flex items-center justify-between">
@@ -1037,7 +978,6 @@ export default function ApiKeysPage() {
                       )}
                     </div>
                   </TabsContent>
-
                   {/* Audit Tab */}
                   <TabsContent value="audit" className="space-y-3">
                     {auditLog.length > 0 ? (
@@ -1072,7 +1012,6 @@ export default function ApiKeysPage() {
             </Card>
           )}
         </div>
-
         {/* Delete Confirmation */}
         <AlertDialog open={!!deleteKeyId} onOpenChange={(open) => {
           if (!open) setDeleteKeyId(null)

@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { AppHeader } from "@/components/app-header"
@@ -21,14 +21,12 @@ import { User, Building, Shield, Bell, Moon, Globe, Loader2, Languages } from "l
 import { toast } from "sonner"
 import { useTheme } from "next-themes"
 import { useTranslation } from "@/src/i18n"
-
 export default function SettingsPage() {
   const { user, isAdmin } = useAuth()
   const { theme, setTheme } = useTheme()
   const { t, locale, changeLanguage, availableLanguages } = useTranslation()
   const [notifications, setNotifications] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-
   const handleSave = async () => {
     setIsSaving(true)
     // Simulate save
@@ -36,7 +34,6 @@ export default function SettingsPage() {
     setIsSaving(false)
     toast.success(t('settings.settingsSavedSuccessfully'))
   }
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: t('settings.title') }]} />
@@ -45,7 +42,6 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t('settings.title')}</h1>
           <p className="text-muted-foreground">{t('settings.description')}</p>
         </div>
-
         {/* Account Info */}
         <Card>
           <CardHeader>
@@ -93,7 +89,6 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Appearance */}
         <Card>
           <CardHeader>
@@ -128,7 +123,6 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Notifications */}
         <Card>
           <CardHeader>
@@ -160,7 +154,6 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Language */}
         <Card>
           <CardHeader>

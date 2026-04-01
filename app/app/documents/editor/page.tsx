@@ -1,5 +1,5 @@
 "use client"
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { filesApi } from "@/lib/api"
@@ -34,7 +34,6 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { toast } from "sonner"
-
 interface Document {
   id: string
   name: string
@@ -45,7 +44,6 @@ interface Document {
   tags: string[]
   starred: boolean
 }
-
 export default function DocumentEditor() {
   const { token, isAdmin } = useAuth()
   const [documents, setDocuments] = useState<Document[]>([])
@@ -59,10 +57,8 @@ export default function DocumentEditor() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
-
   const fetchDocuments = async () => {
     if (!token) return
-
     try {
       const result = await filesApi.list(token)
       if (result.status === "success" && result.response) {
@@ -85,34 +81,27 @@ export default function DocumentEditor() {
       setIsLoading(false)
     }
   }
-
   useEffect(() => {
     fetchDocuments()
   }, [token])
-
   useEffect(() => {
     let filtered = documents
-
     if (searchQuery) {
       filtered = filtered.filter((doc) =>
         doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doc.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     }
-
     if (selectedTags.length > 0) {
       filtered = filtered.filter((doc) =>
         selectedTags.some(tag => doc.tags.includes(tag))
       )
     }
-
     setFilteredDocuments(filtered)
   }, [searchQuery, selectedTags, documents])
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || !token) return
-
     setIsUploading(true)
     try {
       const result = await filesApi.upload(token!, Array.from(files))
@@ -130,16 +119,13 @@ export default function DocumentEditor() {
       e.target.value = ""
     }
   }
-
   const handleEditDocument = async (document: Document) => {
     if (!isAdmin) {
       toast.error("Admin access required to edit documents")
       return
     }
-
     setSelectedDocument(document)
     setIsLoading(true)
-
     try {
       const result = await filesApi.getContent(token!, document.name)
       if (result.status === "success" && result.response) {
@@ -155,10 +141,8 @@ export default function DocumentEditor() {
       setIsLoading(false)
     }
   }
-
   const handleSaveDocument = async () => {
     if (!selectedDocument || !token || !isAdmin) return
-
     setIsSaving(true)
     try {
       const result = await filesApi.edit(token!, selectedDocument.name, editedContent)
@@ -177,11 +161,9 @@ export default function DocumentEditor() {
       setIsSaving(false)
     }
   }
-
   const handleViewDocument = async (document: Document) => {
     setSelectedDocument(document)
     setIsLoading(true)
-
     try {
       const result = await filesApi.getContent(token!, document.name)
       if (result.status === "success" && result.response) {
@@ -196,7 +178,6 @@ export default function DocumentEditor() {
       setIsLoading(false)
     }
   }
-
   const getFileIcon = (type: string) => {
     switch (type) {
       case "pdf":
@@ -225,21 +206,16 @@ export default function DocumentEditor() {
         return <FileText className="w-4 h-4 text-gray-400" />
     }
   }
-
   const formatFileSize = (bytes: number) => {
     const sizes = ["B", "KB", "MB", "GB"]
     const i = Math.floor(Math.log(bytes) / Math.log(1024))
     return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
   }
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString()
   }
-
   const allTags = Array.from(new Set(documents.flatMap(doc => doc.tags)))
-
   const canEdit = isAdmin
-
   return (
     <>
       <AppHeader breadcrumbs={[{ label: "Documents", href: "/app/files" }, { label: "Editor" }]} />
@@ -281,7 +257,6 @@ export default function DocumentEditor() {
             </div>
           </div>
         </div>
-
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Document List */}
           <div className="lg:col-span-1">
@@ -301,7 +276,6 @@ export default function DocumentEditor() {
                     className="pl-10"
                   />
                 </div>
-
                 {/* Tag Filter */}
                 {allTags.length > 0 && (
                   <div className="space-y-2">
@@ -325,7 +299,6 @@ export default function DocumentEditor() {
                     </div>
                   </div>
                 )}
-
                 {/* Document List */}
                 <ScrollArea className="h-[500px]">
                   <div className="space-y-2">
@@ -391,7 +364,6 @@ export default function DocumentEditor() {
               </CardContent>
             </Card>
           </div>
-
           {/* Document Viewer/Editor */}
           <div className="lg:col-span-2">
             <Card className="h-full">
