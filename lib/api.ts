@@ -1,6 +1,6 @@
 import { API_CONFIG, getApiUrl, getWsUrl, getCmsEndpointUrl } from "./config"
 
-// Unified API configuration - all requests use localhost:9001
+// Unified API configuration - all requests use api.wikiai.by
 
 interface ApiRequestOptions {
   url: string

@@ -55,7 +55,7 @@ export default function QuizzesPage() {
       console.log("Fetching quizzes...")
       console.log("Token:", token ? "present" : "missing")
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'
       const url = `${apiUrl}/quizzes`
       console.log("Fetching from URL:", url)
       
@@ -97,7 +97,7 @@ export default function QuizzesPage() {
     if (!selectedQuiz || !token) return
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'
       const response = await fetch(`${apiUrl}/quizzes/${selectedQuiz.id}/submit`, {
         method: 'POST',
         headers: {

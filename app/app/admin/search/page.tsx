@@ -431,7 +431,7 @@ export default function AdminSearchPage() {
     return new Promise((resolve, reject) => {
       try {
         // Use the same API base URL from config for WebSocket
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9001'
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'
         const wsProtocol = apiUrl.startsWith('https://') ? 'wss:' : 'ws:'
         const wsHost = apiUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
         const wsUrl = `${wsProtocol}//${wsHost}/ws/query?token=${encodeURIComponent(token || '')}`
