@@ -8,7 +8,7 @@ const getApiUrlFromEnv = (): string => {
     return envUrl.replace(/\/$/, ''); // Remove trailing slash
   }
   // Fallback to localhost for development
-  return "http://localhost:9001";
+  return "https://api.wikiai.by";
 };
 
 // Get WebSocket URL from environment variables with fallback
