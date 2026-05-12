@@ -2,7 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/src/i18n";
-import { Globe, Moon, Sun } from "lucide-react";
+import { Brain, Globe, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
@@ -35,18 +35,15 @@ export default function LandingNav({ scrolled }: LandingNavProps) {
         }`}
       >
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-              <path d="M12 22a3 3 0 0 0 3-3v-1a3 3 0 0 0-6 0v1a3 3 0 0 0 3 3z"/>
-              <path d="M2 12h3M19 12h3M5.5 5.5l2 2M16.5 16.5l2 2M5.5 18.5l2-2M16.5 7.5l2-2"/>
-            </svg>
+        <a href="#" className="flex items-center gap-2.5 no-underline">
+          <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+            <Brain size={16} color="white" />
           </div>
           <span className="font-extrabold text-lg tracking-[-0.02em]">
-            <span className="text-gradient-blue">Wiki</span>AI
+            <span className="text-gradient-blue">Wiki</span>
+            <span className="text-foreground">AI</span>
           </span>
-        </div>
+        </a>
 
         {/* Center links (desktop) */}
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 gap-7 items-center">
