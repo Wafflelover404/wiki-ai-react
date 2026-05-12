@@ -970,6 +970,32 @@
         "erp": "Pull product catalogs, pricing, inventory and order data automatically.",
         "messaging": "Deploy a bot that answers in your team chats, powered by company knowledge.",
         "store": "Embed a support agent that answers product and policy questions on your shop."
+      },
+      "steps": {
+        "sources": {
+          "title": "Bitrix24",
+          "subtitle": "Connectors pull structured data from your existing systems — CRM, ERP, drives, wikis, and mail archives."
+        },
+        "extraction": {
+          "title": "Data Extraction",
+          "subtitle": "Raw documents are parsed, cleaned, and converted into structured records ready for AI processing."
+        },
+        "structuring": {
+          "title": "Structured Knowledge",
+          "subtitle": "Documents become searchable chunks with metadata — sections, tags, permissions, and context preserved."
+        },
+        "embedding": {
+          "title": "AI Embedding & Indexing",
+          "subtitle": "Text is converted into vector embeddings. The knowledge graph links related concepts across departments."
+        },
+        "engine": {
+          "title": "WikiAI Knowledge Engine",
+          "subtitle": "Semantic search, AI agent responses, and multi-language understanding powered by your company data."
+        },
+        "delivery": {
+          "title": "MCP / API Delivery",
+          "subtitle": "Knowledge reaches teams via Telegram bots, Slack, website widgets, call center tools, and REST API — wherever work happens."
+        }
       }
     },
     "aiAgentBridge": {

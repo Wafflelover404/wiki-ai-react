@@ -292,6 +292,85 @@ mark {
   }
 }
 
+/* ── Landing page scoped tokens ── */
+.landing {
+  --surface: hsl(var(--card));
+  --surface-hi: hsl(var(--accent) / 0.06);
+  --border-subtle: hsl(var(--border));
+  --border-glow: hsl(var(--primary) / 0.35);
+  --text-dim: hsl(var(--muted-foreground));
+  --text-faint: hsl(var(--muted-foreground) / 0.6);
+  --blue-glow: hsl(var(--primary) / 0.15);
+  --blue-soft: hsl(var(--primary) / 0.08);
+  --green-soft: hsl(var(--success) / 0.08);
+  --green-border: hsl(var(--success) / 0.2);
+  --amber-soft: hsl(var(--warning) / 0.08);
+  --amber-border: hsl(var(--warning) / 0.2);
+}
+
+.dark .landing {
+  --surface: hsl(220 20% 6%);
+  --surface-hi: hsl(220 20% 10%);
+  --border-subtle: hsl(220 20% 14%);
+  --border-glow: hsl(217 91% 60% / 0.35);
+  --text-dim: hsl(215 20% 65%);
+  --text-faint: hsl(215 20% 40%);
+  --blue-glow: hsl(217 91% 60% / 0.12);
+  --blue-soft: hsl(217 91% 60% / 0.06);
+  --green-soft: hsl(142 76% 36% / 0.08);
+  --green-border: hsl(142 76% 36% / 0.2);
+  --amber-soft: hsl(38 92% 50% / 0.08);
+  --amber-border: hsl(38 92% 50% / 0.2);
+}
+
+/* Scroll reveal transition */
+.landing .revealable {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.landing .revealable.revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Gradient text utilities */
+.landing .text-gradient-blue {
+  background: linear-gradient(135deg, #60a5fa 0%, #0ea5e9 60%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.landing .text-gradient-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 0%, #60a5fa 30%, #0ea5e9 50%, #60a5fa 70%, #f1f5f9 100%);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: landing-shimmer 4s linear infinite;
+}
+
+@keyframes landing-shimmer {
+  0% { background-position: -300% center; }
+  100% { background-position: 300% center; }
+}
+@keyframes landing-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes landing-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.75); }
+}
+@keyframes landing-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes landing-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Custom scrollbar for dark theme */
 .dark ::-webkit-scrollbar {
   width: 8px;
