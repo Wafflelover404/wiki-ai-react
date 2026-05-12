@@ -61,24 +61,24 @@ export default function IntegrationHub({ isMobile }: { isMobile: boolean }) {
   if (isMobile) return <MobileHub t={t} />;
 
   const sourceCards = [
-    { icon: Diamond, label: "Bitrix24", sub: "CRM / Tasks" },
-    { icon: BarChart3, label: "1C ERP", sub: "Operations" },
-    { icon: Folder, label: "Google Drive", sub: "Documents" },
-    { icon: Globe, label: "Confluence", sub: "Wiki pages" },
+    { icon: Diamond, label: t("landing.integrationHub.sources.bitrix"), sub: t("landing.integrationHub.sources.bitrixSub") },
+    { icon: BarChart3, label: t("landing.integrationHub.sources.erp"), sub: t("landing.integrationHub.sources.erpSub") },
+    { icon: Folder, label: t("landing.integrationHub.sources.drive"), sub: t("landing.integrationHub.sources.driveSub") },
+    { icon: Globe, label: t("landing.integrationHub.sources.confluence"), sub: t("landing.integrationHub.sources.confluenceSub") },
   ];
 
   const outputCards = [
-    { icon: MessageSquare, label: "Telegram Bot", sub: "Team messenger" },
-    { icon: ShoppingCart, label: "Online Store", sub: "AI chat widget" },
-    { icon: Smartphone, label: "Slack", sub: "Workspace chat" },
-    { icon: Plug, label: "REST API", sub: "Any integration" },
+    { icon: MessageSquare, label: t("landing.integrationHub.outputs.telegram"), sub: t("landing.integrationHub.outputs.telegramSub") },
+    { icon: ShoppingCart, label: t("landing.integrationHub.outputs.shop"), sub: t("landing.integrationHub.outputs.shopSub") },
+    { icon: Smartphone, label: t("landing.integrationHub.outputs.slack"), sub: t("landing.integrationHub.outputs.slackSub") },
+    { icon: Plug, label: t("landing.integrationHub.outputs.api"), sub: t("landing.integrationHub.outputs.apiSub") },
   ];
 
   const pipelineSteps = [
     {
       icon: Database,
-      title: t("landing.integrationHub.sources.bitrix"),
-      subtitle: "Connectors pull structured data from your existing systems — CRM, ERP, drives, wikis, and mail archives.",
+      title: t("landing.integrationHub.steps.sources.title"),
+      subtitle: t("landing.integrationHub.steps.sources.subtitle"),
       color: "#60a5fa",
       bg: "rgba(59,130,246,0.1)",
       children: (
@@ -91,30 +91,30 @@ export default function IntegrationHub({ isMobile }: { isMobile: boolean }) {
     },
     {
       icon: FileText,
-      title: "Data Extraction",
-      subtitle: "Raw documents are parsed, cleaned, and converted into structured records ready for AI processing.",
+      title: t("landing.integrationHub.steps.extraction.title"),
+      subtitle: t("landing.integrationHub.steps.extraction.subtitle"),
       color: "#f59e0b",
       bg: "rgba(245,158,11,0.1)",
     },
     {
       icon: Folder,
-      title: "Structured Knowledge",
-      subtitle: "Documents become searchable chunks with metadata — sections, tags, permissions, and context preserved.",
+      title: t("landing.integrationHub.steps.structuring.title"),
+      subtitle: t("landing.integrationHub.steps.structuring.subtitle"),
       color: "#818cf8",
       bg: "rgba(129,140,248,0.1)",
       children: <DataBars />,
     },
     {
       icon: Cpu,
-      title: "AI Embedding & Indexing",
-      subtitle: "Text is converted into vector embeddings. The knowledge graph links related concepts across departments.",
+      title: t("landing.integrationHub.steps.embedding.title"),
+      subtitle: t("landing.integrationHub.steps.embedding.subtitle"),
       color: "#a78bfa",
       bg: "rgba(167,139,250,0.1)",
     },
     {
       icon: Brain,
-      title: "WikiAI Knowledge Engine",
-      subtitle: "Semantic search, AI agent responses, and multi-language understanding powered by your company data.",
+      title: t("landing.integrationHub.steps.engine.title"),
+      subtitle: t("landing.integrationHub.steps.engine.subtitle"),
       color: "#60a5fa",
       bg: "rgba(59,130,246,0.15)",
       children: (
@@ -126,8 +126,8 @@ export default function IntegrationHub({ isMobile }: { isMobile: boolean }) {
     },
     {
       icon: Server,
-      title: "MCP / API Delivery",
-      subtitle: "Knowledge reaches teams via Telegram bots, Slack, website widgets, call center tools, and REST API — wherever work happens.",
+      title: t("landing.integrationHub.steps.delivery.title"),
+      subtitle: t("landing.integrationHub.steps.delivery.subtitle"),
       color: "#4ade80",
       bg: "rgba(34,197,94,0.1)",
       children: (
@@ -233,11 +233,11 @@ export default function IntegrationHub({ isMobile }: { isMobile: boolean }) {
 
 function MobileHub({ t }: { t: (k: string) => string }) {
   const steps = [
-    { icon: Database, title: "Data Sources", sub: "Bitrix24, 1C, Drive, Confluence, Email, SharePoint", color: "#60a5fa", bg: "rgba(59,130,246,0.1)" },
-    { icon: FileText, title: "Extraction", sub: "Parse & structure raw documents into clean records", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-    { icon: Cpu, title: "AI Processing", sub: "Embeddings, indexing, knowledge graph linking", color: "#a78bfa", bg: "rgba(167,139,250,0.1)" },
-    { icon: Brain, title: "WikiAI Engine", sub: "Semantic search & AI agent responses", color: "#60a5fa", bg: "rgba(59,130,246,0.15)" },
-    { icon: Server, title: "Delivery", sub: "Telegram, Slack, Widget, API, Call Center", color: "#4ade80", bg: "rgba(34,197,94,0.1)" },
+    { icon: Database, title: t("landing.integrationHub.dataSources"), sub: "Bitrix24, 1C, Drive, Confluence, Email, SharePoint", color: "#60a5fa", bg: "rgba(59,130,246,0.1)" },
+    { icon: FileText, title: t("landing.integrationHub.steps.extraction.title"), sub: t("landing.integrationHub.steps.extraction.subtitle"), color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+    { icon: Cpu, title: t("landing.integrationHub.steps.embedding.title"), sub: "Embeddings, indexing, knowledge graph linking", color: "#a78bfa", bg: "rgba(167,139,250,0.1)" },
+    { icon: Brain, title: t("landing.integrationHub.steps.engine.title"), sub: "Semantic search & AI agent responses", color: "#60a5fa", bg: "rgba(59,130,246,0.15)" },
+    { icon: Server, title: t("landing.integrationHub.deliveryChannels"), sub: "Telegram, Slack, Widget, API, Call Center", color: "#4ade80", bg: "rgba(34,197,94,0.1)" },
   ];
 
   return (
