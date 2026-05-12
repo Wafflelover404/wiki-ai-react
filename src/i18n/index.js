@@ -1,23 +1,18 @@
-// i18n configuration and utilities
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
-// Import translations
 import en from './locales/en.json'
 import ru from './locales/ru.json'
 
-// Available languages
 export const languages = {
   en: { name: 'English', code: 'en' },
   ru: { name: 'Русский', code: 'ru' }
 }
 
-// Default locale
 export const defaultLocale = 'en'
 
-// Local storage key
 const LOCALE_STORAGE_KEY = 'wiki-ai-locale'
+const LOCALE_CHANGE_EVENT = 'wiki-ai-locale-change'
 
-// Get current locale from storage
 export const getStoredLocale = () => {
   if (typeof window !== 'undefined') {
     return localStorage.getItem(LOCALE_STORAGE_KEY) || defaultLocale
@@ -25,14 +20,12 @@ export const getStoredLocale = () => {
   return defaultLocale
 }
 
-// Store locale in storage
 export const storeLocale = (locale) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(LOCALE_STORAGE_KEY, locale)
   }
 }
 
-// Get translations for a locale
 export const getTranslations = (locale) => {
   switch (locale) {
     case 'ru':
@@ -43,47 +36,67 @@ export const getTranslations = (locale) => {
   }
 }
 
-// Main translation hook
+const listeners = new Set()
+
+function subscribe(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
+
+function notify() {
+  listeners.forEach((fn) => fn())
+}
+
+let cachedLocale
+function resolveLocale() {
+  if (!cachedLocale) cachedLocale = getStoredLocale()
+  return cachedLocale
+}
+
+function setCachedLocale(locale) {
+  cachedLocale = locale
+  storeLocale(locale)
+  notify()
+}
+
 export function useTranslation() {
-  const [locale, setLocale] = useState(defaultLocale)
-  const [translations, setTranslations] = useState(() => getTranslations(defaultLocale))
+  const [, forceUpdate] = useState(0)
 
   useEffect(() => {
-    const storedLocale = getStoredLocale()
-    if (storedLocale !== locale) {
-      setLocale(storedLocale)
-      setTranslations(getTranslations(storedLocale))
+    const stored = getStoredLocale()
+    if (stored !== cachedLocale) {
+      cachedLocale = stored
     }
+    return subscribe(() => forceUpdate((n) => n + 1))
   }, [])
 
-  const changeLanguage = (newLocale) => {
-    setLocale(newLocale)
-    storeLocale(newLocale)
-    setTranslations(getTranslations(newLocale))
-  }
+  const locale = resolveLocale()
+  const translations = getTranslations(locale)
 
-  const t = (key, params = {}) => {
+  const changeLanguage = useCallback((newLocale) => {
+    setCachedLocale(newLocale)
+  }, [])
+
+  const t = useCallback((key, params = {}) => {
     const keys = key.split('.')
-    let value = translations
-    
-    // Navigate through nested keys
+    let value = getTranslations(cachedLocale || getStoredLocale())
+
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k]
       } else {
-        return key // Key not found
+        return key
       }
     }
-    
-    // Handle parameter interpolation
+
     if (typeof value === 'string' && Object.keys(params).length > 0) {
       Object.keys(params).forEach(param => {
         value = value.replace(`{{${param}}}`, params[param])
       })
     }
-    
+
     return value || key
-  }
+  }, [])
 
   return {
     locale,
