@@ -87,7 +87,7 @@ export default function TerminalDemo() {
             {i === TERM_LINES.length - 1 && shown.includes(i) && (
               <motion.span
                 animate={{ opacity: [1, 0] }}
-                transition={{ duration: 1, repeat: Infinity, ease: "steps(1)" }}
+                transition={{ duration: 1, repeat: Infinity, ease: "stepEnd" }}
                 className="ml-0.5"
               >
                 █

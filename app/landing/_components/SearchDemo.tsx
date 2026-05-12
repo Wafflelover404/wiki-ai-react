@@ -68,7 +68,7 @@ export default function SearchDemo({ qa }: { qa: QAItem[] }) {
           {typed}
           <motion.span
             animate={{ opacity: [1, 0] }}
-            transition={{ duration: 0.85, repeat: Infinity, ease: "steps(1)" }}
+            transition={{ duration: 0.85, repeat: Infinity, ease: "stepEnd" }}
           >
             |
           </motion.span>
