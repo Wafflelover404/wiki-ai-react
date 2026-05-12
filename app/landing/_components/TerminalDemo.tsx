@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import { useTranslation } from "@/src/i18n";
 
 interface TermLine { d: number; c: string; tKey: string; }
@@ -85,13 +84,9 @@ export default function TerminalDemo() {
           >
             {t(l.tKey)}
             {i === TERM_LINES.length - 1 && shown.includes(i) && (
-              <motion.span
-                animate={{ opacity: [1, 0] }}
-                transition={{ duration: 1, repeat: Infinity, ease: [1, 0] }}
-                className="ml-0.5"
-              >
+              <span className="animate-pulse ml-0.5" style={{ animationDuration: "1s" }}>
                 █
-              </motion.span>
+              </span>
             )}
           </div>
         ))}

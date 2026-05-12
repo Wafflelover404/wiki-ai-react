@@ -66,12 +66,9 @@ export default function SearchDemo({ qa }: { qa: QAItem[] }) {
         </svg>
         <span className="flex-1 text-[13px] text-foreground font-mono leading-relaxed min-h-[1.5em] flex items-center overflow-hidden text-ellipsis whitespace-nowrap">
           {typed}
-          <motion.span
-            animate={{ opacity: [1, 0] }}
-            transition={{ duration: 0.85, repeat: Infinity, ease: [1, 0] }}
-          >
+          <span className="animate-pulse" style={{ animationDuration: "0.85s" }}>
             |
-          </motion.span>
+          </span>
         </span>
         {searching ? (
           <motion.div
