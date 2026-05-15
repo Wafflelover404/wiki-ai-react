@@ -14,7 +14,7 @@ import {
   FileText, Users, MessageSquare, TrendingUp,
   Search, Filter, RefreshCw, Building
 } from "lucide-react"
-import { getCmsEndpointUrl, API_CONFIG } from "@/lib/config"
+import { getCmsEndpointUrl } from "@/lib/config"
 import CMSOrganizations from "./cms-organizations"
 
 interface CMSContentManagerProps {
@@ -88,38 +88,12 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
     currentTokenRef.current = token
   }, [token])
 
-  // Token refresh helper
-  const refreshToken = async (): Promise<string | null> => {
-    try {
-      console.log("Attempting to refresh token with admin credentials...")
-      const cmsPassword = process.env.NEXT_PUBLIC_CMS_PASSWORD || "AdminTestPassword1423"
-      const response = await fetch(`${API_CONFIG.BASE_URL}/v1/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "admin", password: cmsPassword })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.access_token) {
-          console.log("Token refreshed successfully, updating local reference")
-          currentTokenRef.current = data.access_token
-          return data.access_token
-        }
-      }
-    } catch (err) {
-      console.error("Token refresh error:", err)
-    }
-    return null
-  }
-
-  // Make API request with automatic token refresh on 401/403
   const makeAuthenticatedRequest = async (
     url: string,
     options: RequestInit = {}
   ): Promise<Response> => {
     try {
-      let currentToken = currentTokenRef.current
+      const currentToken = currentTokenRef.current
       const response = await fetch(url, {
         ...options,
         headers: {
@@ -128,25 +102,6 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
           "Content-Type": "application/json"
         }
       })
-
-      // If we get 401/403, try to refresh token and retry
-      if (response.status === 401 || response.status === 403) {
-        console.log("Token invalid, attempting refresh...")
-        const newToken = await refreshToken()
-        if (newToken && newToken !== currentToken) {
-          console.log("Retrying request with refreshed token")
-          // Retry with new token
-          return fetch(url, {
-            ...options,
-            headers: {
-              ...options.headers,
-              "Authorization": `Bearer ${newToken}`,
-              "Content-Type": "application/json"
-            }
-          })
-        }
-      }
-
       return response
     } catch (err) {
       console.error("Request error:", err)
