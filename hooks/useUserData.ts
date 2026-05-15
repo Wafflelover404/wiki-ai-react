@@ -41,9 +41,9 @@ export function useUserData(
 
     switch (resource) {
       case 'profile':
-        return '/user/profile'
+        return '/v1/me' // go-core
       case 'files':
-        return '/files/list' // User's files
+        return '/v1/files' // go-core
       default:
         return null
     }
@@ -66,7 +66,7 @@ export function useUserData(
     onError: options.onError,
   })
 
-  // Extract the specific resource data
+    // Extract the specific resource data
   const getResourceData = useCallback(() => {
     if (!resource || !apiResult.data) return resource === 'profile' ? null : []
 
@@ -74,8 +74,13 @@ export function useUserData(
       case 'profile':
         return apiResult.data.user || null
       case 'files':
-        // Handle both 'documents' and 'files' response formats
-        return (apiResult.data.documents || apiResult.data.files || []) as UserFile[]
+        // Support old format ({documents, files}) and go-core format ({items})
+        return (
+          (apiResult.data as any).documents ||
+          (apiResult.data as any).files ||
+          (apiResult.data as any).items ||
+          []
+        ) as UserFile[]
       default:
         return resource === 'profile' ? null : []
     }

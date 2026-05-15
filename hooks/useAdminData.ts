@@ -54,11 +54,11 @@ export function useAdminData(
 
     switch (resource) {
       case 'users':
-        return '/admin/users'
+        return null // Not available in go-core
       case 'files':
-        return '/admin/files'
+        return '/v1/files' // go-core
       case 'reports':
-        return '/admin/reports'
+        return '/v1/reports' // go-core
       default:
         return null
     }
@@ -102,11 +102,12 @@ export function useAdminData(
       responseData = apiResult.data.response || apiResult.data
     }
 
-    // Handle both response.users and just users field
+    // Handle old format ({users, files, reports}), go-core format ({items})
+    const raw = responseData || {}
     const data = {
-      users: responseData?.users || [],
-      files: responseData?.files || [],
-      reports: responseData?.reports || [],
+      users: raw.users || [],
+      files: raw.files || raw.items || [],
+      reports: raw.reports || raw.items || [],
     }
 
     // Debug logging
