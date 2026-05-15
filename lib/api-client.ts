@@ -77,8 +77,8 @@ export class ApiClient {
   private requestLoadingStates = new Map<string, boolean>()
   private cleanupInterval: NodeJS.Timer | null = null
 
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl
+  constructor(baseUrl?: string) {
+    this.baseUrl = baseUrl || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) || 'https://api.wikiai.by'
     this.startCacheCleanup()
   }
 
@@ -176,7 +176,7 @@ export class ApiClient {
    */
   private async executeRequest<T>(config: RequestConfig): Promise<ApiResponse<T>> {
     const headers: Record<string, string> = {
-      'ngrok-skip-browser-warning': 'true',
+      
     }
 
     // Only set Content-Type for non-FormData
@@ -208,21 +208,37 @@ export class ApiClient {
         signal: controller.signal,
       })
 
-      // Handle non-OK responses
-      if (!response.ok) {
-        let errorData: any = {}
-        try {
-          errorData = await response.json()
-        } catch {
-          errorData = { detail: response.statusText }
-        }
-
-        throw new ApiError(response.status, response.statusText, errorData)
+      // Handle 204 No Content (e.g., DELETE success)
+      if (response.status === 204) {
+        return { status: 'success', response: undefined as T } as ApiResponse<T>
       }
 
-      // Parse and return successful response
-      const result = await response.json()
-      return result as ApiResponse<T>
+      // Parse response
+      let result: any = {}
+      try {
+        result = await response.json()
+      } catch {
+        result = { detail: response.statusText }
+      }
+
+      // Handle non-OK responses
+      if (!response.ok) {
+        // Go-core format: {"error": {"code": "...", "message": "..."}}
+        if (result?.error?.message) {
+          throw new ApiError(response.status, result.error.message, result.error)
+        }
+        throw new ApiError(response.status, response.statusText, result)
+      }
+
+      // Handle go-core success format (no {status, response} wrapper)
+      if (result && typeof result === 'object' && !Array.isArray(result)) {
+        if (result.status === 'success' || result.status === 'error') {
+          return result as ApiResponse<T>
+        }
+      }
+
+      // Go-core success - wrap in ApiResponse
+      return { status: 'success', response: result } as ApiResponse<T>
     } catch (error) {
       if (error instanceof ApiError) {
         throw error
