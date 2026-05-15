@@ -13,6 +13,7 @@ interface CMSLoginProps {
 }
 
 export default function CMSLogin({ onLogin }: CMSLoginProps) {
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -26,7 +27,7 @@ export default function CMSLogin({ onLogin }: CMSLoginProps) {
       const response = await fetch(`${API_CONFIG.BASE_URL}/v1/auth/cms-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       })
 
       if (response.ok) {
@@ -38,7 +39,7 @@ export default function CMSLogin({ onLogin }: CMSLoginProps) {
       }
 
       const data = await response.json().catch(() => ({}))
-      setError(data?.error?.message || "Invalid master key")
+      setError(data?.error?.message || "Invalid CMS credentials")
     } catch (err) {
       setError("Failed to connect. Make sure the API is running on port 9001.")
     } finally {
@@ -54,12 +55,23 @@ export default function CMSLogin({ onLogin }: CMSLoginProps) {
             <Key className="w-6 h-6 text-primary" />
           </div>
           <CardTitle className="text-2xl">WikiAI CMS</CardTitle>
-          <p className="text-muted-foreground">Enter CMS master key to manage content</p>
+          <p className="text-muted-foreground">Enter CMS credentials to manage content</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">Master Key</label>
+              <label className="block text-sm font-medium mb-2 text-foreground">Username</label>
+              <Input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="cmsadmin"
+                required
+                className="bg-background border-input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2 text-foreground">Password</label>
               <Input
                 type="password"
                 value={password}
@@ -100,9 +112,11 @@ export default function CMSLogin({ onLogin }: CMSLoginProps) {
               <strong>CMS Access:</strong>
             </p>
             <div className="text-xs space-y-1">
-              <div>The master key is configured server-side</div>
-              <div>Set <code className="bg-background px-1 rounded">CMS_MASTER_KEY</code> in the backend&apos;s .env or docker-compose</div>
-              <div>Default (dev): <code className="bg-background px-1 rounded">AdminTestPassword1423</code></div>
+              <div>Credentials configured server-side via env vars:</div>
+              <code className="block bg-background px-2 py-1 rounded mt-1 text-[10px] leading-relaxed">
+                CMS_MASTER_USERNAME=cmsadmin<br/>
+                CMS_MASTER_KEY=AdminTestPassword1423
+              </code>
             </div>
           </div>
         </CardContent>
