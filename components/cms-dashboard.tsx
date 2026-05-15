@@ -11,7 +11,7 @@ import {
   TrendingUp,
   LogOut
 } from "lucide-react"
-import { getCmsEndpointUrl } from "@/lib/config"
+import { API_CONFIG } from "@/lib/config"
 import CMSContentManager from "./cms-content-manager"
 
 interface CMSDashboardProps {
@@ -20,28 +20,10 @@ interface CMSDashboardProps {
 }
 
 interface ContentStats {
-  blog_stats: {
-    total_posts: number
-    published_posts: number
-    draft_posts: number
-    featured_posts: number
-  }
-  help_stats: {
-    total_articles: number
-    published_articles: number
-    draft_articles: number
-    total_views: number
-  }
-  contact_stats: {
-    total_submissions: number
-    new_submissions: number
-    in_progress_submissions: number
-  }
-  sales_stats: {
-    total_leads: number
-    new_leads: number
-    qualified_leads: number
-  }
+  blog_stats: { total_posts: number; published_posts: number; draft_posts: number }
+  help_stats: { total_articles: number }
+  contact_stats: { total_submissions: number }
+  sales_stats: { total_leads: number }
 }
 
 export default function CMSDashboard({ token, onLogout }: CMSDashboardProps) {
@@ -56,19 +38,32 @@ export default function CMSDashboard({ token, onLogout }: CMSDashboardProps) {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch(getCmsEndpointUrl("/content/stats"), {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setStats(data)
-      } else {
-        setError("Failed to fetch stats")
+      const headers = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
       }
+      const base = API_CONFIG.BASE_URL
+
+      const [blogRes, helpRes] = await Promise.allSettled([
+        fetch(`${base}/v1/cms/blog/posts`, { headers }),
+        fetch(`${base}/v1/cms/help/articles`, { headers }),
+      ])
+
+      const blogPosts = blogRes.status === "fulfilled" ? await blogRes.value.json().catch(() => []) : []
+      const helpArticles = helpRes.status === "fulfilled" ? await helpRes.value.json().catch(() => []) : []
+      const blogArr = Array.isArray(blogPosts) ? blogPosts : blogPosts.items || []
+      const helpArr = Array.isArray(helpArticles) ? helpArticles : helpArticles.items || []
+
+      setStats({
+        blog_stats: {
+          total_posts: blogArr.length,
+          published_posts: blogArr.filter((p: any) => p.status === "published").length,
+          draft_posts: blogArr.filter((p: any) => p.status === "draft").length,
+        },
+        help_stats: { total_articles: helpArr.length },
+        contact_stats: { total_submissions: 0 },
+        sales_stats: { total_leads: 0 },
+      })
     } catch (err) {
       setError("Failed to connect to API")
     } finally {
@@ -135,9 +130,9 @@ export default function CMSDashboard({ token, onLogout }: CMSDashboardProps) {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.blog_stats.total_posts}</div>
+              <div className="text-2xl font-bold">{stats?.blog_stats.total_posts ?? 0}</div>
               <p className="text-xs text-muted-foreground">
-                {stats?.blog_stats.published_posts} published
+                {stats?.blog_stats.published_posts ?? 0} published
               </p>
             </CardContent>
           </Card>
@@ -148,10 +143,7 @@ export default function CMSDashboard({ token, onLogout }: CMSDashboardProps) {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.help_stats.total_articles}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats?.help_stats.published_articles} published
-              </p>
+              <div className="text-2xl font-bold">{stats?.help_stats.total_articles ?? 0}</div>
             </CardContent>
           </Card>
 
@@ -161,10 +153,7 @@ export default function CMSDashboard({ token, onLogout }: CMSDashboardProps) {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.contact_stats.total_submissions}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats?.contact_stats.new_submissions} new
-              </p>
+              <div className="text-2xl font-bold">{stats?.contact_stats.total_submissions ?? 0}</div>
             </CardContent>
           </Card>
 
@@ -174,10 +163,7 @@ export default function CMSDashboard({ token, onLogout }: CMSDashboardProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.sales_stats.total_leads}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats?.sales_stats.qualified_leads} qualified
-              </p>
+              <div className="text-2xl font-bold">{stats?.sales_stats.total_leads ?? 0}</div>
             </CardContent>
           </Card>
         </div>

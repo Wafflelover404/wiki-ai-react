@@ -26,7 +26,7 @@ import {
   ArrowUpDown
 } from "lucide-react"
 import { useWebSocketMessaging } from "@/hooks/use-websocket-messaging"
-import { getApiUrl } from "@/lib/config"
+import { getV1Url, API_CONFIG } from "@/lib/config"
 
 interface CMSOrganizationsProps {
   token: string
@@ -118,7 +118,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
     try {
       console.log("Attempting to refresh token with admin credentials...")
       const cmsPassword = process.env.NEXT_PUBLIC_CMS_PASSWORD || "AdminTestPassword1423"
-      const response = await fetch(getApiUrl("/login"), {
+      const response = await fetch(getV1Url("/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: "admin", password: cmsPassword })
@@ -182,22 +182,19 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const fetchOrganizations = async () => {
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl("/organizations"),
+        getV1Url("/organizations"),
         { method: "GET" }
       )
 
       if (response.ok) {
         const data = await response.json()
-        if (data.status === "success") {
-          console.log("Fetched organizations:", data.response.organizations)
-          setOrganizations(data.response.organizations || [])
-          setError(null)
-        } else {
-          setError(data.message || "Failed to fetch organizations")
-        }
+        const items = data.items || data.organizations || []
+        console.log("Fetched organizations:", items)
+        setOrganizations(items)
+        setError(null)
       } else {
-        console.error(`HTTP ${response.status}: Failed to fetch organizations`)
-        setError(`Failed to fetch organizations (${response.status})`)
+        const data = await response.json().catch(() => ({}))
+        setError(data?.error?.message || `Failed to fetch organizations (${response.status})`)
       }
     } catch (err) {
       setError("Failed to fetch organizations")
@@ -208,19 +205,16 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const fetchMessageThreads = async () => {
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl("/messages/threads"),
+        getV1Url("/messages/threads"),
         { method: "GET" }
       )
 
       if (response.ok) {
         const data = await response.json()
-        if (data.status === "success") {
-          setMessageThreads(data.response.threads || [])
-        } else {
-          setError(data.message || "Failed to fetch message threads")
-        }
+        setMessageThreads(data.items || data.threads || [])
       } else {
-        setError(`HTTP ${response.status}: Failed to fetch message threads`)
+        const data = await response.json().catch(() => ({}))
+        setError(data?.error?.message || `HTTP ${response.status}: Failed to fetch message threads`)
       }
     } catch (err) {
       setError("Failed to fetch message threads")
@@ -231,15 +225,13 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const fetchUnreadCount = async () => {
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl("/messages/unread-count"),
+        getV1Url("/messages/unread-count"),
         { method: "GET" }
       )
 
       if (response.ok) {
         const data = await response.json()
-        if (data.status === "success") {
-          setUnreadCount(data.response.count || 0)
-        }
+        setUnreadCount(data.unread_count ?? data.count ?? 0)
       }
     } catch (err) {
       console.error("Failed to fetch unread count:", err)
@@ -250,17 +242,16 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
     try {
       // Always use HTTP API for message fetching (more reliable than WebSocket)
       const response = await makeAuthenticatedRequest(
-        getApiUrl(`/messages/threads/${threadId}/messages`),
+        getV1Url(`/messages/threads/${threadId}/messages`),
         { method: "GET" }
       )
 
       if (response.ok) {
         const data = await response.json()
-        if (data.status === "success") {
-          setThreadMessages(data.response.messages || [])
-        }
+        setThreadMessages(data.items || data.messages || [])
       } else {
-        setError(`HTTP ${response.status}: Failed to fetch thread messages`)
+        const errData = await response.json().catch(() => ({}))
+        setError(errData?.error?.message || `HTTP ${response.status}: Failed to fetch thread messages`)
       }
     } catch (err) {
       setError("Failed to fetch thread messages")
@@ -271,14 +262,15 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const banOrganization = async (orgId: string) => {
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl(`/organizations/ban/${orgId}`),
-        { method: "POST" }
+        `${API_CONFIG.BASE_URL}/v1/organizations/${orgId}`,
+        { method: "PATCH", body: JSON.stringify({ status: "banned" }) }
       )
 
       if (response.ok) {
         await fetchOrganizations()
       } else {
-        setError("Failed to ban organization")
+        const data = await response.json().catch(() => ({}))
+        setError(data?.error?.message || "Failed to ban organization")
       }
     } catch (err) {
       setError("Failed to ban organization")
@@ -289,7 +281,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const approveOrganization = async (orgId: string) => {
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl(`/organizations/approve/${orgId}`),
+        getV1Url(`/organizations/approve/${orgId}`),
         { method: "POST" }
       )
 
@@ -307,7 +299,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const rejectOrganization = async (orgId: string, reason: string = "") => {
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl(`/organizations/reject/${orgId}`),
+        getV1Url(`/organizations/reject/${orgId}`),
         { method: "POST", body: JSON.stringify({ reason }) }
       )
 
@@ -326,8 +318,8 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const changeOrganizationStatus = async (orgId: string, newStatus: string) => {
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl(`/organizations/change-status/${orgId}`),
-        { method: "POST", body: JSON.stringify({ status: newStatus }) }
+        `${API_CONFIG.BASE_URL}/v1/organizations/${orgId}`,
+        { method: "PATCH", body: JSON.stringify({ status: newStatus }) }
       )
 
       if (response.ok) {
@@ -367,13 +359,11 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
     setSendingMessage(true)
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl(`/messages/threads/${selectedThread?.id}/messages`),
+        getV1Url(`/messages/threads/${selectedThread?.id}/messages`),
         {
           method: "POST",
           body: JSON.stringify({
             message: newMessage.trim(),
-            sender_name: "WikiAI Admin",
-            sender_email: "admin@wikiai.com",
             message_type: "response"
           })
         }
@@ -398,7 +388,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const markMessageAsRead = async (messageId: string) => {
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl(`/messages/${messageId}/read`),
+        getV1Url(`/messages/${messageId}/read`),
         { method: "POST" }
       )
 
@@ -417,7 +407,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const openThreadWithOrganization = async (orgId: string, orgName: string) => {
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl("/messages/threads"),
+        getV1Url("/messages/threads"),
         {
           method: "POST",
           body: JSON.stringify({
@@ -439,7 +429,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
           
           // Find the newly created thread
           const updatedThreadsResponse = await makeAuthenticatedRequest(
-            getApiUrl("/messages/threads"),
+            getV1Url("/messages/threads"),
             { method: "GET" }
           )
           
