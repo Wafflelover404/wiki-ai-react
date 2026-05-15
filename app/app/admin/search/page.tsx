@@ -404,9 +404,9 @@ export default function AdminSearchPage() {
     setMessages(prev => [...prev, userMessage])
 
     try {
-      // Use WebSocket for real-time search (like Vue implementation)
-      if (typeof WebSocket !== 'undefined') {
-        await performWebSocketQuery(input.trim())
+      // Use SSE stream for real-time search (go-core)
+      if (true) {
+        await performStreamQuery(input.trim())
       } else {
         // Fallback to HTTP
         await performHttpQuery(input.trim())
@@ -427,253 +427,103 @@ export default function AdminSearchPage() {
     }
   }
 
-  const performWebSocketQuery = async (query: string) => {
+  const performStreamQuery = async (query: string) => {
     return new Promise((resolve, reject) => {
-      try {
-        // Use the same API base URL from config for WebSocket
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'
-        const wsProtocol = apiUrl.startsWith('https://') ? 'wss:' : 'ws:'
-        const wsHost = apiUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
-        const wsUrl = `${wsProtocol}//${wsHost}/ws/query?token=${encodeURIComponent(token || '')}`
-        
-        console.log('Connecting to WebSocket:', wsUrl)
-        
-        const ws = new WebSocket(wsUrl)
-        let hasError = false
-        let connectionTimeout: NodeJS.Timeout
-        let immediateReceived = false
-        let overviewReceived = false
-        let loadingMessageAdded = false
-        let lastToken = ''
-        
-        // Set connection timeout
-        connectionTimeout = setTimeout(() => {
-          if (!hasError && ws.readyState === WebSocket.CONNECTING) {
-            hasError = true
-            ws.close()
-            reject(new Error('WebSocket connection timeout'))
-          }
-        }, 5000) // 5 second timeout
-        
-        ws.onopen = () => {
-          clearTimeout(connectionTimeout)
-          console.log('WebSocket connected, sending query')
-          
-          // Send query immediately (same format as Vue)
-          ws.send(JSON.stringify({
-            question: query,
-            session_id: sessionId,
-            model: null,
-            humanize: true,
-            ai_agent_mode: copilotMode
-          }))
-        }
-        
-        ws.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data)
-            console.log('WebSocket message received:', message)
-            
-            switch (message.type) {
-              case 'status':
-                // Processing status update (same as Vue)
-                console.log('Status:', message.message)
-                
-                // Show AI agent specific status
-                if (copilotMode && message.message) {
-                  const statusMessage: Message = {
+      let immediateReceived = false
+      let overviewReceived = false
+      let loadingMessageAdded = false
+      let hasError = false
+
+      queryApi.queryStream(token, query, {
+        onMessage: (msg: any) => {
+          switch (msg.type) {
+            case 'status':
+              if (copilotMode && msg.data?.message) {
+                setMessages(prev => [...prev, {
+                  id: crypto.randomUUID(),
+                  role: "assistant",
+                  content: `🤖 AI Agent: ${msg.data.message}`,
+                  timestamp: new Date(Date.now()),
+                }])
+              }
+              break
+
+            case 'chunks': {
+              const chunks = msg.data?.chunks || []
+              if (chunks.length > 0) {
+                immediateReceived = true
+                setIsLoading(false)
+
+                const searchResults = chunks.map((chunk: any, index: number) => ({
+                  id: `doc-${index}`,
+                  type: 'document',
+                  title: chunk.source || chunk.metadata?.filename || `Document ${index + 1}`,
+                  content: chunk.content ? chunk.content.substring(0, 200) + '...' : 'No content available',
+                  source: chunk.source || 'Unknown',
+                  score: chunk.final_score || 0,
+                }))
+
+                const sources = [...new Set(chunks.map((c: any) => c.source || c.metadata?.filename).filter(Boolean))]
+
+                setMessages(prev => [...prev, {
+                  id: crypto.randomUUID(),
+                  role: "sources",
+                  content: `Found ${searchResults.length} relevant sources:`,
+                  sources,
+                  searchResults,
+                  timestamp: new Date(Date.now()),
+                }])
+
+                if (showAiOverview && !loadingMessageAdded) {
+                  loadingMessageAdded = true
+                  setMessages(prev => [...prev, {
                     id: crypto.randomUUID(),
                     role: "assistant",
-                    content: `🤖 AI Agent: ${message.message}`,
-                    timestamp: new Date(Date.now())
-                  }
-                  setMessages(prev => [...prev, statusMessage])
-                }
-                break
-                
-              case 'immediate':
-                // Show search results immediately (same as Vue)
-                immediateReceived = true
-                setIsLoading(false) // Stop showing the loading indicator
-                
-                if (message.data && (message.data.snippets || message.data.results)) {
-                  let searchResults: any[] = []
-                  let sources: string[] = []
-                  
-                  // Handle original API structure (snippets)
-                  if (message.data.snippets) {
-                    message.data.snippets.forEach((snippet: any, index: number) => {
-                      searchResults.push({
-                        id: `doc-${index}`,
-                        type: 'document',
-                        title: snippet.source || `Document ${index + 1}`,
-                        content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
-                        source: snippet.source || 'Unknown',
-                        score: snippet.score || 0
-                      })
-                    })
-                    sources = message.data.files || []
-                  }
-                  
-                  // Handle AI Agent API structure (results)
-                  if (message.data.results) {
-                    message.data.results.forEach((result: any, index: number) => {
-                      const isAiRanked = result.ai_ranked || false
-                      const relevance = result.relevance || 'medium'
-                      const enhancedContext = result.enhanced_context || false
-                      
-                      searchResults.push({
-                        id: `ai-${index}`,
-                        type: 'document',
-                        title: result.title || result.source || `AI Result ${index + 1}`,
-                        content: result.content || result.snippet || 'No content available',
-                        source: result.source || 'Unknown',
-                        score: result.score || 0,
-                        ai_ranked: isAiRanked,
-                        relevance: relevance,
-                        enhanced_context: enhancedContext
-                      })
-                    })
-                    sources = message.data.results.map((r: any) => r.source)
-                  }
-                  
-                  const sourcesMessage: Message = {
-                    id: crypto.randomUUID(),
-                    role: "sources",
-                    content: copilotMode 
-                      ? `🤖 AI Agent found ${searchResults.length} enhanced sources:`
-                      : `Found ${searchResults.length} relevant sources:`,
-                    sources: sources,
-                    searchResults: searchResults,
+                    content: copilotMode ? "🤖 AI Agent generating enhanced analysis..." : "Generating AI overview...",
                     timestamp: new Date(Date.now()),
-                  }
-                  setMessages(prev => [...prev, sourcesMessage])
-                  
-                  // Add "Generating AI overview" message if overview is expected
-                  if (showAiOverview && !loadingMessageAdded) {
-                    loadingMessageAdded = true
-                    const overviewLoadingMessage: Message = {
-                      id: crypto.randomUUID(),
-                      role: "assistant",
-                      content: copilotMode ? "🤖 AI Agent generating enhanced analysis..." : "Generating AI overview...",
-                      timestamp: new Date(Date.now()),
-                    }
-                    setMessages(prev => [...prev, overviewLoadingMessage])
-                  }
+                  }])
                 }
-                break
-                
-              case 'stream_start':
-                // Start streaming - replace "Generating..." with empty message that will be filled with tokens
-                loadingMessageAdded = false // Reset flag
-                lastToken = '' // Reset token deduplication
-                setMessages(prev => {
-                  const filtered = prev.filter(msg => 
-                    msg.content !== "Generating AI overview..." && 
-                    msg.content !== "🤖 AI Agent generating enhanced analysis..."
-                  )
-                  return [...filtered, {
-                    id: crypto.randomUUID(),
-                    role: "overview",
-                    content: "",
-                    timestamp: new Date(Date.now()),
-                  }]
-                })
-                break
-                
-              case 'stream_token':
-                // Append streaming token to the last overview message (with deduplication)
-                if (message.token && message.token !== lastToken) {
-                  lastToken = message.token
-                  setMessages(prev => {
-                    const updated = [...prev]
-                    const lastMessage = updated[updated.length - 1]
-                    if (lastMessage && lastMessage.role === "overview") {
-                      // Create a new message object to ensure React re-renders
-                      updated[updated.length - 1] = {
-                        ...lastMessage,
-                        content: lastMessage.content + message.token
-                      }
-                    }
-                    return updated
-                  })
-                }
-                break
-                
-              case 'stream_end':
-                // Streaming completed
-                overviewReceived = true
-                setIsLoading(false)
-                break
-                
-              case 'overview':
-                // Replace "Generating..." with actual overview (same as Vue) - fallback for non-streaming
-                overviewReceived = true
-                setIsLoading(false) // Ensure loading is stopped
-                
-                const overviewContent = copilotMode 
-                  ? `🤖 **AI-Agent Analysis:** ${message.data || ""}`
-                  : message.data || ""
-                  
-                setMessages(prev => {
-                  const filtered = prev.filter(msg => 
-                    msg.content !== "Generating AI overview..." && 
-                    msg.content !== "🤖 AI Agent generating enhanced analysis..."
-                  )
-                  return [...filtered, {
-                    id: crypto.randomUUID(),
-                    role: "overview",
-                    content: overviewContent,
-                    timestamp: new Date(Date.now()),
-                  }]
-                })
-                break
-                
-              case 'chunks':
-                // Handle raw chunks (for non-humanized queries, same as Vue)
-                console.log('Received chunks:', message.data)
-                break
-                
-              case 'complete':
-                // Query completed (same as Vue)
-                console.log('Query completed')
-                ws.close()
-                resolve(message.data)
-                break
-                
-              case 'error':
-                hasError = true
-                console.error('WebSocket error from server:', message.message)
-                reject(new Error(message.message || 'WebSocket query error'))
-                ws.close()
-                break
+              }
+              break
             }
-          } catch (error) {
-            console.error('Error parsing WebSocket message:', error)
+
+            case 'answer': {
+              overviewReceived = true
+              setIsLoading(false)
+              const answerText = msg.data?.text || msg.data?.answer || ''
+              if (answerText) {
+                setMessages(prev => {
+                  const filtered = prev.filter(m =>
+                    m.content !== "Generating AI overview..." &&
+                    m.content !== "🤖 AI Agent generating enhanced analysis..."
+                  )
+                  return [...filtered, {
+                    id: crypto.randomUUID(),
+                    role: "overview",
+                    content: copilotMode ? `🤖 **AI-Agent Analysis:** ${answerText}` : answerText,
+                    timestamp: new Date(Date.now()),
+                  }]
+                })
+              }
+              break
+            }
+
+            case 'complete':
+              resolve(msg.data)
+              break
+
+            case 'error':
+              hasError = true
+              reject(new Error(msg.data?.message || 'Stream error'))
+              break
           }
+        },
+      }).catch((err: any) => {
+        if (!hasError) {
+          hasError = true
+          reject(err instanceof Error ? err : new Error(err?.message || 'Stream failed'))
         }
-        
-        ws.onerror = (error) => {
-          clearTimeout(connectionTimeout)
-          console.error('WebSocket error:', error)
-          if (!hasError) {
-            hasError = true
-            reject(new Error('WebSocket connection error'))
-          }
-        }
-        
-        ws.onclose = (event) => {
-          clearTimeout(connectionTimeout)
-          console.log('WebSocket closed:', event.code, event.reason)
-          if (!hasError && event.code !== 1000) {
-            hasError = true
-            reject(new Error(`WebSocket closed: ${event.reason || 'Unknown reason'} (code: ${event.code})`))
-          }
-        }
-        
-      } catch (error) {
-        reject(error)
-      }
+      })
     })
   }
 
