@@ -396,21 +396,25 @@ export const filesApi = {
 
   // POST /v1/files - multipart file upload
   upload: async (token: string, files: File[]) => {
-    const formData = new FormData()
-    files.forEach(file => {
-      formData.append("files", file)
-    })
-
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FILES}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        
-      },
-      body: formData,
-    })
-
-    return response.json()
+    const tenantId = await resolveTenantId(token)
+    const results = []
+    for (const file of files) {
+      const content = await file.text()
+      const res = await apiRequest({
+        url: `${API_CONFIG.V1_PREFIX}/documents`,
+        method: "POST",
+        token,
+        data: {
+          tenant_id: tenantId,
+          title: file.name,
+          source_url: "core:upload:" + file.name,
+          content,
+          doc_type: file.name.split('.').pop() || "txt",
+        },
+      })
+      if (res.status === "success") results.push(res.response)
+    }
+    return { status: "success" as const, response: { items: results } }
   },
 
   // POST /files/edit - NOT IN GO-CORE
