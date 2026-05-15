@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { API_CONFIG } from "@/lib/config"
 
 interface WebSocketMessage {
   type: string
@@ -25,7 +26,7 @@ export function useWebSocketMessaging(token: string) {
   // Token validation function
   const validateToken = async (providedToken: string): Promise<string | null> => {
     try {
-      const response = await fetch("http://127.0.0.1:9001/organizations", {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/v1/me`, {
         headers: {
           "Authorization": `Bearer ${providedToken}`,
           "Content-Type": "application/json"
@@ -33,27 +34,12 @@ export function useWebSocketMessaging(token: string) {
       })
 
       if (response.ok) {
-        return providedToken // Token is valid
-      } else if (response.status === 403) {
-        // Token is invalid, try to refresh with hardcoded credentials
-        console.log("WebSocket token expired, attempting to refresh...")
-        const refreshResponse = await fetch("http://127.0.0.1:9001/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: "admin@example.com", password: "admin123" })
-        })
-
-        if (refreshResponse.ok) {
-          const data = await refreshResponse.json()
-          if (data.status === "success" && data.token) {
-            console.log("WebSocket token refreshed successfully")
-            setCurrentToken(data.token)
-            return data.token
-          }
-        }
+        return providedToken
+      } else {
+        return null
       }
     } catch (err) {
-      console.error("WebSocket token validation error:", err)
+      console.error("Token validation error:", err)
     }
     
     return null
@@ -68,7 +54,6 @@ export function useWebSocketMessaging(token: string) {
 
     console.log("WebSocket: Starting connection with token length:", currentToken.length)
 
-    // Close existing connection if any
     if (wsRef.current) {
       try {
         wsRef.current.close()
@@ -78,22 +63,17 @@ export function useWebSocketMessaging(token: string) {
       wsRef.current = null
     }
 
-    // Validate and refresh token if needed
-    try {
-      const validToken = await validateToken(currentToken)
-      if (!validToken) {
-        console.error("WebSocket token validation failed")
-        setConnectionError("Authentication failed - please refresh the page")
-        return
-      }
-      console.log("WebSocket: Token validation successful")
-    } catch (error) {
-      console.error("WebSocket: Token validation error:", error)
-      setConnectionError("Token validation failed")
+    const validToken = await validateToken(currentToken)
+    if (!validToken) {
+      console.error("WebSocket token validation failed")
+      setConnectionError("Authentication failed - please refresh the page")
       return
     }
 
-    const wsUrl = `ws://127.0.0.1:9001/ws/messaging?token=${currentToken}`
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.wikiai.by"
+    const wsProtocol = apiUrl.startsWith("https://") ? "wss:" : "ws:"
+    const wsHost = apiUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")
+    const wsUrl = `${wsProtocol}//${wsHost}/ws/messaging?token=${currentToken}`
     console.log("WebSocket: Attempting connection to:", wsUrl.split('?token=')[0] + '?token=...')
     
     // Set connection timeout
