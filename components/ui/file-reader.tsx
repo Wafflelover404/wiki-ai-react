@@ -30,9 +30,10 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism"
 
 interface FileItem {
+  id?: string
   filename: string
   size: number
-  upload_date: string
+  upload_date?: string
   content_type: string
   metadata?: any
   indexed: boolean
@@ -931,10 +932,9 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
           // Import API_CONFIG dynamically to avoid circular dependencies
           const { API_CONFIG } = await import("@/lib/config")
           // Fallback to API endpoint if no content provided
-          const response = await fetch(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(file.filename)}`, {
+          const response = await fetch(`${API_CONFIG.BASE_URL}/v1/files/${encodeURIComponent(file.id)}/content`, {
             headers: {
               'Authorization': `Bearer ${token}`,
-              'ngrok-skip-browser-warning': 'true'
             }
           })
           
@@ -972,11 +972,12 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
           }
         }
         
-        // Fallback to opening in new tab if we have a token (this will likely also fail, but provides user feedback)
+        // Fallback to opening in new tab if we have a token
         if (token) {
           try {
             const { API_CONFIG } = await import("@/lib/config")
-            window.open(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(file.filename)}`, '_blank')
+            const filePath = file.id ? `/v1/files/${encodeURIComponent(file.id)}/content` : `/v1/files/${encodeURIComponent(file.filename)}/content`
+            window.open(`${API_CONFIG.BASE_URL}${filePath}`, '_blank')
           } catch (fallbackErr) {
             console.error('Fallback open also failed:', fallbackErr)
           }

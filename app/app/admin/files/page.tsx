@@ -160,7 +160,7 @@ export default function AdminFilesPage() {
       formData.append("file", file)
       
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/files/upload`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/v1/files`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -276,31 +276,7 @@ export default function AdminFilesPage() {
 
   const handleEditMetadata = async () => {
     if (!editingFile) return
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/files/${editingFile.filename}/metadata`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          metadata: editMetadata ? JSON.parse(editMetadata) : {}
-        }),
-      })
-
-      if (response.ok) {
-        toast.success(t('files.fileMetadataUpdated'))
-        fetchFiles()
-        setEditDialogOpen(false)
-        setEditingFile(null)
-        setEditMetadata("")
-      } else {
-        toast.error("Failed to update metadata")
-      }
-    } catch (error) {
-      toast.error("Failed to update metadata")
-    }
+    toast.error("Metadata editing is not available in the current API version.")
   }
 
   const formatFileSize = (bytes: number) => {
