@@ -347,153 +347,206 @@ export const filesApi = {
     }),
 }
 
+function synthesizeAnswer(question: string, chunks: any[]): string {
+  if (!chunks || chunks.length === 0) {
+    return "No relevant knowledge base content was found for: " + question
+  }
+  const top = chunks[0].content || ""
+  return top.length > 500 ? top.substring(0, 500) : top
+}
+
+function chunksToSearchResults(chunks: any[]): any[] {
+  return chunks.map((c: any) => ({
+    chunk_id: c.chunk_id,
+    document_id: c.document_id,
+    content: c.content,
+    final_score: c.final_score,
+    source: c.source || c.metadata?.filename || "memory",
+    metadata: c.metadata,
+  }))
+}
+
 export const queryApi = {
-  // POST /query with { question, session_id, model, humanize, ai_agent_mode }
-  query: (token: string, question: string, options?: { session_id?: string; model?: string; humanize?: boolean; ai_agent_mode?: boolean }) =>
-    apiRequest<{
-      immediate?: {
-        files: string[]
-        snippets: Array<{
-          content: string
-          source: string
-        }>
-        model: string
-        security_info: {
-          user_filtered: boolean
-          username: string
-          source_documents_count: number
-          security_filtered: boolean
-        }
-      }
-      overview?: string
-      model?: string
-      security_info?: {
-        user_filtered: boolean
-        username: string
-        source_documents_count: number
-        security_filtered: boolean
-      }
+  query: async (token: string, question: string, options?: {
+    session_id?: string
+    model?: string
+    humanize?: boolean
+    ai_agent_mode?: boolean
+    top_k?: number
+  }) => {
+    const tenantId = await resolveTenantId(token)
+    const res = await apiRequest<{
+      results: Array<{
+        chunk_id: string
+        document_id: string
+        content: string
+        final_score: number
+        source: string
+        metadata?: Record<string, unknown>
+      }>
+      query_id: string
+      took_ms: number
     }>({
-      url: "/query",
+      url: API_CONFIG.ENDPOINTS.SEARCH,
       method: "POST",
       token,
       data: {
-        question,
-        session_id: options?.session_id || null,
-        model: options?.model || null,
-        humanize: options?.humanize ?? true,
-        ai_agent_mode: options?.ai_agent_mode ?? false,
+        tenant_id: tenantId,
+        query: question,
+        top_k: options?.top_k || 10,
       },
-    }),
+    })
 
-  // WebSocket query for real-time streaming
-  queryWebSocket: async (
-    token: string, 
-    question: string, 
-    options?: { 
-      session_id?: string; 
-      model?: string; 
-      humanize?: boolean;
-      ai_agent_mode?: boolean;
-      onMessage?: (message: any) => void;
+    if (res.status === "success" && res.response) {
+      const data = res.response as any
+      const chunks = data.results || []
+      return {
+        status: "success" as const,
+        response: {
+          answer: synthesizeAnswer(question, chunks),
+          chunks: chunksToSearchResults(chunks),
+          model: options?.model || null,
+          query_id: data.query_id,
+          took_ms: data.took_ms,
+          security: { organization_id: tenantId, filtered: true },
+        },
+      }
     }
-  ) => {
+    return res
+  },
+
+  queryStream: async (
+    token: string,
+    question: string,
+    options?: {
+      session_id?: string
+      model?: string
+      humanize?: boolean
+      top_k?: number
+      onMessage?: (message: any) => void
+    }
+  ): Promise<ApiResponse<any>> => {
+    options?.onMessage?.({ type: "status", data: { message: "searching" } })
+
+    try {
+      return await queryApi.queryStreamViaWS(token, question, options)
+    } catch {
+      return queryApi.queryStreamViaHTTP(token, question, options)
+    }
+  },
+
+  queryStreamViaWS: async (
+    token: string,
+    question: string,
+    options?: {
+      session_id?: string
+      top_k?: number
+      onMessage?: (message: any) => void
+    }
+  ): Promise<ApiResponse<any>> => {
+    const baseUrl = API_CONFIG.BASE_URL.replace(/^http/, "ws")
+    const wsUrl = `${baseUrl}/v1/query/stream?token=${encodeURIComponent(token)}`
+
     return new Promise((resolve, reject) => {
-      try {
-        const wsUrl = getWsUrl("/ws/query") + `?token=${encodeURIComponent(token)}`
-        
-        const ws = new WebSocket(wsUrl)
-        let hasError = false
-        let immediateData: any = null
-        let overviewData: any = null
-        let chunksData: any = null
-        
-        ws.onopen = () => {
-          // Send query
-          ws.send(JSON.stringify({
-            question,
-            session_id: options?.session_id || null,
-            model: options?.model || null,
-            humanize: options?.humanize ?? true,
-            ai_agent_mode: options?.ai_agent_mode ?? false
-          }))
-        }
-        
-        ws.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data)
-            
-            // Call the message handler
-            if (options?.onMessage) {
-              options.onMessage(message)
-            }
-            
-            // Store data based on message type
-            switch (message.type) {
-              case 'status':
-                // Processing status update
-                break
-              case 'immediate':
-                immediateData = message.data
-                break
-              case 'overview':
-                overviewData = message.data
-                break
-              case 'chunks':
-                chunksData = message.data
-                break
-              case 'error':
-                hasError = true
-                reject(new Error(message.message || 'WebSocket query error'))
-                ws.close()
-                break
-              case 'complete':
-                // Query completed successfully
-                ws.close()
-                
-                // Resolve with combined data
-                const result = {
-                  status: 'success',
-                  response: {
-                    immediate: immediateData,
-                    answer: overviewData,
-                    chunks: chunksData?.chunks,
-                    available_files: chunksData?.available_files,
-                    possible_files_by_title: chunksData?.possible_files_by_title,
-                    model: immediateData?.model,
-                    security_info: immediateData?.security_info
-                  }
-                }
-                resolve(result)
-                break
-            }
-          } catch (error) {
-            console.error('Error parsing WebSocket message:', error)
-            if (options?.onMessage) {
-              options.onMessage({ type: 'error', message: 'Failed to parse message' })
-            }
+      const ws = new WebSocket(wsUrl)
+      let timeout: NodeJS.Timeout | undefined
+
+      ws.onopen = () => {
+        timeout = setTimeout(() => {
+          ws.close()
+          reject(new Error("WebSocket query timeout"))
+        }, 30000)
+
+        const tenantId = localStorage.getItem("tenant_id") || ""
+        ws.send(JSON.stringify({
+          query: question,
+          tenant_id: tenantId,
+          top_k: options?.top_k || 10,
+        }))
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data)
+          options?.onMessage?.(msg)
+
+          if (msg.type === "complete") {
+            clearTimeout(timeout)
+            ws.close()
+            resolve({ status: "success" as const, response: msg.data })
           }
-        }
-        
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error)
-          if (!hasError) {
-            reject(new Error('WebSocket connection error'))
+
+          if (msg.type === "error") {
+            clearTimeout(timeout)
+            ws.close()
+            reject(new Error(msg.data?.message || "WebSocket error"))
           }
+        } catch (e) {
+          console.error("WS parse error:", e)
         }
-        
-        ws.onclose = (event) => {
-          if (!hasError && event.code !== 1000) {
-            console.error('WebSocket closed unexpectedly:', event.code, event.reason)
-            reject(new Error(`WebSocket closed: ${event.reason || 'Unknown reason'}`))
-          }
+      }
+
+      ws.onerror = () => {
+        clearTimeout(timeout)
+        reject(new Error("WebSocket connection failed"))
+      }
+
+      ws.onclose = (event) => {
+        clearTimeout(timeout)
+        if (event.code !== 1000) {
+          reject(new Error(`WebSocket closed: ${event.reason || "unknown reason"}`))
         }
-        
-      } catch (error) {
-        reject(error)
       }
     })
-  }
+  },
+
+  queryStreamViaHTTP: async (
+    token: string,
+    question: string,
+    options?: {
+      session_id?: string
+      model?: string
+      humanize?: boolean
+      top_k?: number
+      onMessage?: (message: any) => void
+    }
+  ): Promise<ApiResponse<any>> => {
+    const result = await queryApi.query(token, question, options)
+    if (result.status !== "success") {
+      options?.onMessage?.({ type: "error", data: { message: result.message } })
+      return result
+    }
+
+    const data = result.response!
+    options?.onMessage?.({ type: "chunks", data: { chunks: data.chunks } })
+    options?.onMessage?.({ type: "answer", data: { answer: data.answer } })
+    options?.onMessage?.({ type: "complete", data: { query_id: data.query_id } })
+
+    return { status: "success", response: data }
+  },
+
+  queryWebSocket: async (
+    token: string,
+    question: string,
+    options?: {
+      session_id?: string
+      model?: string
+      humanize?: boolean
+      ai_agent_mode?: boolean
+      onMessage?: (message: any) => void
+    }
+  ) => {
+    return queryApi.queryStream(token, question, {
+      ...options,
+      onMessage: (msg) => {
+        options?.onMessage?.({
+          type: msg.type,
+          data: msg.data,
+          message: msg.type === "status" ? msg.data?.message : undefined,
+        })
+      },
+    })
+  },
 }
 
 export const reportsApi = {
