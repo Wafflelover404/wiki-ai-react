@@ -70,6 +70,7 @@ export const API_CONFIG = {
     API_KEYS_DELETE: "/api-keys",
     
     // Query endpoints
+    SEARCH: "/v1/search",
     QUERY: "/query",
     QUERY_WS: "/ws/query",
     
