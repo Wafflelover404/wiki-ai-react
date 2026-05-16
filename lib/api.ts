@@ -106,7 +106,7 @@ export async function apiRequest<T = unknown>({
       }
     }
 
-    return result
+    return { status: "success", response: result }
   } catch (error) {
     console.error('Network or fetch error:', error)
     return {
