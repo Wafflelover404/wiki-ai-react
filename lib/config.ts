@@ -22,9 +22,9 @@ const getWsUrlFromEnv = (): string => {
   return apiUrl.replace("http://", "ws://").replace("https://", "wss://");
 };
 
-// Get CMS prefix from environment variables
+// Get CMS prefix (now /v1/cms for go-core)
 const getCmsPrefix = (): string => {
-  return process.env.NEXT_PUBLIC_CMS_PREFIX || "/api/cms";
+  return process.env.NEXT_PUBLIC_CMS_PREFIX || "/v1/cms";
 };
 
 // Get site URL from environment variables
@@ -61,45 +61,45 @@ export const API_CONFIG = {
   // API endpoints
   ENDPOINTS: {
     // Auth endpoints
-    LOGIN: "/login",
-    TOKEN_VALIDATE: "/token/validate",
-    
+    LOGIN: "/v1/auth/login",
+    TOKEN_VALIDATE: "/v1/token/validate",
+
     // API Keys endpoints
-    API_KEYS_LIST: "/api-keys/list",
-    API_KEYS_CREATE: "/api-keys/create",
-    API_KEYS_DELETE: "/api-keys",
-    
+    API_KEYS_LIST: "/v1/api-keys",
+    API_KEYS_CREATE: "/v1/api-keys",
+    API_KEYS_DELETE: "/v1/api-keys",
+
     // Query endpoints
     SEARCH: "/v1/search",
-    QUERY: "/query",
-    QUERY_WS: "/ws/query",
-    
+    QUERY: "/v1/search",
+    QUERY_WS: "/v1/query/stream",
+
     // Files endpoints
-    FILES_LIST: "/files/list",
-    FILES_UPLOAD: "/upload",
-    
+    FILES_LIST: "/v1/files",
+    FILES_UPLOAD: "/v1/files",
+
     // Admin endpoints
-    ADMIN_ACCOUNTS: "/accounts",
-    ADMIN_INVITES: "/invites",
-    
+    ADMIN_ACCOUNTS: "/v1/accounts",
+    ADMIN_INVITES: "/v1/invites",
+
     // Metrics endpoints
-    METRICS_SUMMARY: "/metrics/summary",
-    METRICS_VOLUME: "/metrics/volume",
-    
-    // CMS endpoints (now unified with main API)
-    ORGANIZATIONS_ALL: "/organizations/all",
-    ORGANIZATIONS_PENDING: "/organizations/pending",
-    ORGANIZATIONS_APPROVE: "/organizations/approve",
-    ORGANIZATIONS_REJECT: "/organizations/reject",
-    ORGANIZATIONS_CHANGE_STATUS: "/organizations/change-status",
-    ORGANIZATIONS_SWITCH: "/organizations/switch",
-    ORGANIZATIONS_MEMBERSHIPS: "/organizations/memberships",
-    ORGANIZATIONS_MEMBERS: "/organizations/members",
-    ORGANIZATIONS_INVITES: "/organizations/invites",
-    MESSAGES_THREADS: "/messages/threads",
-    MESSAGES_THREAD_MESSAGES: "/messages/threads/{threadId}/messages",
-    MESSAGES_MARK_READ: "/messages/{messageId}/read",
-    MESSAGES_UNREAD_COUNT: "/messages/unread-count",
+    METRICS_SUMMARY: "/v1/metrics/summary",
+    METRICS_VOLUME: "/v1/metrics/volume",
+
+    // Organization & management endpoints
+    ORGANIZATIONS_ALL: "/v1/organizations",
+    ORGANIZATIONS_PENDING: "/v1/organizations/pending",
+    ORGANIZATIONS_APPROVE: "/v1/organizations/{id}/approve",
+    ORGANIZATIONS_REJECT: "/v1/organizations/{id}/reject",
+    ORGANIZATIONS_CHANGE_STATUS: "/v1/organizations/{id}",
+    ORGANIZATIONS_SWITCH: "/v1/organizations/switch",
+    ORGANIZATIONS_MEMBERSHIPS: "/v1/organizations/memberships",
+    ORGANIZATIONS_MEMBERS: "/v1/organizations/members",
+    ORGANIZATIONS_INVITES: "/v1/invites",
+    MESSAGES_THREADS: "/v1/messages/threads",
+    MESSAGES_THREAD_MESSAGES: "/v1/messages/threads/{threadId}/messages",
+    MESSAGES_MARK_READ: "/v1/messages/{messageId}/read",
+    MESSAGES_UNREAD_COUNT: "/v1/messages/unread-count",
   }
 } as const
 

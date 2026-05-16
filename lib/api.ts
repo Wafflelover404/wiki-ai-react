@@ -125,7 +125,7 @@ export const authApi = {
     }
 
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/login`, {
+      const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.LOGIN), {
         method: "POST",
         headers,
         body: JSON.stringify({ username, password }),
@@ -234,7 +234,7 @@ export const filesApi = {
       "ngrok-skip-browser-warning": "true",
       Authorization: `Bearer ${token}`,
     }
-    const response = await fetch(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(filename)}`, {
+    const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.FILES_LIST + "/" + encodeURIComponent(filename) + "/content"), {
       method: "GET",
       headers,
     })
@@ -298,7 +298,7 @@ export const filesApi = {
       formData.append(`file`, file)
     })
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}/upload`, {
+    const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.FILES_LIST), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -639,7 +639,7 @@ export const reportsApi = {
       Accept: "application/json",
     }
 
-    const res = await fetch(`${API_CONFIG.BASE_URL}/reports/get/auto`, {
+    const res = await fetch(getApiUrl("/v1/reports?" + new URLSearchParams({ type: "auto" })), {
       method: "GET",
       headers,
     })
@@ -665,7 +665,7 @@ export const reportsApi = {
       Accept: "application/json",
     }
 
-    const res = await fetch(`${API_CONFIG.BASE_URL}/reports/get/manual`, {
+    const res = await fetch(getApiUrl("/v1/reports?" + new URLSearchParams({ type: "manual" })), {
       method: "GET",
       headers,
     })
@@ -704,7 +704,7 @@ export const adminApi = {
     }
 
     try {
-      const res = await fetch(`${API_CONFIG.BASE_URL}/accounts`, {
+      const res = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.ADMIN_ACCOUNTS), {
         method: "GET",
         headers,
       })
@@ -1256,7 +1256,7 @@ export const aiAgentApi = {
     }
 
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/ai-agent/execute`, {
+      const response = await fetch(getApiUrl("/v1/ai-agent/execute"), {
         method: "POST",
         headers,
         body: JSON.stringify({ input }),
