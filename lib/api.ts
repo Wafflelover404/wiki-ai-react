@@ -150,26 +150,26 @@ export const authApi = {
       organization_id?: string
       organization_name?: string
     }>({
-      url: "/token/validate",
+      url: "/v1/token/validate",
       token,
     }),
 
   checkAdminAccess: (token: string) =>
     apiRequest<{ admin: boolean }>({
-      url: "/admin/access",
+      url: "/v1/admin/access",
       token,
     }),
 
   createOrganization: (data: { organization_name: string; admin_username: string; admin_password: string }) =>
     apiRequest({
-      url: "/organizations/create_with_admin",
+      url: "/v1/organizations",
       method: "POST",
       data,
     }),
 
   switchOrganization: (token: string, data: { organization_id?: string; organization_slug?: string }) =>
     apiRequest<{ token: string }>({
-      url: "/organizations/switch",
+      url: "/v1/organizations/switch",
       method: "POST",
       token,
       data,
@@ -177,19 +177,19 @@ export const authApi = {
 
   listMemberships: (token: string) =>
     apiRequest<{ memberships: Array<{ organization_id: string; organization_name: string; role: string }> }>({
-      url: "/organizations/memberships",
+      url: "/v1/organizations/memberships",
       token,
     }),
 
   listMembers: (token: string) =>
     apiRequest<{ members: Array<{ user_id: string; username: string; role: string }> }>({
-      url: "/organizations/members",
+      url: "/v1/organizations/members",
       token,
     }),
 
   createInvite: (token: string, email: string, role = "member") =>
     apiRequest({
-      url: "/organizations/invites",
+      url: "/v1/invites",
       method: "POST",
       token,
       data: { email, role },
@@ -197,14 +197,14 @@ export const authApi = {
 
   acceptInvite: (inviteToken: string, password: string, username: string) =>
     apiRequest({
-      url: "/invites/accept",
+      url: "/v1/invites/accept",
       method: "POST",
       data: { token: inviteToken, username, password },
     }),
 
   updateMemberRole: (token: string, user_id: string, role: string) =>
     apiRequest({
-      url: "/organizations/members/role",
+      url: "/v1/organizations/members/role",
       method: "POST",
       token,
       data: { user_id, role },
@@ -224,7 +224,7 @@ export const filesApi = {
     apiRequest<{
       documents: Array<{ id: number; filename: string; upload_timestamp: string; organization_id: string; file_size: number }>
     }>({
-      url: "/files/list",
+      url: "/v1/files",
       token,
     }),
 
@@ -313,7 +313,7 @@ export const filesApi = {
   // POST /files/edit with { filename, new_content }
   edit: (token: string, filename: string, newContent: string) =>
     apiRequest({
-      url: "/files/edit",
+      url: "/v1/files/edit",
       method: "POST",
       token,
       data: { filename, new_content: newContent },
@@ -322,7 +322,7 @@ export const filesApi = {
   // DELETE /files/delete_by_fileid with { file_id }
   deleteById: (token: string, fileId: string) =>
     apiRequest({
-      url: "/files/delete_by_fileid",
+      url: "/v1/files/delete_by_fileid",
       method: "DELETE",
       token,
       data: { file_id: fileId },
@@ -331,7 +331,7 @@ export const filesApi = {
   // DELETE /files/delete_by_filename with ?filename=...
   deleteByFilename: (token: string, filename: string) =>
     apiRequest({
-      url: "/files/delete_by_filename",
+      url: "/v1/files/delete_by_filename",
       method: "DELETE",
       token,
       params: { filename },
@@ -340,7 +340,7 @@ export const filesApi = {
   // POST /files/index
   index: (token: string) =>
     apiRequest({
-      url: "/files/index",
+      url: "/v1/files/index",
       method: "POST",
       token,
       data: {},
@@ -686,7 +686,7 @@ export const reportsApi = {
   // POST /reports/submit/manual with { issue }
   submitManual: (token: string, issue: string) =>
     apiRequest({
-      url: "/reports/submit/manual",
+      url: "/v1/reports",
       method: "POST",
       token,
       data: { issue },
@@ -730,6 +730,14 @@ export const adminApi = {
         }
       }
 
+      // go-core format: {"items": [...], "next_cursor": null}
+      if (data && typeof data === "object" && !Array.isArray(data) && (data as any).items) {
+        return {
+          status: "success" as const,
+          response: { accounts: (data as any).items },
+        }
+      }
+
       if (Array.isArray(data)) {
         return {
           status: "success" as const,
@@ -755,7 +763,7 @@ export const adminApi = {
     userData: { username: string; password: string; role: string; allowed_files?: string[] },
   ) =>
     apiRequest({
-      url: "/register",
+      url: "/v1/register",
       method: "POST",
       token,
       data: userData,
@@ -767,7 +775,7 @@ export const adminApi = {
     userData: { username: string; role?: string; password?: string; allowed_files?: string[] },
   ) =>
     apiRequest({
-      url: "/user/edit",
+      url: "/v1/user/edit",
       method: "POST",
       token,
       data: userData,
@@ -776,7 +784,7 @@ export const adminApi = {
   // DELETE /user/delete with ?username=...
   deleteUser: (token: string, username: string) =>
     apiRequest({
-      url: "/user/delete",
+      url: "/v1/user/delete",
       method: "DELETE",
       token,
       params: { username },
@@ -797,7 +805,7 @@ export const adminApi = {
       created_by: string
       organization_id?: string
     }>({
-      url: "/invites/create",
+      url: "/v1/invites",
       method: "POST",
       token,
       data: inviteData,
@@ -819,7 +827,7 @@ export const adminApi = {
       count: number
       listed_by: string
     }>({
-      url: "/invites",
+      url: "/v1/invites",
       token,
     }),
 
@@ -846,7 +854,7 @@ export const adminApi = {
       allowed_files: string[]
       organization_id?: string
     }>({
-      url: "/invites/accept",
+      url: "/v1/invites/accept",
       method: "POST",
       data: { ...userData, token },
     }),
@@ -884,13 +892,13 @@ export const adminApi = {
 export const catalogsApi = {
   list: (token: string) =>
     apiRequest<{ catalogs: Array<{ catalog_id: string; shop_name: string; total_products: number }> }>({
-      url: "/catalogs",
+      url: "/v1/catalogs",
       token,
     }),
 
   create: (token: string, name: string) =>
     apiRequest<{ catalog_id: string; shop_name: string }>({
-      url: "/catalogs/create",
+      url: "/v1/catalogs",
       method: "POST",
       token,
       data: { name },
@@ -929,7 +937,7 @@ export const catalogsApi = {
 export const pluginsApi = {
   status: (token: string) =>
     apiRequest<{ enabled: boolean; status: string }>({
-      url: "/plugins/status",
+      url: "/v1/plugins",
       token,
     }),
 
@@ -949,13 +957,13 @@ export const pluginsApi = {
 
   listTokens: (token: string) =>
     apiRequest<{ tokens: Array<{ id: string; name: string; created_at: string }> }>({
-      url: "/plugins/tokens",
+      url: "/v1/plugins/tokens",
       token,
     }),
 
   createToken: (token: string, name: string) =>
     apiRequest<{ token: string; id: string }>({
-      url: "/plugins/tokens/create",
+      url: "/v1/plugins/tokens",
       method: "POST",
       token,
       data: { token_name: name },
@@ -973,7 +981,7 @@ export const pluginsApi = {
 export const opencartApi = {
   importProducts: (token: string, catalogId: string) =>
     apiRequest({
-      url: "/opencart/products/import",
+      url: "/v1/opencart/products/import",
       method: "POST",
       token,
       data: { catalog_id: catalogId },
@@ -1003,7 +1011,7 @@ export const apiKeysApi = {
         expires_at?: string;
       }> 
     }>({
-      url: "/api-keys/list",
+      url: "/v1/api-keys",
       token,
     }),
 
@@ -1026,7 +1034,7 @@ export const apiKeysApi = {
       full_key: string;
       tier?: string;
     }>({
-      url: "/api-keys/create",
+      url: "/v1/api-keys",
       method: "POST",
       token,
       data,
@@ -1166,7 +1174,7 @@ export const apiKeysApi = {
       permissions: Record<string, string>;
       total: number;
     }>({
-      url: "/api-keys/permissions/list",
+      url: "/v1/permissions",
       token,
     }),
 }
@@ -1184,7 +1192,7 @@ export const metricsApi = {
       organization_id?: string | null
       user_id?: string | null
     }>({
-      url: "/metrics/summary",
+      url: "/v1/metrics/summary",
       token,
       params: { since, scope },
     }),
@@ -1205,7 +1213,7 @@ export const metricsApi = {
       limit?: number
       offset?: number
     }>({
-      url: "/metrics/queries",
+      url: "/v1/metrics/queries",
       token,
       params: {
         since,
@@ -1239,7 +1247,7 @@ export const metricsApi = {
       total_failed: number
       avg_daily_queries: number
     }>({
-      url: "/metrics/volume",
+      url: "/v1/metrics/volume",
       token,
       params: { days: String(days), scope },
     }),
@@ -1278,7 +1286,7 @@ export const aiAgentApi = {
       files: Array<{ id: number; filename: string; upload_timestamp: string; organization_id: string; file_size: number }>
       file_id_map: Record<string, string>
     }>({
-      url: "/ai-agent/files",
+      url: "/v1/ai-agent/files",
       token,
     }),
 
@@ -1299,7 +1307,7 @@ export const aiAgentApi = {
     apiRequest<{
       matches: Array<{ filename: string; similarity: number; match_type: string }>
     }>({
-      url: "/ai-agent/fuzzy-search",
+      url: "/v1/ai-agent/fuzzy-search",
       method: "POST",
       token,
       data: { query },
@@ -1310,7 +1318,7 @@ export const aiAgentApi = {
       results: Array<{ source: string; content: string }>
       overview?: string
     }>({
-      url: "/ai-agent/kb-search",
+      url: "/v1/ai-agent/kb-search",
       method: "POST",
       token,
       data: { query },
@@ -1321,7 +1329,7 @@ export const aiAgentApi = {
       results: Array<{ source: string; content: string }>
       overview?: string
     }>({
-      url: "/ai-agent/semantic-search",
+      url: "/v1/ai-agent/semantic-search",
       method: "POST",
       token,
       data: { query },
@@ -1329,7 +1337,7 @@ export const aiAgentApi = {
 
   batchOverviews: (token: string, queries: string[], results: any[]) =>
     apiRequest<{ overviews: string[] }>({
-      url: "/query/batch-overview",
+      url: "/v1/query/batch-overview",
       method: "POST",
       token,
       data: { queries, results },
@@ -1690,7 +1698,7 @@ export const dashboardApi = {
         active_users: number
       }
     }>({
-      url: "/dashboard/employee",
+      url: "/v1/dashboard/employee",
       token,
       params: { since },
     }),
@@ -1740,7 +1748,7 @@ export const dashboardApi = {
       organization_id?: string | null
       period: string
     }>({
-      url: "/dashboard/admin",
+      url: "/v1/dashboard/admin",
       token,
       params: { since, scope },
     }),
@@ -1774,7 +1782,7 @@ export const dashboardApi = {
         organization_id: string
       }>
     }>({
-      url: "/admin/quizzes",
+      url: "/v1/admin/quizzes",
       token,
       params,
     })
@@ -1858,7 +1866,7 @@ export const dashboardApi = {
       id: string
       message: string
     }>({
-      url: "/admin/quizzes",
+      url: "/v1/admin/quizzes",
       method: "POST",
       token,
       data: backendQuizData,
@@ -1976,7 +1984,7 @@ export const dashboardApi = {
       expires_at: string
       created_by: string
     }>({
-      url: "/invites/create",
+      url: "/v1/invites",
       method: "POST",
       token,
       data,
@@ -1989,7 +1997,7 @@ export const dashboardApi = {
       count: number
       listed_by: string
     }>({
-      url: "/invites",
+      url: "/v1/invites",
       token,
     })
   },
@@ -2019,7 +2027,7 @@ export const dashboardApi = {
       allowed_files: string[]
       organization_id?: string
     }>({
-      url: "/invites/accept",
+      url: "/v1/invites/accept",
       method: "POST",
       data,
     })
@@ -2069,7 +2077,7 @@ export const dashboardApi = {
           organization_slug: string
         }>
       }>({
-        url: "/messages/threads",
+        url: "/v1/messages/threads",
         method: "GET",
         token,
       })
@@ -2108,7 +2116,7 @@ export const dashboardApi = {
       return apiRequest<{
         thread_id: string
       }>({
-        url: "/messages/threads",
+        url: "/v1/messages/threads",
         method: "POST",
         token,
         data: data,
@@ -2143,7 +2151,7 @@ export const dashboardApi = {
       return apiRequest<{
         unread_count: number
       }>({
-        url: "/messages/unread-count",
+        url: "/v1/messages/unread-count",
         method: "GET",
         token,
       })
@@ -2187,7 +2195,7 @@ export const dashboardApi = {
           description?: string
         }>
       }>({
-        url: "/organizations/pending",
+        url: "/v1/organizations/pending",
         method: "GET",
         token,
       })
