@@ -246,11 +246,11 @@ export const authApi = {
     }),
 
   // POST /v1/invites/accept
-  acceptInvite: (inviteToken: string, password: string, name: string) =>
+  acceptInvite: (inviteToken: string, password: string, username: string) =>
     apiRequest({
       url: `${API_CONFIG.ENDPOINTS.INVITES}/accept`,
       method: "POST",
-      data: { token: inviteToken, username: name, password, display_name: name },
+      data: { token: inviteToken, username, password },
     }),
 
   // POST /organizations/members/role - NOT IN GO-CORE
