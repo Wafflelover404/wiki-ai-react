@@ -549,7 +549,7 @@ export const queryApi = {
     return res
   },
 
-  // KMS search (synchronous - no streaming) - fires synthetic events for backward compat
+  // WebSocket streaming query - connects to /v1/query/stream
   queryStream: async (
     token: string,
     question: string,
@@ -561,29 +561,107 @@ export const queryApi = {
       onMessage?: (message: any) => void
     }
   ): Promise<ApiResponse<any>> => {
-    if (options?.onMessage) {
-      options.onMessage({ type: "status", data: { message: "searching" } })
-    }
+    options?.onMessage?.({ type: "status", data: { message: "searching" } })
 
+    try {
+      return await queryApi.queryStreamViaWS(token, question, options)
+    } catch {
+      return queryApi.queryStreamViaHTTP(token, question, options)
+    }
+  },
+
+  queryStreamViaWS: async (
+    token: string,
+    question: string,
+    options?: {
+      session_id?: string
+      top_k?: number
+      onMessage?: (message: any) => void
+    }
+  ): Promise<ApiResponse<any>> => {
+    const baseUrl = API_CONFIG.BASE_URL.replace(/^http/, "ws")
+    const wsUrl = `${baseUrl}/v1/query/stream?token=${encodeURIComponent(token)}`
+
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket(wsUrl)
+      let timeout: NodeJS.Timeout | undefined
+
+      ws.onopen = () => {
+        timeout = setTimeout(() => {
+          ws.close()
+          reject(new Error("WebSocket query timeout"))
+        }, 30000)
+
+        const tenantId = localStorage.getItem("tenant_id") || ""
+        ws.send(JSON.stringify({
+          query: question,
+          tenant_id: tenantId,
+          top_k: options?.top_k || 10,
+        }))
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data)
+          options?.onMessage?.(msg)
+
+          if (msg.type === "complete") {
+            clearTimeout(timeout)
+            ws.close()
+            resolve({ status: "success" as const, response: msg.data })
+          }
+
+          if (msg.type === "error") {
+            clearTimeout(timeout)
+            ws.close()
+            reject(new Error(msg.data?.message || "WebSocket error"))
+          }
+        } catch (e) {
+          console.error("WS parse error:", e)
+        }
+      }
+
+      ws.onerror = () => {
+        clearTimeout(timeout)
+        reject(new Error("WebSocket connection failed"))
+      }
+
+      ws.onclose = (event) => {
+        clearTimeout(timeout)
+        if (event.code !== 1000) {
+          reject(new Error(`WebSocket closed: ${event.reason || "unknown reason"}`))
+        }
+      }
+    })
+  },
+
+  // Fallback: HTTP REST search with synthetic events
+  queryStreamViaHTTP: async (
+    token: string,
+    question: string,
+    options?: {
+      session_id?: string
+      model?: string
+      humanize?: boolean
+      top_k?: number
+      onMessage?: (message: any) => void
+    }
+  ): Promise<ApiResponse<any>> => {
     const result = await queryApi.query(token, question, options)
     if (result.status !== "success") {
-      if (options?.onMessage) {
-        options.onMessage({ type: "error", data: { message: result.message } })
-      }
+      options?.onMessage?.({ type: "error", data: { message: result.message } })
       return result
     }
 
     const data = result.response!
-    if (options?.onMessage) {
-      options.onMessage({ type: "chunks", data: { chunks: data.chunks } })
-      options.onMessage({ type: "answer", data: { answer: data.answer } })
-      options.onMessage({ type: "complete", data: { query_id: data.query_id } })
-    }
+    options?.onMessage?.({ type: "chunks", data: { chunks: data.chunks } })
+    options?.onMessage?.({ type: "answer", data: { answer: data.answer } })
+    options?.onMessage?.({ type: "complete", data: { query_id: data.query_id } })
 
     return { status: "success", response: data }
   },
 
-  // Legacy WebSocket wrapper - delegates to KMS search
+  // Legacy WebSocket wrapper - delegates to queryStream
   queryWebSocket: async (
     token: string,
     question: string,
@@ -598,13 +676,11 @@ export const queryApi = {
     return queryApi.queryStream(token, question, {
       ...options,
       onMessage: (msg) => {
-        if (options?.onMessage) {
-          options.onMessage({
-            type: msg.type,
-            data: msg.type === "chunks" ? msg.data : msg.data,
-            message: msg.type === "status" ? msg.data?.message : undefined,
-          })
-        }
+        options?.onMessage?.({
+          type: msg.type,
+          data: msg.data,
+          message: msg.type === "status" ? msg.data?.message : undefined,
+        })
       },
     })
   },
