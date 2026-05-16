@@ -347,6 +347,16 @@ export const filesApi = {
     }),
 }
 
+async function resolveTenantId(token: string): Promise<string | null> {
+  try {
+    const res = await authApi.validateToken(token)
+    if (res.status === "success" && res.response) {
+      return (res.response as any).organization_id || null
+    }
+  } catch { /* ignore */ }
+  return null
+}
+
 function synthesizeAnswer(question: string, chunks: any[]): string {
   if (!chunks || chunks.length === 0) {
     return "No relevant knowledge base content was found for: " + question
@@ -449,18 +459,29 @@ export const queryApi = {
 
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(wsUrl)
+      let settled = false
       let timeout: NodeJS.Timeout | undefined
 
-      ws.onopen = () => {
-        timeout = setTimeout(() => {
+      const connectTimeout = setTimeout(() => {
+        if (!settled) {
+          settled = true
           ws.close()
-          reject(new Error("WebSocket query timeout"))
+          reject(new Error("WebSocket connection timeout"))
+        }
+      }, 10000)
+
+      ws.onopen = () => {
+        clearTimeout(connectTimeout)
+        timeout = setTimeout(() => {
+          if (!settled) {
+            settled = true
+            ws.close()
+            reject(new Error("WebSocket query timeout"))
+          }
         }, 30000)
 
-        const tenantId = localStorage.getItem("tenant_id") || ""
         ws.send(JSON.stringify({
           query: question,
-          tenant_id: tenantId,
           top_k: options?.top_k || 10,
         }))
       }
@@ -470,13 +491,17 @@ export const queryApi = {
           const msg = JSON.parse(event.data)
           options?.onMessage?.(msg)
 
-          if (msg.type === "complete") {
+          if (msg.type === "complete" && !settled) {
+            settled = true
+            clearTimeout(connectTimeout)
             clearTimeout(timeout)
             ws.close()
             resolve({ status: "success" as const, response: msg.data })
           }
 
-          if (msg.type === "error") {
+          if (msg.type === "error" && !settled) {
+            settled = true
+            clearTimeout(connectTimeout)
             clearTimeout(timeout)
             ws.close()
             reject(new Error(msg.data?.message || "WebSocket error"))
@@ -487,13 +512,19 @@ export const queryApi = {
       }
 
       ws.onerror = () => {
+        clearTimeout(connectTimeout)
         clearTimeout(timeout)
-        reject(new Error("WebSocket connection failed"))
+        if (!settled) {
+          settled = true
+          reject(new Error("WebSocket connection failed"))
+        }
       }
 
       ws.onclose = (event) => {
+        clearTimeout(connectTimeout)
         clearTimeout(timeout)
-        if (event.code !== 1000) {
+        if (!settled && event.code !== 1000) {
+          settled = true
           reject(new Error(`WebSocket closed: ${event.reason || "unknown reason"}`))
         }
       }
@@ -539,11 +570,41 @@ export const queryApi = {
     return queryApi.queryStream(token, question, {
       ...options,
       onMessage: (msg) => {
-        options?.onMessage?.({
-          type: msg.type,
-          data: msg.data,
-          message: msg.type === "status" ? msg.data?.message : undefined,
-        })
+        // Map new message types to old format for backward compatibility
+        switch (msg.type) {
+          case "chunks": {
+            const chunks = msg.data?.chunks || []
+            options?.onMessage?.({
+              type: "immediate",
+              data: {
+                results: chunks.map((c: any) => ({
+                  chunk_id: c.chunk_id,
+                  content: c.content,
+                  source: c.source || c.metadata?.filename || "memory",
+                  score: c.final_score,
+                })),
+                snippets: chunks.map((c: any) => ({
+                  content: c.content,
+                  source: c.source || c.metadata?.filename || "memory",
+                  score: c.final_score,
+                })),
+              },
+            })
+            break
+          }
+          case "answer":
+            options?.onMessage?.({ type: "overview", data: msg.data?.answer || "" })
+            break
+          case "status":
+            options?.onMessage?.({ type: "status", message: msg.data?.message || "" })
+            break
+          case "complete":
+            options?.onMessage?.({ type: "complete", data: msg.data })
+            break
+          case "error":
+            options?.onMessage?.({ type: "error", message: msg.data?.message || "Unknown error" })
+            break
+        }
       },
     })
   },
