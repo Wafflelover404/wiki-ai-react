@@ -195,11 +195,11 @@ export const authApi = {
       data: { email, role },
     }),
 
-  acceptInvite: (inviteToken: string, password: string, name: string) =>
+  acceptInvite: (inviteToken: string, password: string, username: string) =>
     apiRequest({
-      url: "/organizations/invites/accept",
+      url: "/invites/accept",
       method: "POST",
-      data: { token: inviteToken, password, name },
+      data: { token: inviteToken, username, password },
     }),
 
   updateMemberRole: (token: string, user_id: string, role: string) =>
@@ -1410,12 +1410,9 @@ export const landingPagesApi = {
       }
       
       const data = await response.json()
-      
-      // Check if the response contains an error message
-      if (data.detail === "Blog post not found") {
-        return null
-      }
-      
+
+      if (data?.error?.code === "post_not_found") return null
+
       return data
     } catch (error) {
       console.error('Error fetching blog post:', error)
