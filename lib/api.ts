@@ -460,6 +460,7 @@ export const queryApi = {
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(wsUrl)
       let settled = false
+      let receivedData = false
       let timeout: NodeJS.Timeout | undefined
 
       const connectTimeout = setTimeout(() => {
@@ -476,7 +477,11 @@ export const queryApi = {
           if (!settled) {
             settled = true
             ws.close()
-            reject(new Error("WebSocket query timeout"))
+            if (receivedData) {
+              resolve({ status: "success" as const, response: null })
+            } else {
+              reject(new Error("WebSocket query timeout"))
+            }
           }
         }, 30000)
 
@@ -489,7 +494,6 @@ export const queryApi = {
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data)
-          options?.onMessage?.(msg)
 
           if (msg.type === "complete" && !settled) {
             settled = true
@@ -497,6 +501,7 @@ export const queryApi = {
             clearTimeout(timeout)
             ws.close()
             resolve({ status: "success" as const, response: msg.data })
+            return
           }
 
           if (msg.type === "error" && !settled) {
@@ -504,8 +509,19 @@ export const queryApi = {
             clearTimeout(connectTimeout)
             clearTimeout(timeout)
             ws.close()
-            reject(new Error(msg.data?.message || "WebSocket error"))
+            if (receivedData) {
+              resolve({ status: "success" as const, response: null })
+            } else {
+              reject(new Error(msg.data?.message || "WebSocket error"))
+            }
+            return
           }
+
+          if (msg.type === "chunks" || msg.type === "answer") {
+            receivedData = true
+          }
+
+          options?.onMessage?.(msg)
         } catch (e) {
           console.error("WS parse error:", e)
         }
@@ -525,7 +541,11 @@ export const queryApi = {
         clearTimeout(timeout)
         if (!settled && event.code !== 1000) {
           settled = true
-          reject(new Error(`WebSocket closed: ${event.reason || "unknown reason"}`))
+          if (receivedData) {
+            resolve({ status: "success" as const, response: null })
+          } else {
+            reject(new Error(`WebSocket closed: ${event.reason || "unknown reason"}`))
+          }
         }
       }
     })
