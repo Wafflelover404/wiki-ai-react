@@ -250,7 +250,7 @@ export const authApi = {
     apiRequest({
       url: `${API_CONFIG.ENDPOINTS.INVITES}/accept`,
       method: "POST",
-      data: { token: inviteToken, password, display_name: name },
+      data: { token: inviteToken, username: name, password, display_name: name },
     }),
 
   // POST /organizations/members/role - NOT IN GO-CORE
@@ -1235,7 +1235,7 @@ export const landingPagesApi = {
       }
 
       const data = await response.json()
-      if (data?.error?.code === "not_found") return null
+      if (data?.error?.code === "post_not_found") return null
 
       return data
     } catch (error) {
