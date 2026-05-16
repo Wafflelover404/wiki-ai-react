@@ -111,9 +111,9 @@ All paths are under `/v1/`. Go-core edge gateway (port 9001) proxies to microser
 
 ### `POST /v1/invites/accept`
 - **What**: Accept invite, create user account, auto-login
-- **Request**: `{"token": string, "username": string, "password": string, "display_name"?: string}`
+- **Request**: `{"token": string, "username": string, "password": string}`
 - **Response**: `LoginResponse` (201)
-- **Callers**: `authApi.acceptInvite()` at `lib/api.ts:249`, `adminApi.acceptInvite()` at `lib/api.ts:754`, `dashboardApi.acceptInvite()` at `lib/api.ts:1602`, `app/invite/page.tsx:128`
+- **Callers**: `adminApi.acceptInvite()` at `lib/api.ts:754`, `dashboardApi.acceptInvite()` at `lib/api.ts:1602`, `app/invite/page.tsx:128`
 
 ### `DELETE /v1/invites/{id}`
 - **What**: Revoke an invite
@@ -182,6 +182,12 @@ All paths are under `/v1/`. Go-core edge gateway (port 9001) proxies to microser
 - **Request**: `{"tenant_id": string, "title": string, "source_url": string, "content": string, "doc_type": string}` + header `Authorization: Bearer {token}`
 - **Response**: `{"document_id": string, "chunk_ids": [string], "status": string, "content_hash": string, "chunk_count": int}`
 - **Callers**: `filesApi.upload()` at `lib/api.ts:398` — converts files to text content first
+
+### `POST /v1/files`
+- **What**: Upload file via multipart form (binary files)
+- **Request**: `FormData` with `file` field + header `Authorization: Bearer {token}` (no JSON)
+- **Response**: `200 OK`
+- **Callers**: `app/app/admin/files/page.tsx:163` (direct fetch)
 
 ### `GET /v1/files`
 - **What**: List all files/documents in the knowledge base
