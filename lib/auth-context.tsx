@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(storedToken)
       setUser({
         username: (data as any).username || "User",
-        role: ((data as any).role as "admin" | "user") || "user",
+        role: ((data as any).role as User["role"]) || "user",
         organization: (data as any).organization_name || (data as any).organization || "",
       })
       return true
