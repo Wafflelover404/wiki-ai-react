@@ -4,7 +4,7 @@ import { API_CONFIG, getApiUrl, getWsUrl, getCmsEndpointUrl } from "./config"
 
 interface ApiRequestOptions {
   url: string
-  method?: "GET" | "POST" | "PUT" | "DELETE"
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
   token?: string
   data?: Record<string, unknown> | FormData
   params?: Record<string, string>
