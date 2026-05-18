@@ -95,7 +95,7 @@ export function useWebSocketMessaging(token: string) {
       return
     }
 
-    const wsUrl = `${getWsUrl("/ws/messaging")}?token=${currentToken}`
+    const wsUrl = `${getWsUrl("/v1/ws/messaging")}?token=${currentToken}`
     console.log("WebSocket: Attempting connection to:", wsUrl.split('?token=')[0] + '?token=...')
     
     // Set connection timeout
