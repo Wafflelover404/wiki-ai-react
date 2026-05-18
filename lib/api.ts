@@ -212,7 +212,7 @@ export const authApi = {
 
   revokeInvite: (token: string, invite_id: string) =>
     apiRequest({
-      url: `/organizations/invites/${encodeURIComponent(invite_id)}`,
+      url: `/v1/invites/${encodeURIComponent(invite_id)}`,
       method: "DELETE",
       token,
     }),
@@ -841,7 +841,7 @@ export const adminApi = {
       created_by: string
       message?: string
     }>({
-      url: `/invite/${token}`,
+      url: `/v1/invites/${token}`,
     }),
 
   acceptInvite: (
@@ -864,7 +864,7 @@ export const adminApi = {
       invite_id: string
       revoked_by: string
     }>({
-      url: `/invites/${inviteId}`,
+      url: `/v1/invites/${inviteId}`,
       method: "DELETE",
       token,
     }),
@@ -882,7 +882,7 @@ export const adminApi = {
         admin_email: string
       }
     }>({
-      url: `/organizations/status-by-email/${encodeURIComponent(email)}`,
+      url: `/v1/organizations/status-by-email/${encodeURIComponent(email)}`,
       method: "GET",
     })
   },
@@ -919,7 +919,7 @@ export const catalogsApi = {
         score?: number
       }>
     }>({
-      url: `/catalogs/${catalogId}/search`,
+      url: `/v1/catalogs/${catalogId}/search`,
       method: "GET",
       token,
       params: { query },
@@ -927,7 +927,7 @@ export const catalogsApi = {
 
   delete: (token: string, catalogId: string) =>
     apiRequest({
-      url: `/catalogs/${catalogId}`,
+      url: `/v1/catalogs/${catalogId}`,
       method: "DELETE",
       token,
     }),
@@ -943,14 +943,14 @@ export const pluginsApi = {
 
   enable: (token: string, plugin = "opencart") =>
     apiRequest({
-      url: `/plugins/${plugin}/enable`,
+      url: `/v1/plugins/${plugin}/enable`,
       method: "POST",
       token,
     }),
 
   disable: (token: string, plugin = "opencart") =>
     apiRequest({
-      url: `/plugins/${plugin}/disable`,
+      url: `/v1/plugins/${plugin}/disable`,
       method: "POST",
       token,
     }),
@@ -971,7 +971,7 @@ export const pluginsApi = {
 
   deleteToken: (token: string, tokenId: string) =>
     apiRequest({
-      url: `/plugins/tokens/${tokenId}`,
+      url: `/v1/plugins/tokens/${tokenId}`,
       method: "DELETE",
       token,
     }),
@@ -1042,7 +1042,7 @@ export const apiKeysApi = {
 
   delete: (token: string, keyId: string) =>
     apiRequest({
-      url: `/api-keys/${keyId}`,
+      url: `/v1/api-keys/${keyId}`,
       method: "DELETE",
       token,
     }),
@@ -1068,7 +1068,7 @@ export const apiKeysApi = {
       llm_cost_limit: number;
       current_llm_cost: number;
     }>({
-      url: `/api-keys/${keyId}`,
+      url: `/v1/api-keys/${keyId}`,
       token,
     }),
 
@@ -1082,7 +1082,7 @@ export const apiKeysApi = {
     priority_tier?: string;
   }) =>
     apiRequest({
-      url: `/api-keys/${keyId}`,
+      url: `/v1/api-keys/${keyId}`,
       method: "PUT",
       token,
       data,
@@ -1090,7 +1090,7 @@ export const apiKeysApi = {
 
   revoke: (token: string, keyId: string) =>
     apiRequest({
-      url: `/api-keys/${keyId}/revoke`,
+      url: `/v1/api-keys/${keyId}/revoke`,
       method: "POST",
       token,
     }),
@@ -1105,7 +1105,7 @@ export const apiKeysApi = {
       is_warning: boolean;
       reset_time: string;
     }>({
-      url: `/api-keys/${keyId}/quota`,
+      url: `/v1/api-keys/${keyId}/quota`,
       token,
     }),
 
@@ -1119,7 +1119,7 @@ export const apiKeysApi = {
       total_response_bytes: number;
       period_days: number;
     }>({
-      url: `/api-keys/${keyId}/usage-stats`,
+      url: `/v1/api-keys/${keyId}/usage-stats`,
       token,
       params: { days: String(days) },
     }),
@@ -1135,7 +1135,7 @@ export const apiKeysApi = {
         reason?: string;
       }>;
     }>({
-      url: `/api-keys/${keyId}/audit-log`,
+      url: `/v1/api-keys/${keyId}/audit-log`,
       token,
       params: { limit: String(limit), offset: String(offset) },
     }),
@@ -1152,7 +1152,7 @@ export const apiKeysApi = {
       cost_limit: number;
       can_afford: boolean;
     }>({
-      url: `/api-keys/${keyId}/llm-control`,
+      url: `/v1/api-keys/${keyId}/llm-control`,
       token,
     }),
 
@@ -1163,7 +1163,7 @@ export const apiKeysApi = {
     llm_cost_limit?: number;
   }) =>
     apiRequest({
-      url: `/api-keys/${keyId}/llm-control`,
+      url: `/v1/api-keys/${keyId}/llm-control`,
       method: "PUT",
       token,
       data,
@@ -1293,13 +1293,13 @@ export const aiAgentApi = {
   // Execute specific command types
   fileContent: (token: string, filename: string) =>
     apiRequest<{ content: string }>({
-      url: `/ai-agent/file-content/${encodeURIComponent(filename)}`,
+      url: `/v1/ai-agent/file-content/${encodeURIComponent(filename)}`,
       token,
     }),
 
   fileById: (token: string, fileId: string) =>
     apiRequest<{ content: string }>({
-      url: `/ai-agent/file-id/${encodeURIComponent(fileId)}`,
+      url: `/v1/ai-agent/file-id/${encodeURIComponent(fileId)}`,
       token,
     }),
 
@@ -1408,7 +1408,7 @@ export const landingPagesApi = {
     }
 
     try {
-      const response = await fetch(getCmsEndpointUrl(`/blog/posts/slug/${slug}`), { headers })
+      const response = await fetch(getCmsEndpointUrl(`/blog/posts/${slug}`), { headers })
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -1810,7 +1810,7 @@ export const dashboardApi = {
       updated_at: string
       organization_id: string
     }>({
-      url: `/admin/quizzes/${quizId}`,
+      url: `/v1/admin/quizzes/${quizId}`,
       token,
     })
   },
@@ -1913,8 +1913,8 @@ export const dashboardApi = {
     return apiRequest<{
       message: string
     }>({
-      url: `/admin/quizzes/${quizId}`,
-      method: "PUT",
+      url: `/v1/admin/quizzes/${quizId}`,
+      method: "PATCH",
       token,
       data: backendQuizData,
     })
@@ -1924,7 +1924,7 @@ export const dashboardApi = {
     return apiRequest<{
       message: string
     }>({
-      url: `/admin/quizzes/${quizId}`,
+      url: `/v1/admin/quizzes/${quizId}`,
       method: "DELETE",
       token,
     })
@@ -1943,7 +1943,7 @@ export const dashboardApi = {
         submitted_at: string
       }>
     }>({
-      url: `/admin/quizzes/${quizId}/statistics`,
+      url: `/v1/admin/quizzes/${quizId}/statistics`,
       token,
     })
   },
@@ -1961,7 +1961,7 @@ export const dashboardApi = {
       }>
       total: number
     }>({
-      url: `/admin/quizzes/${quizId}/submissions`,
+      url: `/v1/admin/quizzes/${quizId}/submissions`,
       token,
       params: { limit: limit.toString() },
     })
@@ -2012,7 +2012,7 @@ export const dashboardApi = {
       created_by: string
       message?: string
     }>({
-      url: `/invite/${token}`,
+      url: `/v1/invites/${token}`,
     })
   },
 
@@ -2038,7 +2038,7 @@ export const dashboardApi = {
       invite_id: string
       revoked_by: string
     }>({
-      url: `/invites/${inviteId}`,
+      url: `/v1/invites/${inviteId}`,
       method: "DELETE",
       token,
     })
@@ -2055,7 +2055,7 @@ export const dashboardApi = {
         logs?: string
       }
     }>({
-      url: `/quiz/${encodeURIComponent(filename)}?regenerate=${regenerate}`,
+      url: `/v1/quiz/${encodeURIComponent(filename)}?regenerate=${regenerate}`,
       method: "POST",
       token,
     })
@@ -2099,7 +2099,7 @@ export const dashboardApi = {
           updated_at: string
         }>
       }>({
-        url: `/messages/threads/${threadId}/messages`,
+        url: `/v1/messages/threads/${threadId}/messages`,
         method: "GET",
         token,
       })
@@ -2132,7 +2132,7 @@ export const dashboardApi = {
       return apiRequest<{
         message_id: string
       }>({
-        url: `/messages/threads/${threadId}/messages`,
+        url: `/v1/messages/threads/${threadId}/messages`,
         method: "POST",
         token,
         data: data,
@@ -2141,7 +2141,7 @@ export const dashboardApi = {
 
     markMessageAsRead: async (messageId: string, token: string) => {
       return apiRequest<{}>({
-        url: `/messages/${messageId}/read`,
+        url: `/v1/messages/${messageId}/read`,
         method: "POST",
         token,
       })
@@ -2159,7 +2159,7 @@ export const dashboardApi = {
 
     approveOrganization: async (orgId: string, token: string) => {
       return apiRequest<{}>({
-        url: `/organizations/approve/${orgId}`,
+        url: `/v1/organizations/${orgId}/approve`,
         method: "POST",
         token,
       })
@@ -2167,7 +2167,7 @@ export const dashboardApi = {
 
     rejectOrganization: async (orgId: string, token: string, reason?: string) => {
       return apiRequest<{}>({
-        url: `/organizations/reject/${orgId}`,
+        url: `/v1/organizations/${orgId}/reject`,
         method: "POST",
         token,
         data: reason ? { reason } : undefined,
@@ -2176,8 +2176,8 @@ export const dashboardApi = {
 
     changeOrganizationStatus: async (orgId: string, token: string, newStatus: string) => {
       return apiRequest<{}>({
-        url: `/organizations/change-status/${orgId}`,
-        method: "POST",
+        url: `/v1/organizations/${orgId}`,
+        method: "PATCH",
         token,
         data: { status: newStatus },
       })

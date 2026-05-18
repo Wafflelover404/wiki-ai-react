@@ -57,13 +57,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await authApi.login(username, password)
     console.log("[v0] Login result:", result)
 
+    // Handle both Go backend format ({access_token, user, organization, memberships})
+    // and legacy format ({status: "success", token: "..."})
+    const token = (result as any).access_token || result.token
+    if (token) {
+      localStorage.setItem("auth_token", token)
+      setToken(token)
+
+      const userData = (result as any).user
+      if (userData) {
+        const membership = (result as any).memberships?.[0]
+        setUser({
+          username: userData.username || "User",
+          role: (membership?.role || userData.role || "user") as "admin" | "user" | "owner",
+          organization: (result as any).organization?.name || "",
+        })
+        return { success: true }
+      }
+
+      await validateAndSetToken(token)
+      return { success: true }
+    }
+
     if (result.status === "success" && result.token) {
       localStorage.setItem("auth_token", result.token)
       setToken(result.token)
-      // Hydrate user (incl. organization) from /token/validate
       await validateAndSetToken(result.token)
       return { success: true }
     }
+
     return { success: false, error: result.message || "Login failed" }
   }
 

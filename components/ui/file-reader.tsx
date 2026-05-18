@@ -931,7 +931,7 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
           // Import API_CONFIG dynamically to avoid circular dependencies
           const { API_CONFIG } = await import("@/lib/config")
           // Fallback to API endpoint if no content provided
-          const response = await fetch(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(file.filename)}`, {
+          const response = await fetch(`${API_CONFIG.BASE_URL}/v1/files/${encodeURIComponent(file.filename)}/content`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
@@ -976,7 +976,7 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
         if (token) {
           try {
             const { API_CONFIG } = await import("@/lib/config")
-            window.open(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(file.filename)}`, '_blank')
+            window.open(`${API_CONFIG.BASE_URL}/v1/files/${encodeURIComponent(file.filename)}/content`, '_blank')
           } catch (fallbackErr) {
             console.error('Fallback open also failed:', fallbackErr)
           }

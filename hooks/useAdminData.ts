@@ -54,11 +54,11 @@ export function useAdminData(
 
     switch (resource) {
       case 'users':
-        return '/admin/users'
+        return '/v1/accounts'
       case 'files':
-        return '/admin/files'
+        return '/v1/files'
       case 'reports':
-        return '/admin/reports'
+        return '/v1/reports'
       default:
         return null
     }

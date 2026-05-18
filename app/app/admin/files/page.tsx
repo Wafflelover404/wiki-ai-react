@@ -160,7 +160,7 @@ export default function AdminFilesPage() {
       formData.append("file", file)
       
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/files/upload`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/v1/files`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -278,7 +278,7 @@ export default function AdminFilesPage() {
     if (!editingFile) return
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/files/${editingFile.filename}/metadata`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/v1/files/${editingFile.filename}/metadata`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
