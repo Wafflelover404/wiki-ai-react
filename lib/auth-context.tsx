@@ -5,7 +5,7 @@ import { authApi } from "./api"
 
 interface User {
   username: string
-  role: "admin" | "user"
+  role: "admin" | "user" | "owner"
   organization: string
 }
 
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         token,
         isLoading,
-        isAdmin: user?.role === "admin",
+        isAdmin: user?.role === "admin" || user?.role === "owner",
         login,
         logout,
         switchOrganization,

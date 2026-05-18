@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { adminApi, filesApi } from "@/lib/api"
+import { adminApi } from "@/lib/api"
 import { getActualSiteUrl } from "@/lib/config"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
@@ -39,8 +39,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Users, Plus, Search, MoreVertical, Edit, Trash2, Loader2, Shield, User, Mail, Link, Copy } from "lucide-react"
 import { toast } from "sonner"
 import { redirect } from "next/navigation"
@@ -51,7 +49,6 @@ interface UserAccount {
   username: string
   role: string
   organization_id?: string
-  allowed_files?: string[]
   created_at?: string
 }
 
@@ -61,7 +58,6 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserAccount[]>([])
   const [filteredUsers, setFilteredUsers] = useState<UserAccount[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [allFiles, setAllFiles] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   // Create user state
@@ -69,11 +65,8 @@ export default function UsersPage() {
   const [newUsername, setNewUsername] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [newRole, setNewRole] = useState("user")
-  const [newAllowedFiles, setNewAllowedFiles] = useState<string[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState("")
-  const createDialogRef = useRef<HTMLDivElement>(null)
-  const editDialogRef = useRef<HTMLDivElement>(null)
 
   // Create invite state
   const [isInviteOpen, setIsInviteOpen] = useState(false)
@@ -88,7 +81,6 @@ export default function UsersPage() {
   // Edit user state
   const [editUser, setEditUser] = useState<UserAccount | null>(null)
   const [editRole, setEditRole] = useState("")
-  const [editPermittedFiles, setEditPermittedFiles] = useState<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
 
   // Delete user state
@@ -99,18 +91,11 @@ export default function UsersPage() {
     if (!token) return
 
     try {
-      const [usersRes, filesRes] = await Promise.all([
-        adminApi.listAccounts(token), 
-        filesApi.list(token)
-      ])
+      const usersRes = await adminApi.listAccounts(token)
 
       if (usersRes.status === "success" && usersRes.response) {
         setUsers(usersRes.response.accounts || [])
         setFilteredUsers(usersRes.response.accounts || [])
-      }
-      
-      if (filesRes.status === "success" && filesRes.response) {
-        setAllFiles(filesRes.response.documents?.map((doc: any) => doc.filename) || [])
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
@@ -145,10 +130,11 @@ export default function UsersPage() {
 
   useEffect(() => {
     if (searchQuery) {
+      const q = searchQuery.toLowerCase()
       const filtered = users.filter(
         (user) =>
-          user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.role.toLowerCase().includes(searchQuery.toLowerCase()),
+          user.username.toLowerCase().includes(q) ||
+          (user.role && user.role.toLowerCase().includes(q)),
       )
       setFilteredUsers(filtered)
     } else {
@@ -174,7 +160,6 @@ export default function UsersPage() {
         username: newUsername.trim(),
         password: newPassword,
         role: newRole,
-        allowed_files: newAllowedFiles,
       })
 
       if (result.status === "success") {
@@ -183,7 +168,6 @@ export default function UsersPage() {
         setNewUsername("")
         setNewPassword("")
         setNewRole("user")
-        setNewAllowedFiles([])
         setCreateError("")
         fetchData()
       } else {
@@ -245,7 +229,6 @@ export default function UsersPage() {
   const handleEditUser = (user: UserAccount) => {
     setEditUser(user)
     setEditRole(user.role)
-    setEditPermittedFiles(user.allowed_files || [])
   }
 
   const handleSaveUser = async () => {
@@ -256,7 +239,6 @@ export default function UsersPage() {
       const result = await adminApi.editUser(token, {
         username: editUser.username,
         role: editRole,
-        allowed_files: editPermittedFiles,
       })
 
       if (result.status === "success") {
@@ -293,34 +275,6 @@ export default function UsersPage() {
       toast.error("Failed to delete user")
     } finally {
       setIsDeleting(false)
-    }
-  }
-
-  const toggleFilePermission = (filename: string, isCreating = false) => {
-    if (isCreating) {
-      setNewAllowedFiles((prev) =>
-        prev.includes(filename) ? prev.filter((f) => f !== filename) : [...prev, filename]
-      )
-    } else {
-      setEditPermittedFiles((prev) =>
-        prev.includes(filename) ? prev.filter((f) => f !== filename) : [...prev, filename]
-      )
-    }
-  }
-
-  const toggleAllFiles = (isCreating = false) => {
-    if (isCreating) {
-      if (newAllowedFiles.length === allFiles.length) {
-        setNewAllowedFiles([])
-      } else {
-        setNewAllowedFiles(allFiles)
-      }
-    } else {
-      if (editPermittedFiles.length === allFiles.length) {
-        setEditPermittedFiles([])
-      } else {
-        setEditPermittedFiles(allFiles)
-      }
     }
   }
 
@@ -431,44 +385,6 @@ export default function UsersPage() {
                           <User className="w-3 h-3" />
                           {t('userManagement.standardUserWithAssignedFilePermissions')}
                         </>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>{t('userManagement.filePermissions')}</Label>
-                      {allFiles.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleAllFiles(true)}
-                          disabled={isCreating}
-                          className="text-xs"
-                        >
-                          {newAllowedFiles.length === allFiles.length ? t('userManagement.selectNone') : t('userManagement.selectAll')}
-                        </Button>
-                      )}
-                    </div>
-                    <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
-                      {allFiles.length > 0 ? (
-                        <div className="space-y-2">
-                          {allFiles.map((file) => (
-                            <div key={file} className="flex items-center gap-2">
-                              <Checkbox
-                                id={`create-${file}`}
-                                checked={newAllowedFiles.includes(file)}
-                                onCheckedChange={() => toggleFilePermission(file, true)}
-                                disabled={isCreating}
-                              />
-                              <label htmlFor={`create-${file}`} className="text-sm cursor-pointer truncate">
-                                {file}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center py-4">No files available</p>
                       )}
                     </div>
                   </div>
@@ -658,43 +574,6 @@ export default function UsersPage() {
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>File Permissions</Label>
-                      {allFiles.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleAllFiles(false)}
-                          disabled={isSaving}
-                          className="text-xs"
-                        >
-                          {editPermittedFiles.length === allFiles.length ? "Deselect All" : "Select All"}
-                        </Button>
-                      )}
-                    </div>
-                    <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
-                      {allFiles.length > 0 ? (
-                        <div className="space-y-2">
-                          {allFiles.map((file) => (
-                            <div key={file} className="flex items-center gap-2">
-                              <Checkbox
-                                id={`edit-${file}`}
-                                checked={editPermittedFiles.includes(file)}
-                                onCheckedChange={() => toggleFilePermission(file, false)}
-                                disabled={isSaving}
-                              />
-                              <label htmlFor={`edit-${file}`} className="text-sm cursor-pointer truncate">
-                                {file}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center py-4">No files available</p>
-                      )}
-                    </div>
-                  </div>
                 </div>
                 
                 <div className="flex gap-2 mt-6">
