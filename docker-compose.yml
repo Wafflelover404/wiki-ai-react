@@ -1,0 +1,153 @@
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_URL: http://edge-gateway:9001
+        NEXT_PUBLIC_WS_URL: ws://edge-gateway:9001
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      edge-gateway:
+        condition: service_started
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: wikiai
+      POSTGRES_PASSWORD: wikiai
+      POSTGRES_DB: wikiai_core
+    ports:
+      - "5433:5432"
+    volumes:
+      - go_core_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wikiai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+
+  edge-gateway:
+    build:
+      context: ../go-core
+      args:
+        SERVICE: edge-gateway
+    environment:
+      HTTP_ADDR: ":9001"
+      JWT_SECRET: "${JWT_SECRET:-dev-secret}"
+      IDENTITY_SERVICE_URL: "http://identity-service:9002"
+      KMS_BASE_URL: "${KMS_BASE_URL:-http://host.docker.internal:8080}"
+      ANALYTICS_SERVICE_URL: "http://analytics-service:9004"
+      CATALOG_SERVICE_URL: "http://catalog-service:9005"
+      LEARNING_SERVICE_URL: "http://learning-service:9006"
+      CMS_SERVICE_URL: "http://cms-service:9007"
+    ports:
+      - "9001:9001"
+    depends_on:
+      identity-service:
+        condition: service_started
+      analytics-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      learning-service:
+        condition: service_started
+      cms-service:
+        condition: service_started
+    restart: unless-stopped
+
+  identity-service:
+    build:
+      context: ../go-core
+      args:
+        SERVICE: identity-service
+    environment:
+      HTTP_ADDR: ":9002"
+      JWT_SECRET: "${JWT_SECRET:-dev-secret}"
+      CMS_MASTER_KEY: "${CMS_MASTER_KEY:-pass123}"
+      CMS_MASTER_USERNAME: "${CMS_MASTER_USERNAME:-admin}"
+      DATABASE_URL: "postgres://wikiai:wikiai@postgres:5432/wikiai_core?sslmode=disable"
+    ports:
+      - "9002:9002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  analytics-service:
+    build:
+      context: ../go-core
+      args:
+        SERVICE: analytics-service
+    environment:
+      HTTP_ADDR: ":9004"
+      JWT_SECRET: "${JWT_SECRET:-dev-secret}"
+      DATABASE_URL: "postgres://wikiai:wikiai@postgres:5432/wikiai_core?sslmode=disable"
+    ports:
+      - "9004:9004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  catalog-service:
+    build:
+      context: ../go-core
+      args:
+        SERVICE: catalog-service
+    environment:
+      HTTP_ADDR: ":9005"
+      JWT_SECRET: "${JWT_SECRET:-dev-secret}"
+      DATABASE_URL: "postgres://wikiai:wikiai@postgres:5432/wikiai_core?sslmode=disable"
+      KMS_BASE_URL: "${KMS_BASE_URL:-http://host.docker.internal:8080}"
+    ports:
+      - "9005:9005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  learning-service:
+    build:
+      context: ../go-core
+      args:
+        SERVICE: learning-service
+    environment:
+      HTTP_ADDR: ":9006"
+      JWT_SECRET: "${JWT_SECRET:-dev-secret}"
+      DATABASE_URL: "postgres://wikiai:wikiai@postgres:5432/wikiai_core?sslmode=disable"
+    ports:
+      - "9006:9006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cms-service:
+    build:
+      context: ../go-core
+      args:
+        SERVICE: cms-service
+    environment:
+      HTTP_ADDR: ":9007"
+      JWT_SECRET: "${JWT_SECRET:-dev-secret}"
+      DATABASE_URL: "postgres://wikiai:wikiai@postgres:5432/wikiai_core?sslmode=disable"
+    ports:
+      - "9007:9007"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  go_core_postgres:
