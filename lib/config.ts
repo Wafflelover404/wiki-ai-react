@@ -57,11 +57,14 @@ export const API_CONFIG = {
   TIMEOUT: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || "30000"),
   DEBUG: process.env.NEXT_PUBLIC_DEBUG === "true",
   ENABLE_CORS_FALLBACK: process.env.NEXT_PUBLIC_ENABLE_CORS_FALLBACK !== "false",
+  REFRESH_TOKEN_KEY: "refresh_token",
   
   // API endpoints
   ENDPOINTS: {
     // Auth endpoints
     LOGIN: "/v1/auth/login",
+    REFRESH: "/v1/auth/refresh",
+    CMS_LOGIN: "/v1/auth/cms-login",
     TOKEN_VALIDATE: "/v1/token/validate",
 
     // API Keys endpoints
@@ -74,9 +77,9 @@ export const API_CONFIG = {
     QUERY: "/v1/search",
     QUERY_WS: "/v1/query/stream",
 
-    // Files endpoints
-    FILES_LIST: "/v1/files",
-    FILES_UPLOAD: "/v1/files",
+    // Files endpoints (mapped to document endpoints)
+    FILES_LIST: "/v1/documents",
+    FILES_UPLOAD: "/v1/documents",
 
     // Admin endpoints
     ADMIN_ACCOUNTS: "/v1/accounts",

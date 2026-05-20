@@ -4,7 +4,8 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { filesApi, queryApi, pluginsApi, catalogsApi } from "@/lib/api"
+import { filesApi, queryApi, pluginsApi, catalogsApi, resolveTenantId } from "@/lib/api"
+import { API_CONFIG } from "@/lib/config"
 import { useWebSocket } from "@/lib/use-websocket"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
@@ -53,6 +54,7 @@ import { UnifiedFileReader } from "@/components/ui/file-reader"
 
 interface SearchResult {
   id: string
+  document_id?: string
   type: 'document' | 'product'
   title: string
   content: string
@@ -68,6 +70,7 @@ interface SearchResult {
 }
 
 interface FileReaderItem {
+  id?: string | number
   filename: string
   size: number
   upload_date: string
@@ -200,6 +203,7 @@ export default function AdminSearchPage() {
       if (result.type === 'document') {
         // Create a proper FileReaderItem with enhanced metadata
         const fileItem: FileReaderItem = {
+          id: result.document_id,
           filename: result.title || result.source || '',
           size: 0, // Will be determined by the file reader
           upload_date: new Date().toISOString(),
@@ -269,6 +273,7 @@ export default function AdminSearchPage() {
         sources: data.files || [],
         searchResults: data.snippets?.map((snippet: any, index: number) => ({
           id: `doc-${index}`,
+          document_id: snippet.document_id || snippet.metadata?.document_id,
           type: 'document',
           title: snippet.source || `Document ${index + 1}`,
           content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
@@ -351,14 +356,15 @@ export default function AdminSearchPage() {
   }
 
   const performWebSocketQuery = async (query: string) => {
+    if (!token) {
+      throw new Error('Authentication token is required for WebSocket search')
+    }
+    const tenantId = await resolveTenantId(token)
     return new Promise((resolve, reject) => {
       try {
+
         // Use the same API base URL from config for WebSocket
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'
-        const wsProtocol = apiUrl.startsWith('https://') ? 'wss:' : 'ws:'
-        const wsHost = apiUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
-        const wsUrl = `${wsProtocol}//${wsHost}/ws/query?token=${encodeURIComponent(token || '')}`
-        
+        const wsUrl = `${API_CONFIG.WS_URL}${API_CONFIG.ENDPOINTS.QUERY_WS}?token=${encodeURIComponent(token)}`
         console.log('Connecting to WebSocket:', wsUrl)
         
         const ws = new WebSocket(wsUrl)
@@ -367,7 +373,6 @@ export default function AdminSearchPage() {
         let immediateReceived = false
         let overviewReceived = false
         let loadingMessageAdded = false
-        let lastToken = ''
         
         // Set connection timeout
         connectionTimeout = setTimeout(() => {
@@ -382,13 +387,12 @@ export default function AdminSearchPage() {
           clearTimeout(connectionTimeout)
           console.log('WebSocket connected, sending query')
           
-          // Send query immediately (same format as Vue)
+          // Send query immediately (backend expects `query`, `tenant_id`)
           ws.send(JSON.stringify({
-            question: query,
+            query: query,
+            tenant_id: tenantId,
             session_id: sessionId,
-            model: null,
-            humanize: true,
-            ai_agent_mode: copilotMode
+            top_k: 10,
           }))
         }
         
@@ -414,130 +418,50 @@ export default function AdminSearchPage() {
                 }
                 break
                 
-              case 'immediate':
-                // Show search results immediately (same as Vue)
+              case 'chunks':
+                // Show search results from backend
                 immediateReceived = true
-                setIsLoading(false) // Stop showing the loading indicator
+                setIsLoading(false)
                 
-                if (message.data && (message.data.snippets || message.data.results)) {
-                  let searchResults: any[] = []
-                  let sources: string[] = []
+                const chunks = message.data?.chunks || []
+                if (chunks.length > 0) {
+                  const searchResults = chunks.map((chunk: any, index: number) => ({
+                    id: `doc-${index}`,
+                    document_id: chunk.document_id,
+                    type: 'document' as const,
+                    title: chunk.source || `Document ${index + 1}`,
+                    content: chunk.content ? chunk.content.substring(0, 200) + '...' : 'No content available',
+                    source: chunk.source || 'Unknown',
+                    score: chunk.final_score || 0,
+                  }))
+                  const sources = chunks.map((c: any) => c.source)
                   
-                  // Handle original API structure (snippets)
-                  if (message.data.snippets) {
-                    message.data.snippets.forEach((snippet: any, index: number) => {
-                      searchResults.push({
-                        id: `doc-${index}`,
-                        type: 'document',
-                        title: snippet.source || `Document ${index + 1}`,
-                        content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
-                        source: snippet.source || 'Unknown',
-                        score: snippet.score || 0
-                      })
-                    })
-                    sources = message.data.files || []
-                  }
-                  
-                  // Handle AI Agent API structure (results)
-                  if (message.data.results) {
-                    message.data.results.forEach((result: any, index: number) => {
-                      const isAiRanked = result.ai_ranked || false
-                      const relevance = result.relevance || 'medium'
-                      const enhancedContext = result.enhanced_context || false
-                      
-                      searchResults.push({
-                        id: `ai-${index}`,
-                        type: 'document',
-                        title: result.title || result.source || `AI Result ${index + 1}`,
-                        content: result.content || result.snippet || 'No content available',
-                        source: result.source || 'Unknown',
-                        score: result.score || 0,
-                        ai_ranked: isAiRanked,
-                        relevance: relevance,
-                        enhanced_context: enhancedContext
-                      })
-                    })
-                    sources = message.data.results.map((r: any) => r.source)
-                  }
-                  
-                  const sourcesMessage: Message = {
+                  setMessages(prev => [...prev, {
                     id: crypto.randomUUID(),
                     role: "sources",
-                    content: copilotMode 
-                      ? `🤖 AI Agent found ${searchResults.length} enhanced sources:`
-                      : `Found ${searchResults.length} relevant sources:`,
+                    content: `Found ${searchResults.length} relevant sources:`,
                     sources: sources,
                     searchResults: searchResults,
                     timestamp: new Date(Date.now()),
-                  }
-                  setMessages(prev => [...prev, sourcesMessage])
+                  }])
                   
-                  // Add "Generating AI overview" message if overview is expected
                   if (showAiOverview && !loadingMessageAdded) {
                     loadingMessageAdded = true
-                    const overviewLoadingMessage: Message = {
+                    setMessages(prev => [...prev, {
                       id: crypto.randomUUID(),
                       role: "assistant",
-                      content: copilotMode ? "🤖 AI Agent generating enhanced analysis..." : "Generating AI overview...",
+                      content: "Generating AI overview...",
                       timestamp: new Date(Date.now()),
-                    }
-                    setMessages(prev => [...prev, overviewLoadingMessage])
+                    }])
                   }
                 }
                 break
                 
-              case 'stream_start':
-                // Start streaming - replace "Generating..." with empty message that will be filled with tokens
-                loadingMessageAdded = false // Reset flag
-                lastToken = '' // Reset token deduplication
-                setMessages(prev => {
-                  const filtered = prev.filter(msg => 
-                    msg.content !== "Generating AI overview..." && 
-                    msg.content !== "🤖 AI Agent generating enhanced analysis..."
-                  )
-                  return [...filtered, {
-                    id: crypto.randomUUID(),
-                    role: "overview",
-                    content: "",
-                    timestamp: new Date(Date.now()),
-                  }]
-                })
-                break
-                
-              case 'stream_token':
-                // Append streaming token to the last overview message (with deduplication)
-                if (message.token && message.token !== lastToken) {
-                  lastToken = message.token
-                  setMessages(prev => {
-                    const updated = [...prev]
-                    const lastMessage = updated[updated.length - 1]
-                    if (lastMessage && lastMessage.role === "overview") {
-                      // Create a new message object to ensure React re-renders
-                      updated[updated.length - 1] = {
-                        ...lastMessage,
-                        content: lastMessage.content + message.token
-                      }
-                    }
-                    return updated
-                  })
-                }
-                break
-                
-              case 'stream_end':
-                // Streaming completed
+              case 'answer':
+                // Replace "Generating..." with actual answer
                 overviewReceived = true
                 setIsLoading(false)
-                break
                 
-              case 'overview':
-                // Replace "Generating..." with actual overview (same as Vue) - fallback for non-streaming
-                overviewReceived = true
-                setIsLoading(false) // Ensure loading is stopped
-                
-                const overviewContent = copilotMode 
-                  ? `🤖 **AI-Agent Analysis:** ${message.data || ""}`
-                  : message.data || ""
-                  
                 setMessages(prev => {
                   const filtered = prev.filter(msg => 
                     msg.content !== "Generating AI overview..." && 
@@ -546,15 +470,10 @@ export default function AdminSearchPage() {
                   return [...filtered, {
                     id: crypto.randomUUID(),
                     role: "overview",
-                    content: overviewContent,
+                    content: message.data?.answer || message.data || "",
                     timestamp: new Date(Date.now()),
                   }]
                 })
-                break
-                
-              case 'chunks':
-                // Handle raw chunks (for non-humanized queries, same as Vue)
-                console.log('Received chunks:', message.data)
                 break
                 
               case 'complete':
@@ -611,25 +530,24 @@ export default function AdminSearchPage() {
       ai_agent_mode: copilotMode,
     })
     
-    // Process and display results (existing logic)
+    // Process and display results with the current query API structure
     if (result.status === 'success' && result.response) {
-      const immediateData = result.response.immediate
-      const snippets = immediateData?.snippets || []
-      const files = immediateData?.files || []
-      const aiAnswer = result.response.overview || ""
+      const chunks = result.response.chunks || []
+      const aiAnswer = result.response.answer || ""
       
-      if (snippets.length > 0) {
+      if (chunks.length > 0) {
         const sourcesMessage: Message = {
           id: crypto.randomUUID(),
           role: "sources",
-          content: `Found ${files.length} relevant sources:`,
-          sources: files,
-          searchResults: snippets.map((snippet: any, index: number) => ({
+          content: `Found ${chunks.length} relevant sources:`,
+          sources: chunks.map((chunk: any) => chunk.source || 'Unknown'),
+          searchResults: chunks.map((chunk: any, index: number) => ({
             id: `doc-${index}`,
+            document_id: chunk.document_id,
             type: 'document',
-            title: snippet.source || `Document ${index + 1}`,
-            content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
-            source: 'document'
+            title: chunk.source || `Document ${index + 1}`,
+            content: chunk.content ? chunk.content.substring(0, 200) + '...' : 'No content available',
+            source: chunk.source || 'document'
           })),
           timestamp: new Date(Date.now()),
         }

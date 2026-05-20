@@ -15,6 +15,7 @@ import {
   Search, Filter, RefreshCw, Building
 } from "lucide-react"
 import { getCmsEndpointUrl } from "@/lib/config"
+import { apiRequest } from "@/lib/api"
 import CMSOrganizations from "./cms-organizations"
 
 interface CMSContentManagerProps {
@@ -92,19 +93,19 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
   const refreshToken = async (): Promise<string | null> => {
     try {
       console.log("Attempting to refresh token with admin credentials...")
-      const cmsPassword = process.env.NEXT_PUBLIC_CMS_PASSWORD || "AdminTestPassword1423"
-      const response = await fetch("http://127.0.0.1:9001/login", {
+      const result = await apiRequest({
+        url: "/v1/auth/cms-login",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "admin", password: cmsPassword })
+        data: { username: "admin", password: "pass123" },
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        if (data.status === "success" && data.token) {
+      if (result.status === "success" && result.response) {
+        const data = result.response as Record<string, unknown>
+        const token = (data.access_token as string) || (data.token as string)
+        if (token) {
           console.log("Token refreshed successfully, updating local reference")
-          currentTokenRef.current = data.token
-          return data.token
+          currentTokenRef.current = token
+          return token
         }
       }
     } catch (err) {

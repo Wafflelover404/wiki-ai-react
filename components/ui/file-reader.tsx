@@ -30,6 +30,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism"
 
 interface FileItem {
+  id?: string | number
   filename: string
   size: number
   upload_date: string
@@ -781,12 +782,12 @@ const FileContentViewer: React.FC<FileViewerContentProps> = ({ file, token }) =>
 
   useEffect(() => {
     const loadContent = async () => {
-      if (!token || !file.filename) return
+      if (!token || (!file.id && !file.filename)) return
       
       try {
         // Import filesApi dynamically to avoid circular dependencies
         const { filesApi } = await import("@/lib/api")
-        const response = await filesApi.getContent(token, file.filename)
+        const response = await filesApi.getContent(token, file.id ? String(file.id) : file.filename)
         
         if (response.status === "success") {
           setContent(response.response.content || "")
@@ -928,21 +929,27 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
             blob = new Blob([processedContent], { type: mimeType })
           }
         } else if (token) {
-          // Import API_CONFIG dynamically to avoid circular dependencies
-          const { API_CONFIG } = await import("@/lib/config")
+          // Import api helpers dynamically to avoid circular dependencies
+          const { filesApi } = await import("@/lib/api")
           // Fallback to API endpoint if no content provided
-          const response = await fetch(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(file.filename)}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'ngrok-skip-browser-warning': 'true'
-            }
-          })
-          
-          if (!response.ok) {
-            throw new Error(`Download failed: ${response.statusText}`)
+          const contentResult = await filesApi.getContent(token, file.id ? String(file.id) : file.filename)
+          if (contentResult.status !== 'success' || !contentResult.response) {
+            throw new Error('Failed to fetch file content')
           }
-          
-          blob = await response.blob()
+          const { content: fileContent, isBinary } = contentResult.response
+          const mimeType = file.content_type || getContentType(file.filename) || 'application/octet-stream'
+          let processedContent = fileContent
+          if (isBinary || fileContent.startsWith('data:')) {
+            const base64Content = fileContent.split(',')[1] || fileContent
+            const binaryString = atob(base64Content)
+            const bytes = new Uint8Array(binaryString.length)
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i)
+            }
+            blob = new Blob([bytes], { type: mimeType })
+          } else {
+            blob = new Blob([fileContent], { type: mimeType })
+          }
         } else {
           throw new Error('No content or token available for download')
         }
@@ -976,7 +983,7 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
         if (token) {
           try {
             const { API_CONFIG } = await import("@/lib/config")
-            window.open(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(file.filename)}`, '_blank')
+            window.open(`${API_CONFIG.BASE_URL}/v1/documents/${encodeURIComponent(file.filename)}/content`, '_blank')
           } catch (fallbackErr) {
             console.error('Fallback open also failed:', fallbackErr)
           }
