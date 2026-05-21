@@ -76,6 +76,12 @@ export function LoginForm() {
       if (result.status === "success") {
         toast.success(t('login.organizationCreatedSuccessfully'))
         
+        // Store token from create org response if present
+        const tokenFromResponse = (result.response as any)?.token || (result as any).token
+        if (tokenFromResponse) {
+          localStorage.setItem("auth_token", tokenFromResponse)
+        }
+        
         // Redirect to review status page
         const reviewUrl = `/review-status?org=${encodeURIComponent(orgName)}&email=${encodeURIComponent(adminUsername)}`
         window.location.href = reviewUrl

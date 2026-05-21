@@ -128,7 +128,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function fetchAdminData() {
-      if (!token || user?.role !== "admin") return
+      if (!token || (user?.role !== "admin" && user?.role !== "owner")) return
 
       try {
         // Use the new enhanced admin dashboard API
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
     )
   }
 
-  if (user?.role !== "admin") {
+  if (user?.role !== "admin" && user?.role !== "owner") {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">

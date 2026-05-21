@@ -41,9 +41,9 @@ export function useUserData(
 
     switch (resource) {
       case 'profile':
-        return '/user/profile'
+        return '/v1/user/profile'
       case 'files':
-        return '/files/list' // User's files
+        return '/v1/documents'
       default:
         return null
     }

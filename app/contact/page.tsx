@@ -18,6 +18,7 @@ import {
   ArrowRight,
   CheckCircle
 } from "lucide-react"
+import { landingPagesApi } from '@/lib/api'
 import { useTranslation } from '@/src/i18n'
 import LandingHeader from '@/components/landing-header'
 
@@ -39,19 +40,15 @@ export default function ContactPage() {
     setError("")
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/contact/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ...formData,
-          inquiry_type: "general",
-          priority: "normal"
-        })
+      const result = await landingPagesApi.submitContact({
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        message: formData.message,
+        inquiry_type: "general",
       })
 
-      if (response.ok) {
+      if (result.status === "success") {
         setIsSubmitted(true)
         setFormData({ name: "", email: "", company: "", message: "" })
       } else {

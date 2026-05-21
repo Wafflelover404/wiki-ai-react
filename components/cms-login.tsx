@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Lock, Key } from "lucide-react"
-import { getCmsEndpointUrl } from "@/lib/config"
+import { apiRequest } from "@/lib/api"
 
 interface CMSLoginProps {
   onLogin: (token: string) => void
@@ -24,27 +24,30 @@ export default function CMSLogin({ onLogin }: CMSLoginProps) {
     setError("")
 
     try {
-      // Dynamic authentication: any password provided is treated as the master token
-      if (username === "admin" && password) {
-        // Test the provided token with API
-        const response = await fetch(getCmsEndpointUrl("/content/stats"), {
-          headers: {
-            "Authorization": `Bearer ${password}`,
-            "Content-Type": "application/json"
-          }
-        })
+      if (!username || !password) {
+        setError("Username and master key are required.")
+        return
+      }
 
-        if (response.ok) {
-          onLogin(password)
-          setError("")
+      const result = await apiRequest({
+        url: "/v1/auth/cms-login",
+        method: "POST",
+        data: { username, password },
+      })
+
+      if (result.status === "success" && result.response) {
+        const data = result.response as Record<string, unknown>
+        const accessToken = (data.access_token as string) || (data.token as string)
+        if (accessToken) {
+          onLogin(accessToken)
         } else {
-          setError("Invalid master token. Please check your master key.")
+          setError("Login succeeded but no token returned.")
         }
       } else {
-        setError("Invalid credentials. Use username: admin")
+        setError("Invalid master key. Please check your credentials.")
       }
     } catch (err) {
-      setError("Failed to connect to CMS API. Make sure the API is running on port 9001.")
+      setError("Failed to connect to CMS API. Please check that the API server is running.")
     } finally {
       setIsLoading(false)
     }
@@ -117,11 +120,11 @@ export default function CMSLogin({ onLogin }: CMSLoginProps) {
             </p>
             <div className="text-xs space-y-1">
               <div>1. Use username: <code className="bg-background px-1 rounded">admin</code></div>
-              <div>2. Enter your master key from the backend .env file</div>
-              <div>3. The token is validated against the CMS API</div>
+              <div>2. Enter the master key from the backend .env file</div>
+              <div>3. Authenticates via <code className="bg-background px-1 rounded">/v1/auth/cms-login</code></div>
             </div>
             <p className="text-xs text-muted-foreground mt-3">
-              Check the backend logs or .env file for the current master token.
+              Check the backend .env file for the current master key (CMS_MASTER_KEY).
             </p>
           </div>
         </CardContent>

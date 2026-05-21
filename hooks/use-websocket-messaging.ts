@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { API_CONFIG, getApiUrl } from "@/lib/config"
 
 interface WebSocketMessage {
   type: string
@@ -25,7 +26,7 @@ export function useWebSocketMessaging(token: string) {
   // Token validation function
   const validateToken = async (providedToken: string): Promise<string | null> => {
     try {
-      const response = await fetch("http://127.0.0.1:9001/organizations", {
+      const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.ORGANIZATIONS_ALL), {
         headers: {
           "Authorization": `Bearer ${providedToken}`,
           "Content-Type": "application/json"
@@ -37,10 +38,12 @@ export function useWebSocketMessaging(token: string) {
       } else if (response.status === 403) {
         // Token is invalid, try to refresh with hardcoded credentials
         console.log("WebSocket token expired, attempting to refresh...")
-        const refreshResponse = await fetch("http://127.0.0.1:9001/login", {
+        const cmsUsername = process.env.NEXT_PUBLIC_CMS_USERNAME || "admin"
+        const cmsPassword = process.env.NEXT_PUBLIC_CMS_PASSWORD || ""
+        const refreshResponse = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.LOGIN), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: "admin@example.com", password: "admin123" })
+          body: JSON.stringify({ username: cmsUsername, password: cmsPassword })
         })
 
         if (refreshResponse.ok) {
@@ -93,7 +96,8 @@ export function useWebSocketMessaging(token: string) {
       return
     }
 
-    const wsUrl = `ws://127.0.0.1:9001/ws/messaging?token=${currentToken}`
+    const wsBaseUrl = API_CONFIG.BASE_URL.replace(/^http/, "ws")
+    const wsUrl = `${wsBaseUrl}/ws/messaging?token=${currentToken}`
     console.log("WebSocket: Attempting connection to:", wsUrl.split('?token=')[0] + '?token=...')
     
     // Set connection timeout
