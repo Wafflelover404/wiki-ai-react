@@ -169,10 +169,10 @@ export default function AdminSearchPage() {
               searchResults.push({
                 id: `doc-${index}`,
                 type: 'document',
-                title: snippet.source || `Document ${index + 1}`,
-                content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
+                title: snippet.metadata?.original_filename || snippet.source || `Document ${index + 1}`,
+                content: snippet.content ?? 'No content available',
                 source: snippet.source || 'Unknown',
-                score: snippet.score || 0
+                score: snippet.final_score ?? snippet.score ?? 0
               })
             })
           }
@@ -182,10 +182,10 @@ export default function AdminSearchPage() {
               searchResults.push({
                 id: `ai-${index}`,
                 type: 'document',
-                title: resultItem.title || resultItem.source || `AI Result ${index + 1}`,
-                content: resultItem.content || resultItem.snippet || 'No content available',
+                title: resultItem.metadata?.original_filename || resultItem.title || resultItem.source || `AI Result ${index + 1}`,
+                content: resultItem.content ?? resultItem.snippet ?? 'No content available',
                 source: resultItem.source || 'Unknown',
-                score: resultItem.score || 0
+                score: resultItem.final_score ?? resultItem.score ?? 0
               })
             })
           }
@@ -195,7 +195,7 @@ export default function AdminSearchPage() {
               id: crypto.randomUUID(),
               role: "sources",
               content: `Found ${searchResults.length} relevant sources`,
-              sources: searchResults.map(r => r.source),
+              sources: searchResults.map(r => r.title),
               searchResults: searchResults,
               timestamp: new Date(Date.now())
             }
@@ -274,10 +274,10 @@ export default function AdminSearchPage() {
                     searchResults.push({
                       id: `doc-${index}`,
                       type: 'document',
-                      title: snippet.source || `Document ${index + 1}`,
-                      content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
+                      title: snippet.metadata?.original_filename || snippet.source || `Document ${index + 1}`,
+                      content: snippet.content ?? 'No content available',
                       source: snippet.source || 'Unknown',
-                      score: snippet.score || 0
+                      score: snippet.final_score ?? snippet.score ?? 0
                     })
                   })
                 }
@@ -286,10 +286,10 @@ export default function AdminSearchPage() {
                     searchResults.push({
                       id: `ai-${index}`,
                       type: 'document',
-                      title: result.title || result.source || `AI Result ${index + 1}`,
-                      content: result.content || result.snippet || 'No content available',
+                      title: result.metadata?.original_filename || result.title || result.source || `AI Result ${index + 1}`,
+                      content: result.content ?? result.snippet ?? 'No content available',
                       source: result.source || 'Unknown',
-                      score: result.score || 0,
+                      score: result.final_score ?? result.score ?? 0,
                       ai_ranked: result.ai_ranked || false,
                       relevance: result.relevance || 'medium',
                       enhanced_context: result.enhanced_context || false
@@ -301,7 +301,7 @@ export default function AdminSearchPage() {
                 id: crypto.randomUUID(),
                 role: "sources",
                 content: aiAgentMode ? `🤖 AI Agent found ${searchResults.length} enhanced sources` : `Found ${searchResults.length} relevant sources`,
-                sources: searchResults.map(r => r.source),
+                sources: searchResults.map(r => r.title),
                 searchResults: searchResults,
                 timestamp: new Date()
               }])
@@ -578,6 +578,11 @@ export default function AdminSearchPage() {
                                     <div className="flex items-start justify-between gap-2 mb-2">
                                       <h4 className="font-medium text-sm flex-1">{result.title}</h4>
                                       <div className="flex gap-1 flex-shrink-0">
+                                        {result.score !== undefined && result.score > 0 && (
+                                          <Badge variant="outline" className="text-xs font-mono">
+                                            {Math.round(result.score * 100)}%
+                                          </Badge>
+                                        )}
                                         {result.ai_ranked && (
                                           <Badge variant="secondary" className="text-xs">
                                             <Brain className="w-3 h-3 mr-1" />
@@ -597,9 +602,6 @@ export default function AdminSearchPage() {
                                     <p className="text-sm text-muted-foreground mb-2">{result.content}</p>
                                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                                       <span>Source: {result.source}</span>
-                                      {result.score && (
-                                        <span>Score: {result.score.toFixed(2)}</span>
-                                      )}
                                     </div>
                                   </div>
                                 ))}

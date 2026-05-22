@@ -354,9 +354,10 @@ export default function AdminSearchPage() {
           id: `doc-${index}`,
           document_id: snippet.document_id || snippet.metadata?.document_id,
           type: 'document',
-          title: snippet.source || `Document ${index + 1}`,
-          content: snippet.content ? snippet.content.substring(0, 200) + '...' : 'No content available',
-          source: 'document'
+          title: snippet.metadata?.original_filename || snippet.source || `Document ${index + 1}`,
+          content: snippet.content ?? 'No content available',
+          source: snippet.source || 'document',
+          score: snippet.final_score ?? snippet.score ?? 0,
         })) || [],
         timestamp: new Date(Date.now()),
       }
@@ -508,12 +509,12 @@ export default function AdminSearchPage() {
                     id: `doc-${index}`,
                     document_id: chunk.document_id,
                     type: 'document' as const,
-                    title: chunk.source || `Document ${index + 1}`,
-                    content: chunk.content ? chunk.content.substring(0, 200) + '...' : 'No content available',
+                    title: chunk.metadata?.original_filename || chunk.source || `Document ${index + 1}`,
+                    content: chunk.content ?? 'No content available',
                     source: chunk.source || 'Unknown',
-                    score: chunk.final_score || 0,
+                    score: chunk.final_score ?? 0,
                   }))
-                  const sources = chunks.map((c: any) => c.source)
+                  const sources = chunks.map((c: any) => c.metadata?.original_filename || c.source)
                   
                   setMessages(prev => [...prev, {
                     id: crypto.randomUUID(),
@@ -619,14 +620,15 @@ export default function AdminSearchPage() {
           id: crypto.randomUUID(),
           role: "sources",
           content: `Found ${chunks.length} relevant sources:`,
-          sources: chunks.map((chunk: any) => chunk.source || 'Unknown'),
+          sources: chunks.map((chunk: any) => chunk.metadata?.original_filename || chunk.source || 'Unknown'),
           searchResults: chunks.map((chunk: any, index: number) => ({
             id: `doc-${index}`,
             document_id: chunk.document_id,
             type: 'document',
-            title: chunk.source || `Document ${index + 1}`,
-            content: chunk.content ? chunk.content.substring(0, 200) + '...' : 'No content available',
-            source: chunk.source || 'document'
+            title: chunk.metadata?.original_filename || chunk.source || `Document ${index + 1}`,
+            content: chunk.content ?? 'No content available',
+            source: chunk.source || 'document',
+            score: chunk.final_score ?? 0,
           })),
           timestamp: new Date(Date.now()),
         }
@@ -770,6 +772,11 @@ export default function AdminSearchPage() {
                                             )}
                                           </h4>
                                           <div className="flex gap-1 flex-shrink-0 items-center">
+                                            {result.score !== undefined && result.score > 0 && (
+                                              <Badge variant="outline" className="text-xs font-mono">
+                                                {Math.round(result.score * 100)}%
+                                              </Badge>
+                                            )}
                                             {result.ai_ranked && (
                                               <Badge variant="secondary" className="text-xs">
                                                 <Brain className="w-3 h-3 mr-1" />
