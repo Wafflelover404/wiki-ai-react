@@ -56,7 +56,8 @@ export default function QuizzesPage() {
       console.log("Fetching quizzes...")
       console.log("Token:", token ? "present" : "missing")
       
-      const url = getApiUrl('/v1/quizzes')
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'
+      const url = `${apiUrl}/v1/quizzes`
       console.log("Fetching from URL:", url)
       
       const response = await fetch(url, {
@@ -97,7 +98,8 @@ export default function QuizzesPage() {
     if (!selectedQuiz || !token) return
 
     try {
-      const response = await fetch(getApiUrl(`/v1/quizzes/${selectedQuiz.id}/submit`), {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'
+      const response = await fetch(`${apiUrl}/v1/quizzes/${selectedQuiz.id}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

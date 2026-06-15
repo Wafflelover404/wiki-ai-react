@@ -365,7 +365,11 @@ export default function AdminSearchPage() {
       try {
 
         // Use the same API base URL from config for WebSocket
-        const wsUrl = `${API_CONFIG.WS_URL}${API_CONFIG.ENDPOINTS.QUERY_WS}?token=${encodeURIComponent(token)}`
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'
+        const wsProtocol = apiUrl.startsWith('https://') ? 'wss:' : 'ws:'
+        const wsHost = apiUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+        const wsUrl = `${wsProtocol}//${wsHost}/v1/query/stream?token=${encodeURIComponent(token || '')}`
+        
         console.log('Connecting to WebSocket:', wsUrl)
         
         const ws = new WebSocket(wsUrl)

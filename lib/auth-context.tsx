@@ -6,7 +6,7 @@ import { API_CONFIG } from "./config"
 
 interface User {
   username: string
-  role: "admin" | "owner" | "user"
+  role: "admin" | "user" | "owner"
   organization: string
 }
 
@@ -55,8 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(storedToken)
       setUser({
         username: (data as any).username || "User",
-        role: ((data as any).role as "admin" | "owner" | "user") || "user",
-        organization: normalizeOrganization((data as any).organization_name || (data as any).organization),
+        role: ((data as any).role as User["role"]) || "user",
+        organization: (data as any).organization_name || (data as any).organization || "",
       })
       return true
     }
@@ -89,26 +89,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await authApi.login(username, password)
     console.log("[v0] Login result:", result)
 
-    if (result.status === "success") {
-      const data = (result as any).response || result
-      const accessToken = data.token_pair?.access_token || data.token || data.access_token
-      const refreshTokenValue = data.token_pair?.refresh_token || data.refresh_token
+    // Handle both Go backend format ({access_token, user, organization, memberships})
+    // and legacy format ({status: "success", token: "..."})
+    const token = (result as any).access_token || result.token
+    if (token) {
+      localStorage.setItem("auth_token", token)
+      setToken(token)
 
-      if (accessToken) {
-        localStorage.setItem("auth_token", accessToken)
-        setToken(accessToken)
-        if (refreshTokenValue) {
-          localStorage.setItem(API_CONFIG.REFRESH_TOKEN_KEY, refreshTokenValue)
-        }
-        const userData = extractUserFromResponse(data)
-        if (userData) {
-          setUser(userData)
-        } else {
-          await validateAndSetToken(accessToken)
-        }
+      const userData = (result as any).user
+      if (userData) {
+        const membership = (result as any).memberships?.[0]
+        setUser({
+          username: userData.username || "User",
+          role: (membership?.role || userData.role || "user") as "admin" | "user" | "owner",
+          organization: (result as any).organization?.name || "",
+        })
         return { success: true }
       }
+
+      await validateAndSetToken(token)
+      return { success: true }
     }
+
+    if (result.status === "success" && result.token) {
+      localStorage.setItem("auth_token", result.token)
+      setToken(result.token)
+      await validateAndSetToken(result.token)
+      return { success: true }
+    }
+
     return { success: false, error: result.message || "Login failed" }
   }
 

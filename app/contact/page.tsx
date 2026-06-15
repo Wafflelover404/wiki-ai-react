@@ -21,6 +21,7 @@ import {
 import { landingPagesApi } from '@/lib/api'
 import { useTranslation } from '@/src/i18n'
 import LandingHeader from '@/components/landing-header'
+import { getCmsEndpointUrl } from "@/lib/config"
 
 export default function ContactPage() {
   const { t } = useTranslation()
@@ -40,12 +41,16 @@ export default function ContactPage() {
     setError("")
 
     try {
-      const result = await landingPagesApi.submitContact({
-        name: formData.name,
-        email: formData.email,
-        company: formData.company,
-        message: formData.message,
-        inquiry_type: "general",
+      const response = await fetch(getCmsEndpointUrl("/contact/submit"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ...formData,
+          inquiry_type: "general",
+          priority: "normal"
+        })
       })
 
       if (result.status === "success") {

@@ -158,12 +158,26 @@ export default function AdminFilesPage() {
     if (!uploadedFiles.length || !token) return
 
     setUploading(true)
-    try {
-      const result = await filesApi.upload(token, uploadedFiles)
-      if (result.status === "success") {
-        toast.success(`Uploaded ${uploadedFiles.length} file(s)`)
-      } else {
-        toast.error(result.message || "Failed to upload files")
+    const uploadPromises = uploadedFiles.map(async (file) => {
+      const formData = new FormData()
+      formData.append("file", file)
+      
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/v1/files`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+          body: formData,
+        })
+
+        if (response.ok) {
+          toast.success(`Uploaded ${file.name}`)
+        } else {
+          toast.error(`Failed to upload ${file.name}`)
+        }
+      } catch (error) {
+        toast.error(`Failed to upload ${file.name}`)
       }
     } catch (error) {
       toast.error("Failed to upload files")
@@ -260,6 +274,35 @@ export default function AdminFilesPage() {
     } catch (error) {
       console.error("Failed to delete files:", error)
       toast.error(t('files.failedToDeleteSomeFiles'))
+    }
+  }
+
+  const handleEditMetadata = async () => {
+    if (!editingFile) return
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/v1/files/${editingFile.filename}/metadata`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          metadata: editMetadata ? JSON.parse(editMetadata) : {}
+        }),
+      })
+
+      if (response.ok) {
+        toast.success(t('files.fileMetadataUpdated'))
+        fetchFiles()
+        setEditDialogOpen(false)
+        setEditingFile(null)
+        setEditMetadata("")
+      } else {
+        toast.error("Failed to update metadata")
+      }
+    } catch (error) {
+      toast.error("Failed to update metadata")
     }
   }
 

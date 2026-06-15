@@ -4,7 +4,7 @@ import { API_CONFIG, getApiUrl, getWsUrl, getCmsEndpointUrl } from "./config"
 
 interface ApiRequestOptions {
   url: string
-  method?: "GET" | "POST" | "PUT" | "DELETE"
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
   token?: string
   data?: Record<string, unknown> | FormData
   params?: Record<string, string>
@@ -274,7 +274,7 @@ export const authApi = {
 
   revokeInvite: (token: string, invite_id: string) =>
     apiRequest({
-      url: `/v1/organizations/invites/${encodeURIComponent(invite_id)}`,
+      url: `/v1/invites/${encodeURIComponent(invite_id)}`,
       method: "DELETE",
       token,
     }),
@@ -1618,7 +1618,7 @@ export const landingPagesApi = {
     }
 
     try {
-      const response = await fetch(getCmsEndpointUrl(`/blog/posts/slug/${slug}`), { headers })
+      const response = await fetch(getCmsEndpointUrl(`/blog/posts/${slug}`), { headers })
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -2124,7 +2124,7 @@ export const dashboardApi = {
       message: string
     }>({
       url: `/v1/admin/quizzes/${quizId}`,
-      method: "PUT",
+      method: "PATCH",
       token,
       data: backendQuizData,
     })
@@ -2369,7 +2369,7 @@ export const dashboardApi = {
 
     approveOrganization: async (orgId: string, token: string) => {
       return apiRequest<{}>({
-        url: `/v1/organizations/approve/${orgId}`,
+        url: `/v1/organizations/${orgId}/approve`,
         method: "POST",
         token,
       })
@@ -2377,7 +2377,7 @@ export const dashboardApi = {
 
     rejectOrganization: async (orgId: string, token: string, reason?: string) => {
       return apiRequest<{}>({
-        url: `/v1/organizations/reject/${orgId}`,
+        url: `/v1/organizations/${orgId}/reject`,
         method: "POST",
         token,
         data: reason ? { reason } : undefined,
@@ -2386,8 +2386,8 @@ export const dashboardApi = {
 
     changeOrganizationStatus: async (orgId: string, token: string, newStatus: string) => {
       return apiRequest<{}>({
-        url: `/v1/organizations/change-status/${orgId}`,
-        method: "POST",
+        url: `/v1/organizations/${orgId}`,
+        method: "PATCH",
         token,
         data: { status: newStatus },
       })
