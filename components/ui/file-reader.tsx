@@ -30,6 +30,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism"
 
 interface FileItem {
+  id?: string | number
   filename: string
   size: number
   upload_date: string
@@ -781,12 +782,12 @@ const FileContentViewer: React.FC<FileViewerContentProps> = ({ file, token }) =>
 
   useEffect(() => {
     const loadContent = async () => {
-      if (!token || !file.filename) return
+      if (!token || (!file.id && !file.filename)) return
       
       try {
         // Import filesApi dynamically to avoid circular dependencies
         const { filesApi } = await import("@/lib/api")
-        const response = await filesApi.getContent(token, file.filename)
+        const response = await filesApi.getContent(token, file.id ? String(file.id) : file.filename)
         
         if (response.status === "success") {
           setContent(response.response.content || "")
@@ -928,10 +929,10 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
             blob = new Blob([processedContent], { type: mimeType })
           }
         } else if (token) {
-          // Import API_CONFIG dynamically to avoid circular dependencies
-          const { API_CONFIG } = await import("@/lib/config")
+          // Import api helpers dynamically to avoid circular dependencies
+          const { filesApi } = await import("@/lib/api")
           // Fallback to API endpoint if no content provided
-          const response = await fetch(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(file.filename)}`, {
+          const response = await fetch(`${API_CONFIG.BASE_URL}/v1/files/${encodeURIComponent(file.filename)}/content`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
@@ -941,8 +942,6 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
           if (!response.ok) {
             throw new Error(`Download failed: ${response.statusText}`)
           }
-          
-          blob = await response.blob()
         } else {
           throw new Error('No content or token available for download')
         }
@@ -976,7 +975,7 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
         if (token) {
           try {
             const { API_CONFIG } = await import("@/lib/config")
-            window.open(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(file.filename)}`, '_blank')
+            window.open(`${API_CONFIG.BASE_URL}/v1/files/${encodeURIComponent(file.filename)}/content`, '_blank')
           } catch (fallbackErr) {
             console.error('Fallback open also failed:', fallbackErr)
           }

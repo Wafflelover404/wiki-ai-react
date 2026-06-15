@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { getApiUrl } from "@/lib/config"
 import { AppHeader } from "@/components/app-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -56,7 +57,7 @@ export default function QuizzesPage() {
       console.log("Token:", token ? "present" : "missing")
       
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'
-      const url = `${apiUrl}/quizzes`
+      const url = `${apiUrl}/v1/quizzes`
       console.log("Fetching from URL:", url)
       
       const response = await fetch(url, {
@@ -98,7 +99,7 @@ export default function QuizzesPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'
-      const response = await fetch(`${apiUrl}/quizzes/${selectedQuiz.id}/submit`, {
+      const response = await fetch(`${apiUrl}/v1/quizzes/${selectedQuiz.id}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

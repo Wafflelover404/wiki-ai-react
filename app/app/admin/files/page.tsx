@@ -85,7 +85,7 @@ function normalizePdfBase64Content(content: string): string {
 }
 
 interface FileItem {
-  id?: number
+  id?: string | number
   filename: string
   size: number
   upload_date: string
@@ -113,7 +113,7 @@ export default function AdminFilesPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Multi-select state
-  const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
+  const [selectedFiles, setSelectedFiles] = useState<Set<string | number>>(new Set())
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
 
   const fetchFiles = useCallback(async () => {
@@ -124,15 +124,18 @@ export default function AdminFilesPage() {
       const response = await filesApi.list(token)
       if (response.status === "success" && response.response?.documents) {
         // Map API response to FileItem interface
-        const mappedFiles = response.response.documents.map((doc: any) => ({
-          id: doc.id,
-          filename: doc.filename,
-          size: doc.file_size || 0,
-          upload_date: doc.upload_timestamp || new Date().toISOString(),
-          content_type: "application/octet-stream",
-          metadata: null,
-          indexed: true
-        }))
+        const mappedFiles = response.response.documents.map((doc: any, index: number) => {
+          const title = doc.title || doc.Title || doc.filename || doc.original_filename || `file-${index}`
+          return {
+            id: doc.document_id || doc.DocumentID || doc.id || doc.ID || `${index}`,
+            filename: title,
+            size: doc.file_size || doc.size || (typeof doc.content === 'string' ? doc.content.length : 0) || 0,
+            upload_date: doc.upload_timestamp || doc.created_at || doc.updated_at || new Date().toISOString(),
+            content_type: doc.doc_type || doc.DocType || "application/octet-stream",
+            metadata: doc.metadata || null,
+            indexed: true,
+          }
+        })
         setFiles(mappedFiles)
       }
     } catch (error) {
@@ -148,7 +151,7 @@ export default function AdminFilesPage() {
 
   // Filter files based on search query
   const filteredFiles = files.filter(file =>
-    file.filename.toLowerCase().includes(searchQuery.toLowerCase())
+    (file.filename ?? "").toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const handleFileUpload = async () => {
@@ -160,7 +163,7 @@ export default function AdminFilesPage() {
       formData.append("file", file)
       
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/files/upload`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/v1/files`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -176,9 +179,9 @@ export default function AdminFilesPage() {
       } catch (error) {
         toast.error(`Failed to upload ${file.name}`)
       }
-    })
-
-    await Promise.all(uploadPromises)
+    } catch (error) {
+      toast.error("Failed to upload files")
+    }
     setUploadedFiles([])
     setUploading(false)
     fetchFiles()
@@ -278,7 +281,7 @@ export default function AdminFilesPage() {
     if (!editingFile) return
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/files/${editingFile.filename}/metadata`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/v1/files/${editingFile.filename}/metadata`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -593,7 +596,7 @@ export default function AdminFilesPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={async () => {
                             try {
-                              const contentResult = await filesApi.getContent(token || '', file.filename)
+                              const contentResult = await filesApi.getContent(token || '', file.id ? String(file.id) : file.filename)
                               if (contentResult.status === 'success' && contentResult.response) {
                                 const { content, isBinary } = contentResult.response
                                 
@@ -682,9 +685,7 @@ export default function AdminFilesPage() {
                             Download
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => {
-                            setEditingFile(file)
-                            setEditMetadata(JSON.stringify(file.metadata || {}, null, 2))
-                            setEditDialogOpen(true)
+                            toast.info("Metadata editing is not available")
                           }}>
                             <Edit className="h-4 w-4 mr-2" />
                             {t('fileManagement.metadata')}
@@ -723,38 +724,6 @@ export default function AdminFilesPage() {
           open={!!selectedFile}
           onOpenChange={(open) => !open && setSelectedFile(null)}
         />
-
-        {/* Edit Metadata Dialog */}
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{t('fileManagement.metadata')}</DialogTitle>
-              <DialogDescription>
-                {t('fileManagement.updateMetadataFor')} {editingFile?.filename}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="metadata">{t('fileManagement.metadata')} (JSON)</label>
-                <Textarea
-                  id="metadata"
-                  value={editMetadata}
-                  onChange={(e) => setEditMetadata(e.target.value)}
-                  placeholder='{"key": "value"}'
-                  className="min-h-[200px]"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-                {t('actions.cancel')}
-              </Button>
-              <Button onClick={handleEditMetadata}>
-                {t('fileManagement.saveChanges')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
