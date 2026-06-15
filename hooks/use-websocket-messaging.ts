@@ -41,7 +41,7 @@ export function useWebSocketMessaging(token: string) {
         const refreshResponse = await fetch(getApiUrl("/v1/auth/cms-login"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: "admin", password: process.env.NEXT_PUBLIC_CMS_PASSWORD || "pass123" })
+          body: JSON.stringify({ username: "admin", password: process.env.NEXT_PUBLIC_CMS_PASSWORD })
         })
 
         if (refreshResponse.ok) {

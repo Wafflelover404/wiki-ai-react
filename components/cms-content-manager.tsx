@@ -92,7 +92,7 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
   const refreshToken = async (): Promise<string | null> => {
     try {
       console.log("Attempting to refresh token with admin credentials...")
-      const cmsPassword = process.env.NEXT_PUBLIC_CMS_PASSWORD || "pass123"
+      const cmsPassword = process.env.NEXT_PUBLIC_CMS_PASSWORD
       const response = await fetch(getApiUrl("/v1/auth/cms-login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
