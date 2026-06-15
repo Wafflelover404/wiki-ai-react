@@ -1,11 +1,12 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
-import { authApi } from "./api"
+import { authApi, apiRequest } from "./api"
+import { API_CONFIG } from "./config"
 
 interface User {
   username: string
-  role: "admin" | "user"
+  role: "admin" | "user" | "owner"
   organization: string
 }
 
@@ -17,9 +18,29 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   switchOrganization: (organizationId: string) => Promise<boolean>
+  refreshToken: () => Promise<boolean>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
+
+function normalizeOrganization(value: unknown): string {
+  if (typeof value === "string") {
+    return value
+  }
+
+  if (value && typeof value === "object") {
+    const org = value as Record<string, unknown>
+    return (
+      (typeof org.organization_name === "string" && org.organization_name) ||
+      (typeof org.name === "string" && org.name) ||
+      (typeof org.slug === "string" && org.slug) ||
+      (typeof org.id === "string" && org.id) ||
+      ""
+    )
+  }
+
+  return ""
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -34,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(storedToken)
       setUser({
         username: (data as any).username || "User",
-        role: ((data as any).role as "admin" | "user") || "user",
+        role: ((data as any).role as User["role"]) || "user",
         organization: (data as any).organization_name || (data as any).organization || "",
       })
       return true
@@ -52,23 +73,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [validateAndSetToken])
 
+  const extractUserFromResponse = (data: any): User | null => {
+    if (data.username || data.role) {
+      return {
+        username: data.username || "User",
+        role: (data.role as "admin" | "owner" | "user") || "user",
+        organization: normalizeOrganization(data.organization_name || data.organization),
+      }
+    }
+    return null
+  }
+
   const login = async (username: string, password: string) => {
     console.log("[v0] Attempting login for:", username)
     const result = await authApi.login(username, password)
     console.log("[v0] Login result:", result)
 
+    // Handle both Go backend format ({access_token, user, organization, memberships})
+    // and legacy format ({status: "success", token: "..."})
+    const token = (result as any).access_token || result.token
+    if (token) {
+      localStorage.setItem("auth_token", token)
+      setToken(token)
+
+      const userData = (result as any).user
+      if (userData) {
+        const membership = (result as any).memberships?.[0]
+        setUser({
+          username: userData.username || "User",
+          role: (membership?.role || userData.role || "user") as "admin" | "user" | "owner",
+          organization: (result as any).organization?.name || "",
+        })
+        return { success: true }
+      }
+
+      await validateAndSetToken(token)
+      return { success: true }
+    }
+
     if (result.status === "success" && result.token) {
       localStorage.setItem("auth_token", result.token)
       setToken(result.token)
-      // Hydrate user (incl. organization) from /token/validate
       await validateAndSetToken(result.token)
       return { success: true }
     }
+
     return { success: false, error: result.message || "Login failed" }
+  }
+
+  const refreshTokenFn = async (): Promise<boolean> => {
+    const storedRefreshToken = localStorage.getItem(API_CONFIG.REFRESH_TOKEN_KEY)
+    if (!storedRefreshToken) return false
+    try {
+      const res = await apiRequest<{ token: string; refresh_token?: string }>({
+        url: API_CONFIG.ENDPOINTS.REFRESH,
+        method: "POST",
+        data: { refresh_token: storedRefreshToken },
+      })
+      if (res.status === "success" && res.response) {
+        const newToken = (res.response as any).token_pair?.access_token || (res.response as any).token || (res.response as any).access_token
+        if (newToken) {
+          localStorage.setItem("auth_token", newToken)
+          setToken(newToken)
+          const newRefresh = (res.response as any).token_pair?.refresh_token || (res.response as any).refresh_token
+          if (newRefresh) {
+            localStorage.setItem(API_CONFIG.REFRESH_TOKEN_KEY, newRefresh)
+          }
+          return true
+        }
+      }
+    } catch (err) {
+      console.error("Token refresh failed:", err)
+    }
+    return false
   }
 
   const logout = () => {
     localStorage.removeItem("auth_token")
+    localStorage.removeItem(API_CONFIG.REFRESH_TOKEN_KEY)
     setToken(null)
     setUser(null)
   }
@@ -91,10 +173,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         token,
         isLoading,
-        isAdmin: user?.role === "admin",
+        isAdmin: user?.role === "admin" || user?.role === "owner",
         login,
         logout,
         switchOrganization,
+        refreshToken: refreshTokenFn,
       }}
     >
       {children}
@@ -117,4 +200,9 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider")
   }
   return context
+}
+
+export function getRefreshToken(): string | null {
+  if (typeof window === "undefined") return null
+  return localStorage.getItem(API_CONFIG.REFRESH_TOKEN_KEY)
 }

@@ -4,7 +4,7 @@ import { API_CONFIG, getApiUrl, getWsUrl, getCmsEndpointUrl } from "./config"
 
 interface ApiRequestOptions {
   url: string
-  method?: "GET" | "POST" | "PUT" | "DELETE"
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
   token?: string
   data?: Record<string, unknown> | FormData
   params?: Record<string, string>
@@ -20,7 +20,12 @@ interface LoginResponse {
   status: "success" | "error"
   message: string
   token?: string
+  access_token?: string
+  refresh_token?: string
   role?: "user" | "admin"
+  user?: Record<string, unknown>
+  organization?: Record<string, unknown>
+  memberships?: Array<Record<string, unknown>>
 }
 
 export async function apiRequest<T = unknown>({
@@ -58,28 +63,71 @@ export async function apiRequest<T = unknown>({
   }
 
   try {
-    const response = await fetch(fullUrl, {
+    let response = await fetch(fullUrl, {
       method,
       headers,
       body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : undefined,
     })
 
-    let result
+    const responseClone = response.clone()
+    let result: any
     try {
       result = await response.json()
     } catch (jsonError) {
+      const responseText = await responseClone.text()
       console.error('Failed to parse JSON response:', jsonError)
-      console.error('Response text:', await response.text())
-      result = { detail: `Invalid JSON response: ${response.status} ${response.statusText}` }
+      console.error('Response text:', responseText)
+      result = {
+        detail: `Invalid JSON response: ${response.status} ${response.statusText}`,
+        raw_text: responseText,
+      }
     }
 
     console.log(`API Response ${method} ${fullUrl}:`, {
       status: response.status,
       ok: response.ok,
-      result
+      result,
     })
 
     if (!response.ok) {
+      // Auto-refresh token on 401
+      if (response.status === 401 && typeof window !== "undefined") {
+        const storedRefreshToken = localStorage.getItem("refresh_token")
+        if (storedRefreshToken) {
+          try {
+            const refreshRes = await fetch(getApiUrl("/v1/auth/refresh"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
+              body: JSON.stringify({ refresh_token: storedRefreshToken }),
+            })
+            if (refreshRes.ok) {
+              const refreshData = await refreshRes.json()
+              const tokenPair = refreshData.token_pair as Record<string, unknown> | undefined
+              const newToken = (tokenPair?.access_token as string) || refreshData.token || refreshData.access_token
+              const newRefreshToken = (tokenPair?.refresh_token as string) || refreshData.refresh_token
+              if (newToken) {
+                localStorage.setItem("token", newToken)
+                if (newRefreshToken) localStorage.setItem("refresh_token", newRefreshToken)
+                headers["Authorization"] = `Bearer ${newToken}`
+                const retryRes = await fetch(fullUrl, {
+                  method,
+                  headers,
+                  body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : undefined,
+                })
+                if (retryRes.ok) {
+                  const retryResult = await retryRes.json()
+                  return { status: "success", response: retryResult }
+                }
+                result = await retryRes.json()
+                response = retryRes
+              }
+            }
+          } catch (e) {
+            console.error("Token refresh failed:", e)
+          }
+        }
+      }
+
       // Handle structured validation errors (e.g., from FastAPI)
       let errorMessage = "Request failed"
       if (result.detail) {
@@ -106,7 +154,7 @@ export async function apiRequest<T = unknown>({
       }
     }
 
-    return result
+    return { status: "success", response: result }
   } catch (error) {
     console.error('Network or fetch error:', error)
     return {
@@ -119,25 +167,39 @@ export async function apiRequest<T = unknown>({
 // Auth endpoints
 export const authApi = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "ngrok-skip-browser-warning": "true",
+    const result = await apiRequest<Record<string, unknown>>({
+      url: "/v1/auth/login",
+      method: "POST",
+      data: { username, password },
+    })
+
+    if (result.status === "success" && result.response) {
+      const data = result.response
+      const tokenPair = data.token_pair as Record<string, unknown> | undefined
+      const accessToken = (tokenPair?.access_token as string) || (data.token as string) || (data.access_token as string) || ""
+      const refreshToken = (tokenPair?.refresh_token as string) || (data.refresh_token as string) || ""
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("token", accessToken)
+        if (refreshToken) localStorage.setItem("refresh_token", refreshToken)
+      }
+
+      return {
+        status: "success",
+        message: "Login successful",
+        token: accessToken,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        role: (data.role as "user" | "admin") || "user",
+        user: data.user as Record<string, unknown> | undefined,
+        organization: data.organization as Record<string, unknown> | undefined,
+        memberships: data.memberships as Array<Record<string, unknown>> | undefined,
+      }
     }
 
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/login`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ username, password }),
-      })
-
-      const result = await response.json()
-      return result
-    } catch (error) {
-      return {
-        status: "error",
-        message: error instanceof Error ? error.message : "Network error",
-      }
+    return {
+      status: "error",
+      message: result.message || "Login failed",
     }
   },
 
@@ -150,26 +212,26 @@ export const authApi = {
       organization_id?: string
       organization_name?: string
     }>({
-      url: "/token/validate",
+      url: "/v1/token/validate",
       token,
     }),
 
   checkAdminAccess: (token: string) =>
     apiRequest<{ admin: boolean }>({
-      url: "/admin/access",
+      url: "/v1/admin/access",
       token,
     }),
 
   createOrganization: (data: { organization_name: string; admin_username: string; admin_password: string }) =>
     apiRequest({
-      url: "/organizations/create_with_admin",
+      url: "/v1/organizations",
       method: "POST",
       data,
     }),
 
   switchOrganization: (token: string, data: { organization_id?: string; organization_slug?: string }) =>
     apiRequest<{ token: string }>({
-      url: "/organizations/switch",
+      url: "/v1/organizations/switch",
       method: "POST",
       token,
       data,
@@ -177,34 +239,34 @@ export const authApi = {
 
   listMemberships: (token: string) =>
     apiRequest<{ memberships: Array<{ organization_id: string; organization_name: string; role: string }> }>({
-      url: "/organizations/memberships",
+      url: "/v1/organizations/memberships",
       token,
     }),
 
   listMembers: (token: string) =>
     apiRequest<{ members: Array<{ user_id: string; username: string; role: string }> }>({
-      url: "/organizations/members",
+      url: "/v1/organizations/members",
       token,
     }),
 
   createInvite: (token: string, email: string, role = "member") =>
     apiRequest({
-      url: "/organizations/invites",
+      url: "/v1/invites",
       method: "POST",
       token,
       data: { email, role },
     }),
 
-  acceptInvite: (inviteToken: string, password: string, name: string) =>
+  acceptInvite: (inviteToken: string, password: string, username: string) =>
     apiRequest({
-      url: "/organizations/invites/accept",
+      url: "/v1/invites/accept",
       method: "POST",
-      data: { token: inviteToken, password, name },
+      data: { token: inviteToken, username, password },
     }),
 
   updateMemberRole: (token: string, user_id: string, role: string) =>
     apiRequest({
-      url: "/organizations/members/role",
+      url: "/v1/organizations/members/role",
       method: "POST",
       token,
       data: { user_id, role },
@@ -212,7 +274,7 @@ export const authApi = {
 
   revokeInvite: (token: string, invite_id: string) =>
     apiRequest({
-      url: `/organizations/invites/${encodeURIComponent(invite_id)}`,
+      url: `/v1/invites/${encodeURIComponent(invite_id)}`,
       method: "DELETE",
       token,
     }),
@@ -220,34 +282,91 @@ export const authApi = {
 
 export const filesApi = {
   // GET /files/list returns { status: 'success', response: { documents: [...] } }
-  list: (token: string) =>
-    apiRequest<{
+  list: async (token: string) => {
+    const tenantId = await resolveTenantId(token)
+    if (!tenantId) {
+      return { status: "error" as const, message: "Tenant ID is required for file list requests" }
+    }
+
+    return apiRequest<{
       documents: Array<{ id: number; filename: string; upload_timestamp: string; organization_id: string; file_size: number }>
     }>({
-      url: "/files/list",
+      url: API_CONFIG.ENDPOINTS.FILES_LIST,
       token,
-    }),
+      params: { tenant_id: tenantId },
+    })
+  },
 
-  // GET /files/content/:filename - returns content (text or base64 for binary files)
-  getContent: async (token: string, filename: string) => {
+  // GET /files/content or /v1/documents/{id} - returns content (text or base64 for binary files)
+  getContent: async (token: string, documentIdOrFilename: string) => {
+    const tenantId = await resolveTenantId(token)
+    if (!tenantId) {
+      return { status: "error" as const, message: "Tenant ID is required for file content requests" }
+    }
+
     const headers: Record<string, string> = {
       "ngrok-skip-browser-warning": "true",
       Authorization: `Bearer ${token}`,
     }
-    const response = await fetch(`${API_CONFIG.BASE_URL}/files/content/${encodeURIComponent(filename)}`, {
+
+    const resolveDocumentId = async (value: string): Promise<string | null> => {
+      if (!value) return null
+      if (/^[0-9a-fA-F-]{20,}$/.test(value) && !value.includes('.')) {
+        return value
+      }
+
+      const listResult = await apiRequest<{ documents: Array<any> }>({
+        url: API_CONFIG.ENDPOINTS.FILES_LIST,
+        token,
+        params: { tenant_id: tenantId },
+      })
+      if (listResult.status !== "success" || !listResult.response?.documents) {
+        return null
+      }
+
+      const lowerValue = value.toLowerCase()
+      const match = listResult.response.documents.find((doc: any) => {
+        const title = (doc.title || doc.Title || doc.filename || doc.original_filename || doc.name || "").toString().toLowerCase()
+        return title === lowerValue
+      })
+      return match?.document_id || match?.DocumentID || match?.id || match?.ID || null
+    }
+
+    const documentId = await resolveDocumentId(documentIdOrFilename)
+    if (documentId) {
+      const response = await apiRequest<{ document: any }>({
+        url: `${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentId)}`,
+        token,
+        params: { tenant_id: tenantId },
+      })
+
+      if (response.status === "success" && response.response?.document) {
+        const document = response.response.document
+        return {
+          status: "success" as const,
+          response: {
+            content: document.content || document.raw_content || "",
+            isBinary: false,
+            docType: document.doc_type || document.DocType || "application/octet-stream",
+          },
+        }
+      }
+    }
+
+    // Fallback to legacy content route for filename-based file viewers
+    const response = await fetch(getApiUrl(`${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentIdOrFilename)}/content`), {
       method: "GET",
       headers,
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch file content: ${response.status}`)
+      return { status: "error" as const, message: `Failed to fetch file content: ${response.status}` }
     }
 
     const contentType = response.headers.get('content-type')
     const isJsonResponse = contentType && contentType.includes('application/json')
     
     if (isJsonResponse) {
-      // Backend returns JSON with base64 content for binary files
       const data = await response.json()
       return {
         status: "success" as const,
@@ -256,244 +375,469 @@ export const filesApi = {
           isBinary: data.isBinary || false 
         }
       }
-    } else {
-      // Fallback to original binary handling
-      const isBinary = contentType && (
-        contentType.includes('application/pdf') ||
-        contentType.includes('application/msword') ||
-        contentType.includes('application/vnd.openxmlformats-officedocument') ||
-        contentType.includes('application/octet-stream')
-      )
+    }
 
-      if (isBinary) {
-        // Convert binary content to base64
-        const blob = await response.blob()
-        const base64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result)
-          reader.onerror = reject
-          reader.readAsDataURL(blob)
-        })
-        // Remove the data URL prefix to get just the base64 content
-        const base64Content = (base64 as string).split(',')[1]
-        return {
-          status: "success" as const,
-          response: { content: base64Content, isBinary: true }
-        }
-      } else {
-        // Handle text content
-        const content = await response.text()
-        return {
-          status: "success" as const,
-          response: { content, isBinary: false }
-        }
+    const isBinary = contentType && (
+      contentType.includes('application/pdf') ||
+      contentType.includes('application/msword') ||
+      contentType.includes('application/vnd.openxmlformats-officedocument') ||
+      contentType.includes('application/octet-stream')
+    )
+
+    if (isBinary) {
+      const blob = await response.blob()
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
+      const base64Content = (base64 as string).split(',')[1]
+      return {
+        status: "success" as const,
+        response: { content: base64Content, isBinary: true }
       }
+    }
+
+    const content = await response.text()
+    return {
+      status: "success" as const,
+      response: { content, isBinary: false }
     }
   },
 
-  // POST /upload - file upload (supports multiple files)
+  // POST /upload - file upload via document ingest
   upload: async (token: string, files: File[]) => {
-    const formData = new FormData()
-    files.forEach((file, index) => {
-      formData.append(`file`, file)
-    })
+    const tenantId = await resolveTenantId(token)
+    if (!tenantId) {
+      return { status: "error" as const, message: "Tenant ID is required for file uploads" }
+    }
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}/upload`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "ngrok-skip-browser-warning": "true",
-      },
-      body: formData,
-    })
+    const readFileText = (file: File) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(new Error(`Failed to read file ${file.name}`))
+        reader.readAsText(file)
+      })
 
-    return response.json()
+    for (const file of files) {
+      const content = await readFileText(file)
+      const result = await apiRequest({
+        url: API_CONFIG.ENDPOINTS.FILES_UPLOAD,
+        method: "POST",
+        token,
+        data: {
+          tenant_id: tenantId,
+          title: file.name,
+          content,
+          doc_type: file.type || "text/plain",
+          metadata: {
+            original_filename: file.name,
+          },
+        },
+      })
+
+      if (result.status === "error") {
+        return result
+      }
+    }
+
+    return { status: "success" as const }
   },
 
-  // POST /files/edit with { filename, new_content }
-  edit: (token: string, filename: string, newContent: string) =>
-    apiRequest({
-      url: "/files/edit",
-      method: "POST",
-      token,
-      data: { filename, new_content: newContent },
-    }),
+  // PATCH/PUT /v1/documents/{id}
+  edit: async (token: string, documentIdOrFilename: string, newContent: string) => {
+    const tenantId = await resolveTenantId(token)
+    if (!tenantId) {
+      return { status: "error" as const, message: "Tenant ID is required for edit requests" }
+    }
 
-  // DELETE /files/delete_by_fileid with { file_id }
-  deleteById: (token: string, fileId: string) =>
-    apiRequest({
-      url: "/files/delete_by_fileid",
+    const resolveDocumentId = async (value: string): Promise<string | null> => {
+      if (!value) return null
+      if (/^[0-9a-fA-F-]{20,}$/.test(value) && !value.includes('.')) {
+        return value
+      }
+
+      const listResult = await apiRequest<{ documents: Array<any> }>({
+        url: API_CONFIG.ENDPOINTS.FILES_LIST,
+        token,
+        params: { tenant_id: tenantId },
+      })
+      if (listResult.status !== "success" || !listResult.response?.documents) {
+        return null
+      }
+
+      const lowerValue = value.toLowerCase()
+      const match = listResult.response.documents.find((doc: any) => {
+        const title = (doc.title || doc.Title || doc.filename || doc.original_filename || doc.name || "").toString().toLowerCase()
+        return title === lowerValue
+      })
+      return match?.document_id || match?.DocumentID || match?.id || match?.ID || null
+    }
+
+    const documentId = await resolveDocumentId(documentIdOrFilename)
+    if (!documentId) {
+      return { status: "error" as const, message: "Could not resolve document ID for edit" }
+    }
+
+    return apiRequest({
+      url: `${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentId)}`,
+      method: "PUT",
+      token,
+      params: { tenant_id: tenantId },
+      data: { content: newContent },
+    })
+  },
+
+  // DELETE /v1/documents/{id}
+  deleteById: async (token: string, fileId: string) => {
+    const tenantId = await resolveTenantId(token)
+    if (!tenantId) {
+      return { status: "error" as const, message: "Tenant ID is required for delete requests" }
+    }
+    return apiRequest({
+      url: `${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(fileId)}`,
       method: "DELETE",
       token,
-      data: { file_id: fileId },
-    }),
+      params: { tenant_id: tenantId },
+    })
+  },
 
-  // DELETE /files/delete_by_filename with ?filename=...
-  deleteByFilename: (token: string, filename: string) =>
-    apiRequest({
-      url: "/files/delete_by_filename",
+  // DELETE document by matching filename/title
+  deleteByFilename: async (token: string, filename: string) => {
+    const tenantId = await resolveTenantId(token)
+    if (!tenantId) {
+      return { status: "error" as const, message: "Tenant ID is required for delete requests" }
+    }
+
+    const listResult = await apiRequest<{ documents: Array<any> }>({
+      url: API_CONFIG.ENDPOINTS.FILES_LIST,
+      token,
+      params: { tenant_id: tenantId },
+    })
+    if (listResult.status !== "success" || !listResult.response?.documents) {
+      return { status: "error" as const, message: "Could not retrieve documents for deletion" }
+    }
+
+    const lowerFilename = filename.toLowerCase()
+    const match = listResult.response.documents.find((doc: any) => {
+      const title = (doc.title || doc.Title || doc.filename || doc.original_filename || doc.name || "").toString().toLowerCase()
+      return title === lowerFilename
+    })
+    const documentId = match?.document_id || match?.DocumentID || match?.id || match?.ID
+    if (!documentId) {
+      return { status: "error" as const, message: "Could not resolve document ID for deletion" }
+    }
+
+    return apiRequest({
+      url: `${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentId)}`,
       method: "DELETE",
       token,
-      params: { filename },
-    }),
+      params: { tenant_id: tenantId },
+    })
+  },
 
   // POST /files/index
   index: (token: string) =>
     apiRequest({
-      url: "/files/index",
+      url: "/v1/files/index",
       method: "POST",
       token,
       data: {},
     }),
 }
 
+export async function resolveTenantId(token: string): Promise<string | null> {
+  try {
+    const res = await authApi.validateToken(token)
+    if (res.status === "success" && res.response) {
+      return (res.response as any).organization_id || null
+    }
+  } catch { /* ignore */ }
+  return null
+}
+
+function synthesizeAnswer(question: string, chunks: any[]): string {
+  if (!chunks || chunks.length === 0) {
+    return "No relevant knowledge base content was found for: " + question
+  }
+  const top = chunks[0].content || ""
+  return top.length > 500 ? top.substring(0, 500) : top
+}
+
+function chunksToSearchResults(chunks: any[]): any[] {
+  return chunks.map((c: any) => ({
+    chunk_id: c.chunk_id,
+    document_id: c.document_id,
+    content: c.content,
+    final_score: c.final_score,
+    source: c.source || c.metadata?.filename || "memory",
+    metadata: c.metadata,
+  }))
+}
+
 export const queryApi = {
-  // POST /query with { question, session_id, model, humanize, ai_agent_mode }
-  query: (token: string, question: string, options?: { session_id?: string; model?: string; humanize?: boolean; ai_agent_mode?: boolean }) =>
-    apiRequest<{
-      immediate?: {
-        files: string[]
-        snippets: Array<{
-          content: string
-          source: string
-        }>
-        model: string
-        security_info: {
-          user_filtered: boolean
-          username: string
-          source_documents_count: number
-          security_filtered: boolean
-        }
-      }
-      overview?: string
-      model?: string
-      security_info?: {
-        user_filtered: boolean
-        username: string
-        source_documents_count: number
-        security_filtered: boolean
-      }
+  query: async (token: string, question: string, options?: {
+    session_id?: string
+    model?: string
+    humanize?: boolean
+    ai_agent_mode?: boolean
+    top_k?: number
+  }) => {
+    const tenantId = await resolveTenantId(token)
+    const res = await apiRequest<{
+      results: Array<{
+        chunk_id: string
+        document_id: string
+        content: string
+        final_score: number
+        source: string
+        metadata?: Record<string, unknown>
+      }>
+      query_id: string
+      took_ms: number
     }>({
-      url: "/query",
+      url: API_CONFIG.ENDPOINTS.SEARCH,
       method: "POST",
       token,
       data: {
-        question,
-        session_id: options?.session_id || null,
-        model: options?.model || null,
-        humanize: options?.humanize ?? true,
-        ai_agent_mode: options?.ai_agent_mode ?? false,
+        tenant_id: tenantId,
+        query: question,
+        top_k: options?.top_k || 10,
       },
-    }),
+    })
 
-  // WebSocket query for real-time streaming
-  queryWebSocket: async (
-    token: string, 
-    question: string, 
-    options?: { 
-      session_id?: string; 
-      model?: string; 
-      humanize?: boolean;
-      ai_agent_mode?: boolean;
-      onMessage?: (message: any) => void;
+    if (res.status === "success" && res.response) {
+      const data = res.response as any
+      const chunks = data.results || []
+      return {
+        status: "success" as const,
+        response: {
+          answer: synthesizeAnswer(question, chunks),
+          chunks: chunksToSearchResults(chunks),
+          model: options?.model || null,
+          query_id: data.query_id,
+          took_ms: data.took_ms,
+          security: { organization_id: tenantId, filtered: true },
+        },
+      }
     }
-  ) => {
+    return res
+  },
+
+  queryStream: async (
+    token: string,
+    question: string,
+    options?: {
+      session_id?: string
+      model?: string
+      humanize?: boolean
+      top_k?: number
+      onMessage?: (message: any) => void
+    }
+  ): Promise<ApiResponse<any>> => {
+    options?.onMessage?.({ type: "status", data: { message: "searching" } })
+
+    try {
+      return await queryApi.queryStreamViaWS(token, question, options)
+    } catch {
+      return queryApi.queryStreamViaHTTP(token, question, options)
+    }
+  },
+
+  queryStreamViaWS: async (
+    token: string,
+    question: string,
+    options?: {
+      session_id?: string
+      top_k?: number
+      tenant_id?: string
+      onMessage?: (message: any) => void
+    }
+  ): Promise<ApiResponse<any>> => {
+    if (!token) {
+      return Promise.reject(new Error("Missing auth token for WebSocket query"))
+    }
+
+    const tenantId = options?.tenant_id || await resolveTenantId(token)
+
+    const wsUrl = `${API_CONFIG.WS_URL}${API_CONFIG.ENDPOINTS.QUERY_WS}?token=${encodeURIComponent(token)}`
+
     return new Promise((resolve, reject) => {
-      try {
-        const wsUrl = getWsUrl("/ws/query") + `?token=${encodeURIComponent(token)}`
-        
-        const ws = new WebSocket(wsUrl)
-        let hasError = false
-        let immediateData: any = null
-        let overviewData: any = null
-        let chunksData: any = null
-        
-        ws.onopen = () => {
-          // Send query
-          ws.send(JSON.stringify({
-            question,
-            session_id: options?.session_id || null,
-            model: options?.model || null,
-            humanize: options?.humanize ?? true,
-            ai_agent_mode: options?.ai_agent_mode ?? false
-          }))
+      const ws = new WebSocket(wsUrl)
+      let settled = false
+      let receivedData = false
+      let timeout: NodeJS.Timeout | undefined
+
+      const connectTimeout = setTimeout(() => {
+        if (!settled) {
+          settled = true
+          ws.close()
+          reject(new Error("WebSocket connection timeout"))
         }
-        
-        ws.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data)
-            
-            // Call the message handler
-            if (options?.onMessage) {
-              options.onMessage(message)
-            }
-            
-            // Store data based on message type
-            switch (message.type) {
-              case 'status':
-                // Processing status update
-                break
-              case 'immediate':
-                immediateData = message.data
-                break
-              case 'overview':
-                overviewData = message.data
-                break
-              case 'chunks':
-                chunksData = message.data
-                break
-              case 'error':
-                hasError = true
-                reject(new Error(message.message || 'WebSocket query error'))
-                ws.close()
-                break
-              case 'complete':
-                // Query completed successfully
-                ws.close()
-                
-                // Resolve with combined data
-                const result = {
-                  status: 'success',
-                  response: {
-                    immediate: immediateData,
-                    answer: overviewData,
-                    chunks: chunksData?.chunks,
-                    available_files: chunksData?.available_files,
-                    possible_files_by_title: chunksData?.possible_files_by_title,
-                    model: immediateData?.model,
-                    security_info: immediateData?.security_info
-                  }
-                }
-                resolve(result)
-                break
-            }
-          } catch (error) {
-            console.error('Error parsing WebSocket message:', error)
-            if (options?.onMessage) {
-              options.onMessage({ type: 'error', message: 'Failed to parse message' })
+      }, 10000)
+
+      ws.onopen = () => {
+        clearTimeout(connectTimeout)
+        timeout = setTimeout(() => {
+          if (!settled) {
+            settled = true
+            ws.close()
+            if (receivedData) {
+              resolve({ status: "success" as const, response: null })
+            } else {
+              reject(new Error("WebSocket query timeout"))
             }
           }
+        }, 30000)
+
+        ws.send(JSON.stringify({
+          query: question,
+          tenant_id: tenantId,
+          top_k: options?.top_k || 10,
+        }))
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data)
+
+          if (msg.type === "complete" && !settled) {
+            settled = true
+            clearTimeout(connectTimeout)
+            clearTimeout(timeout)
+            ws.close()
+            resolve({ status: "success" as const, response: msg.data })
+            return
+          }
+
+          if (msg.type === "error" && !settled) {
+            settled = true
+            clearTimeout(connectTimeout)
+            clearTimeout(timeout)
+            ws.close()
+            if (receivedData) {
+              resolve({ status: "success" as const, response: null })
+            } else {
+              reject(new Error(msg.data?.message || "WebSocket error"))
+            }
+            return
+          }
+
+          if (msg.type === "chunks" || msg.type === "answer") {
+            receivedData = true
+          }
+
+          options?.onMessage?.(msg)
+        } catch (e) {
+          console.error("WS parse error:", e)
         }
-        
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error)
-          if (!hasError) {
-            reject(new Error('WebSocket connection error'))
+      }
+
+      ws.onerror = () => {
+        clearTimeout(connectTimeout)
+        clearTimeout(timeout)
+        if (!settled) {
+          settled = true
+          reject(new Error("WebSocket connection failed"))
+        }
+      }
+
+      ws.onclose = (event) => {
+        clearTimeout(connectTimeout)
+        clearTimeout(timeout)
+        if (!settled && event.code !== 1000) {
+          settled = true
+          if (receivedData) {
+            resolve({ status: "success" as const, response: null })
+          } else {
+            reject(new Error(`WebSocket closed: ${event.reason || "unknown reason"}`))
           }
         }
-        
-        ws.onclose = (event) => {
-          if (!hasError && event.code !== 1000) {
-            console.error('WebSocket closed unexpectedly:', event.code, event.reason)
-            reject(new Error(`WebSocket closed: ${event.reason || 'Unknown reason'}`))
-          }
-        }
-        
-      } catch (error) {
-        reject(error)
       }
     })
-  }
+  },
+
+  queryStreamViaHTTP: async (
+    token: string,
+    question: string,
+    options?: {
+      session_id?: string
+      model?: string
+      humanize?: boolean
+      top_k?: number
+      onMessage?: (message: any) => void
+    }
+  ): Promise<ApiResponse<any>> => {
+    const result = await queryApi.query(token, question, options)
+    if (result.status !== "success") {
+      options?.onMessage?.({ type: "error", data: { message: result.message } })
+      return result
+    }
+
+    const data = result.response!
+    options?.onMessage?.({ type: "chunks", data: { chunks: data.chunks } })
+    options?.onMessage?.({ type: "answer", data: { answer: data.answer } })
+    options?.onMessage?.({ type: "complete", data: { query_id: data.query_id } })
+
+    return { status: "success", response: data }
+  },
+
+  queryWebSocket: async (
+    token: string,
+    question: string,
+    options?: {
+      session_id?: string
+      model?: string
+      humanize?: boolean
+      ai_agent_mode?: boolean
+      onMessage?: (message: any) => void
+    }
+  ) => {
+    return queryApi.queryStream(token, question, {
+      ...options,
+      onMessage: (msg) => {
+        // Map new message types to old format for backward compatibility
+        switch (msg.type) {
+          case "chunks": {
+            const chunks = msg.data?.chunks || []
+            options?.onMessage?.({
+              type: "immediate",
+              data: {
+                results: chunks.map((c: any) => ({
+                  chunk_id: c.chunk_id,
+                  document_id: c.document_id,
+                  content: c.content,
+                  source: c.source || c.metadata?.filename || "memory",
+                  score: c.final_score,
+                })),
+                snippets: chunks.map((c: any) => ({
+                  document_id: c.document_id,
+                  content: c.content,
+                  source: c.source || c.metadata?.filename || "memory",
+                  score: c.final_score,
+                })),
+              },
+            })
+            break
+          }
+          case "answer":
+            options?.onMessage?.({ type: "overview", data: msg.data?.answer || "" })
+            break
+          case "status":
+            options?.onMessage?.({ type: "status", message: msg.data?.message || "" })
+            break
+          case "complete":
+            options?.onMessage?.({ type: "complete", data: msg.data })
+            break
+          case "error":
+            options?.onMessage?.({ type: "error", message: msg.data?.message || "Unknown error" })
+            break
+        }
+      },
+    })
+  },
 }
 
 export const reportsApi = {
@@ -505,7 +849,7 @@ export const reportsApi = {
       Accept: "application/json",
     }
 
-    const res = await fetch(`${API_CONFIG.BASE_URL}/reports/get/auto`, {
+    const res = await fetch(getApiUrl("/v1/reports?" + new URLSearchParams({ type: "auto" })), {
       method: "GET",
       headers,
     })
@@ -531,7 +875,7 @@ export const reportsApi = {
       Accept: "application/json",
     }
 
-    const res = await fetch(`${API_CONFIG.BASE_URL}/reports/get/manual`, {
+    const res = await fetch(getApiUrl("/v1/reports?" + new URLSearchParams({ type: "manual" })), {
       method: "GET",
       headers,
     })
@@ -552,7 +896,7 @@ export const reportsApi = {
   // POST /reports/submit/manual with { issue }
   submitManual: (token: string, issue: string) =>
     apiRequest({
-      url: "/reports/submit/manual",
+      url: "/v1/reports",
       method: "POST",
       token,
       data: { issue },
@@ -570,7 +914,7 @@ export const adminApi = {
     }
 
     try {
-      const res = await fetch(`${API_CONFIG.BASE_URL}/accounts`, {
+      const res = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.ADMIN_ACCOUNTS), {
         method: "GET",
         headers,
       })
@@ -593,6 +937,14 @@ export const adminApi = {
           status: wrapped.status as "success" | "error",
           message: wrapped.message,
           response: { accounts },
+        }
+      }
+
+      // go-core format: {"items": [...], "next_cursor": null}
+      if (data && typeof data === "object" && !Array.isArray(data) && (data as any).items) {
+        return {
+          status: "success" as const,
+          response: { accounts: (data as any).items },
         }
       }
 
@@ -621,7 +973,7 @@ export const adminApi = {
     userData: { username: string; password: string; role: string; allowed_files?: string[] },
   ) =>
     apiRequest({
-      url: "/register",
+      url: "/v1/register",
       method: "POST",
       token,
       data: userData,
@@ -633,7 +985,7 @@ export const adminApi = {
     userData: { username: string; role?: string; password?: string; allowed_files?: string[] },
   ) =>
     apiRequest({
-      url: "/user/edit",
+      url: "/v1/user/edit",
       method: "POST",
       token,
       data: userData,
@@ -642,7 +994,7 @@ export const adminApi = {
   // DELETE /user/delete with ?username=...
   deleteUser: (token: string, username: string) =>
     apiRequest({
-      url: "/user/delete",
+      url: "/v1/user/delete",
       method: "DELETE",
       token,
       params: { username },
@@ -663,7 +1015,7 @@ export const adminApi = {
       created_by: string
       organization_id?: string
     }>({
-      url: "/invites/create",
+      url: "/v1/invites",
       method: "POST",
       token,
       data: inviteData,
@@ -685,7 +1037,7 @@ export const adminApi = {
       count: number
       listed_by: string
     }>({
-      url: "/invites",
+      url: "/v1/invites",
       token,
     }),
 
@@ -699,7 +1051,7 @@ export const adminApi = {
       created_by: string
       message?: string
     }>({
-      url: `/invite/${token}`,
+      url: `/v1/invites/${token}`,
     }),
 
   acceptInvite: (
@@ -712,7 +1064,7 @@ export const adminApi = {
       allowed_files: string[]
       organization_id?: string
     }>({
-      url: "/invites/accept",
+      url: "/v1/invites/accept",
       method: "POST",
       data: { ...userData, token },
     }),
@@ -722,7 +1074,7 @@ export const adminApi = {
       invite_id: string
       revoked_by: string
     }>({
-      url: `/invites/${inviteId}`,
+      url: `/v1/invites/${inviteId}`,
       method: "DELETE",
       token,
     }),
@@ -740,7 +1092,7 @@ export const adminApi = {
         admin_email: string
       }
     }>({
-      url: `/organizations/status-by-email/${encodeURIComponent(email)}`,
+      url: `/v1/organizations/status-by-email/${encodeURIComponent(email)}`,
       method: "GET",
     })
   },
@@ -750,13 +1102,13 @@ export const adminApi = {
 export const catalogsApi = {
   list: (token: string) =>
     apiRequest<{ catalogs: Array<{ catalog_id: string; shop_name: string; total_products: number }> }>({
-      url: "/catalogs",
+      url: "/v1/catalogs",
       token,
     }),
 
   create: (token: string, name: string) =>
     apiRequest<{ catalog_id: string; shop_name: string }>({
-      url: "/catalogs/create",
+      url: "/v1/catalogs",
       method: "POST",
       token,
       data: { name },
@@ -777,7 +1129,7 @@ export const catalogsApi = {
         score?: number
       }>
     }>({
-      url: `/catalogs/${catalogId}/search`,
+      url: `/v1/catalogs/${catalogId}/search`,
       method: "GET",
       token,
       params: { query },
@@ -785,7 +1137,7 @@ export const catalogsApi = {
 
   delete: (token: string, catalogId: string) =>
     apiRequest({
-      url: `/catalogs/${catalogId}`,
+      url: `/v1/catalogs/${catalogId}`,
       method: "DELETE",
       token,
     }),
@@ -795,33 +1147,33 @@ export const catalogsApi = {
 export const pluginsApi = {
   status: (token: string) =>
     apiRequest<{ enabled: boolean; status: string }>({
-      url: "/plugins/status",
+      url: "/v1/plugins",
       token,
     }),
 
   enable: (token: string, plugin = "opencart") =>
     apiRequest({
-      url: `/plugins/${plugin}/enable`,
+      url: `/v1/plugins/${plugin}/enable`,
       method: "POST",
       token,
     }),
 
   disable: (token: string, plugin = "opencart") =>
     apiRequest({
-      url: `/plugins/${plugin}/disable`,
+      url: `/v1/plugins/${plugin}/disable`,
       method: "POST",
       token,
     }),
 
   listTokens: (token: string) =>
     apiRequest<{ tokens: Array<{ id: string; name: string; created_at: string }> }>({
-      url: "/plugins/tokens",
+      url: "/v1/plugins/tokens",
       token,
     }),
 
   createToken: (token: string, name: string) =>
     apiRequest<{ token: string; id: string }>({
-      url: "/plugins/tokens/create",
+      url: "/v1/plugins/tokens",
       method: "POST",
       token,
       data: { token_name: name },
@@ -829,7 +1181,7 @@ export const pluginsApi = {
 
   deleteToken: (token: string, tokenId: string) =>
     apiRequest({
-      url: `/plugins/tokens/${tokenId}`,
+      url: `/v1/plugins/tokens/${tokenId}`,
       method: "DELETE",
       token,
     }),
@@ -839,7 +1191,7 @@ export const pluginsApi = {
 export const opencartApi = {
   importProducts: (token: string, catalogId: string) =>
     apiRequest({
-      url: "/opencart/products/import",
+      url: "/v1/opencart/products/import",
       method: "POST",
       token,
       data: { catalog_id: catalogId },
@@ -869,7 +1221,7 @@ export const apiKeysApi = {
         expires_at?: string;
       }> 
     }>({
-      url: "/api-keys/list",
+      url: "/v1/api-keys",
       token,
     }),
 
@@ -892,7 +1244,7 @@ export const apiKeysApi = {
       full_key: string;
       tier?: string;
     }>({
-      url: "/api-keys/create",
+      url: "/v1/api-keys",
       method: "POST",
       token,
       data,
@@ -900,7 +1252,7 @@ export const apiKeysApi = {
 
   delete: (token: string, keyId: string) =>
     apiRequest({
-      url: `/api-keys/${keyId}`,
+      url: `/v1/api-keys/${keyId}`,
       method: "DELETE",
       token,
     }),
@@ -926,7 +1278,7 @@ export const apiKeysApi = {
       llm_cost_limit: number;
       current_llm_cost: number;
     }>({
-      url: `/api-keys/${keyId}`,
+      url: `/v1/api-keys/${keyId}`,
       token,
     }),
 
@@ -940,7 +1292,7 @@ export const apiKeysApi = {
     priority_tier?: string;
   }) =>
     apiRequest({
-      url: `/api-keys/${keyId}`,
+      url: `/v1/api-keys/${keyId}`,
       method: "PUT",
       token,
       data,
@@ -948,7 +1300,7 @@ export const apiKeysApi = {
 
   revoke: (token: string, keyId: string) =>
     apiRequest({
-      url: `/api-keys/${keyId}/revoke`,
+      url: `/v1/api-keys/${keyId}/revoke`,
       method: "POST",
       token,
     }),
@@ -963,7 +1315,7 @@ export const apiKeysApi = {
       is_warning: boolean;
       reset_time: string;
     }>({
-      url: `/api-keys/${keyId}/quota`,
+      url: `/v1/api-keys/${keyId}/quota`,
       token,
     }),
 
@@ -977,7 +1329,7 @@ export const apiKeysApi = {
       total_response_bytes: number;
       period_days: number;
     }>({
-      url: `/api-keys/${keyId}/usage-stats`,
+      url: `/v1/api-keys/${keyId}/usage-stats`,
       token,
       params: { days: String(days) },
     }),
@@ -993,7 +1345,7 @@ export const apiKeysApi = {
         reason?: string;
       }>;
     }>({
-      url: `/api-keys/${keyId}/audit-log`,
+      url: `/v1/api-keys/${keyId}/audit-log`,
       token,
       params: { limit: String(limit), offset: String(offset) },
     }),
@@ -1010,7 +1362,7 @@ export const apiKeysApi = {
       cost_limit: number;
       can_afford: boolean;
     }>({
-      url: `/api-keys/${keyId}/llm-control`,
+      url: `/v1/api-keys/${keyId}/llm-control`,
       token,
     }),
 
@@ -1021,7 +1373,7 @@ export const apiKeysApi = {
     llm_cost_limit?: number;
   }) =>
     apiRequest({
-      url: `/api-keys/${keyId}/llm-control`,
+      url: `/v1/api-keys/${keyId}/llm-control`,
       method: "PUT",
       token,
       data,
@@ -1032,7 +1384,7 @@ export const apiKeysApi = {
       permissions: Record<string, string>;
       total: number;
     }>({
-      url: "/api-keys/permissions/list",
+      url: "/v1/permissions",
       token,
     }),
 }
@@ -1050,7 +1402,7 @@ export const metricsApi = {
       organization_id?: string | null
       user_id?: string | null
     }>({
-      url: "/metrics/summary",
+      url: "/v1/metrics/summary",
       token,
       params: { since, scope },
     }),
@@ -1071,7 +1423,7 @@ export const metricsApi = {
       limit?: number
       offset?: number
     }>({
-      url: "/metrics/queries",
+      url: "/v1/metrics/queries",
       token,
       params: {
         since,
@@ -1105,7 +1457,7 @@ export const metricsApi = {
       total_failed: number
       avg_daily_queries: number
     }>({
-      url: "/metrics/volume",
+      url: "/v1/metrics/volume",
       token,
       params: { days: String(days), scope },
     }),
@@ -1122,7 +1474,7 @@ export const aiAgentApi = {
     }
 
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/ai-agent/execute`, {
+      const response = await fetch(getApiUrl("/v1/ai-agent/execute"), {
         method: "POST",
         headers,
         body: JSON.stringify({ input }),
@@ -1144,20 +1496,20 @@ export const aiAgentApi = {
       files: Array<{ id: number; filename: string; upload_timestamp: string; organization_id: string; file_size: number }>
       file_id_map: Record<string, string>
     }>({
-      url: "/ai-agent/files",
+      url: "/v1/ai-agent/files",
       token,
     }),
 
   // Execute specific command types
   fileContent: (token: string, filename: string) =>
     apiRequest<{ content: string }>({
-      url: `/ai-agent/file-content/${encodeURIComponent(filename)}`,
+      url: `/v1/ai-agent/file-content/${encodeURIComponent(filename)}`,
       token,
     }),
 
   fileById: (token: string, fileId: string) =>
     apiRequest<{ content: string }>({
-      url: `/ai-agent/file-id/${encodeURIComponent(fileId)}`,
+      url: `/v1/ai-agent/file-id/${encodeURIComponent(fileId)}`,
       token,
     }),
 
@@ -1165,7 +1517,7 @@ export const aiAgentApi = {
     apiRequest<{
       matches: Array<{ filename: string; similarity: number; match_type: string }>
     }>({
-      url: "/ai-agent/fuzzy-search",
+      url: "/v1/ai-agent/fuzzy-search",
       method: "POST",
       token,
       data: { query },
@@ -1176,7 +1528,7 @@ export const aiAgentApi = {
       results: Array<{ source: string; content: string }>
       overview?: string
     }>({
-      url: "/ai-agent/kb-search",
+      url: "/v1/ai-agent/kb-search",
       method: "POST",
       token,
       data: { query },
@@ -1187,7 +1539,7 @@ export const aiAgentApi = {
       results: Array<{ source: string; content: string }>
       overview?: string
     }>({
-      url: "/ai-agent/semantic-search",
+      url: "/v1/ai-agent/semantic-search",
       method: "POST",
       token,
       data: { query },
@@ -1195,7 +1547,7 @@ export const aiAgentApi = {
 
   batchOverviews: (token: string, queries: string[], results: any[]) =>
     apiRequest<{ overviews: string[] }>({
-      url: "/query/batch-overview",
+      url: "/v1/query/batch-overview",
       method: "POST",
       token,
       data: { queries, results },
@@ -1266,7 +1618,7 @@ export const landingPagesApi = {
     }
 
     try {
-      const response = await fetch(getCmsEndpointUrl(`/blog/posts/slug/${slug}`), { headers })
+      const response = await fetch(getCmsEndpointUrl(`/blog/posts/${slug}`), { headers })
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -1276,12 +1628,9 @@ export const landingPagesApi = {
       }
       
       const data = await response.json()
-      
-      // Check if the response contains an error message
-      if (data.detail === "Blog post not found") {
-        return null
-      }
-      
+
+      if (data?.error?.code === "post_not_found") return null
+
       return data
     } catch (error) {
       console.error('Error fetching blog post:', error)
@@ -1559,7 +1908,7 @@ export const dashboardApi = {
         active_users: number
       }
     }>({
-      url: "/dashboard/employee",
+      url: "/v1/dashboard/employee",
       token,
       params: { since },
     }),
@@ -1609,7 +1958,7 @@ export const dashboardApi = {
       organization_id?: string | null
       period: string
     }>({
-      url: "/dashboard/admin",
+      url: "/v1/dashboard/admin",
       token,
       params: { since, scope },
     }),
@@ -1643,7 +1992,7 @@ export const dashboardApi = {
         organization_id: string
       }>
     }>({
-      url: "/admin/quizzes",
+      url: "/v1/admin/quizzes",
       token,
       params,
     })
@@ -1671,7 +2020,7 @@ export const dashboardApi = {
       updated_at: string
       organization_id: string
     }>({
-      url: `/admin/quizzes/${quizId}`,
+      url: `/v1/admin/quizzes/${quizId}`,
       token,
     })
   },
@@ -1727,7 +2076,7 @@ export const dashboardApi = {
       id: string
       message: string
     }>({
-      url: "/admin/quizzes",
+      url: "/v1/admin/quizzes",
       method: "POST",
       token,
       data: backendQuizData,
@@ -1774,8 +2123,8 @@ export const dashboardApi = {
     return apiRequest<{
       message: string
     }>({
-      url: `/admin/quizzes/${quizId}`,
-      method: "PUT",
+      url: `/v1/admin/quizzes/${quizId}`,
+      method: "PATCH",
       token,
       data: backendQuizData,
     })
@@ -1785,7 +2134,7 @@ export const dashboardApi = {
     return apiRequest<{
       message: string
     }>({
-      url: `/admin/quizzes/${quizId}`,
+      url: `/v1/admin/quizzes/${quizId}`,
       method: "DELETE",
       token,
     })
@@ -1804,7 +2153,7 @@ export const dashboardApi = {
         submitted_at: string
       }>
     }>({
-      url: `/admin/quizzes/${quizId}/statistics`,
+      url: `/v1/admin/quizzes/${quizId}/statistics`,
       token,
     })
   },
@@ -1822,7 +2171,7 @@ export const dashboardApi = {
       }>
       total: number
     }>({
-      url: `/admin/quizzes/${quizId}/submissions`,
+      url: `/v1/admin/quizzes/${quizId}/submissions`,
       token,
       params: { limit: limit.toString() },
     })
@@ -1845,7 +2194,7 @@ export const dashboardApi = {
       expires_at: string
       created_by: string
     }>({
-      url: "/invites/create",
+      url: "/v1/invites",
       method: "POST",
       token,
       data,
@@ -1858,7 +2207,7 @@ export const dashboardApi = {
       count: number
       listed_by: string
     }>({
-      url: "/invites",
+      url: "/v1/invites",
       token,
     })
   },
@@ -1873,7 +2222,7 @@ export const dashboardApi = {
       created_by: string
       message?: string
     }>({
-      url: `/invite/${token}`,
+      url: `/v1/invites/${token}`,
     })
   },
 
@@ -1888,7 +2237,7 @@ export const dashboardApi = {
       allowed_files: string[]
       organization_id?: string
     }>({
-      url: "/invites/accept",
+      url: "/v1/invites/accept",
       method: "POST",
       data,
     })
@@ -1899,7 +2248,7 @@ export const dashboardApi = {
       invite_id: string
       revoked_by: string
     }>({
-      url: `/invites/${inviteId}`,
+      url: `/v1/invites/${inviteId}`,
       method: "DELETE",
       token,
     })
@@ -1916,7 +2265,7 @@ export const dashboardApi = {
         logs?: string
       }
     }>({
-      url: `/quiz/${encodeURIComponent(filename)}?regenerate=${regenerate}`,
+      url: `/v1/quiz/${encodeURIComponent(filename)}?regenerate=${regenerate}`,
       method: "POST",
       token,
     })
@@ -1938,7 +2287,7 @@ export const dashboardApi = {
           organization_slug: string
         }>
       }>({
-        url: "/messages/threads",
+        url: "/v1/messages/threads",
         method: "GET",
         token,
       })
@@ -1960,7 +2309,7 @@ export const dashboardApi = {
           updated_at: string
         }>
       }>({
-        url: `/messages/threads/${threadId}/messages`,
+        url: `/v1/messages/threads/${threadId}/messages`,
         method: "GET",
         token,
       })
@@ -1977,7 +2326,7 @@ export const dashboardApi = {
       return apiRequest<{
         thread_id: string
       }>({
-        url: "/messages/threads",
+        url: "/v1/messages/threads",
         method: "POST",
         token,
         data: data,
@@ -1993,7 +2342,7 @@ export const dashboardApi = {
       return apiRequest<{
         message_id: string
       }>({
-        url: `/messages/threads/${threadId}/messages`,
+        url: `/v1/messages/threads/${threadId}/messages`,
         method: "POST",
         token,
         data: data,
@@ -2002,7 +2351,7 @@ export const dashboardApi = {
 
     markMessageAsRead: async (messageId: string, token: string) => {
       return apiRequest<{}>({
-        url: `/messages/${messageId}/read`,
+        url: `/v1/messages/${messageId}/read`,
         method: "POST",
         token,
       })
@@ -2012,7 +2361,7 @@ export const dashboardApi = {
       return apiRequest<{
         unread_count: number
       }>({
-        url: "/messages/unread-count",
+        url: "/v1/messages/unread-count",
         method: "GET",
         token,
       })
@@ -2020,7 +2369,7 @@ export const dashboardApi = {
 
     approveOrganization: async (orgId: string, token: string) => {
       return apiRequest<{}>({
-        url: `/organizations/approve/${orgId}`,
+        url: `/v1/organizations/${orgId}/approve`,
         method: "POST",
         token,
       })
@@ -2028,7 +2377,7 @@ export const dashboardApi = {
 
     rejectOrganization: async (orgId: string, token: string, reason?: string) => {
       return apiRequest<{}>({
-        url: `/organizations/reject/${orgId}`,
+        url: `/v1/organizations/${orgId}/reject`,
         method: "POST",
         token,
         data: reason ? { reason } : undefined,
@@ -2037,8 +2386,8 @@ export const dashboardApi = {
 
     changeOrganizationStatus: async (orgId: string, token: string, newStatus: string) => {
       return apiRequest<{}>({
-        url: `/organizations/change-status/${orgId}`,
-        method: "POST",
+        url: `/v1/organizations/${orgId}`,
+        method: "PATCH",
         token,
         data: { status: newStatus },
       })
@@ -2056,7 +2405,7 @@ export const dashboardApi = {
           description?: string
         }>
       }>({
-        url: "/organizations/pending",
+        url: "/v1/organizations/pending",
         method: "GET",
         token,
       })

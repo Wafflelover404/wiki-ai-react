@@ -76,10 +76,20 @@ export class ApiClient {
   private inFlightRequests = new Map<string, Promise<any>>()
   private requestLoadingStates = new Map<string, boolean>()
   private cleanupInterval: NodeJS.Timer | null = null
+  private refreshTokenCallback: (() => Promise<string | null>) | null = null
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl
     this.startCacheCleanup()
+  }
+
+  setRefreshTokenCallback(cb: () => Promise<string | null>): void {
+    this.refreshTokenCallback = cb
+  }
+
+  async refreshToken(): Promise<string | null> {
+    if (!this.refreshTokenCallback) return null
+    return this.refreshTokenCallback()
   }
 
   /**
@@ -143,6 +153,21 @@ export class ApiClient {
     try {
       return await this.executeRequest<T>(config)
     } catch (error) {
+      // On 401/403, attempt token refresh and retry once
+      if (
+        error instanceof ApiError &&
+        error.isAuthError() &&
+        this.refreshTokenCallback &&
+        attempt === 1
+      ) {
+        console.warn(`[Auth Retry] ${config.method} ${config.url} - attempting token refresh`)
+        const newToken = await this.refreshTokenCallback()
+        if (newToken) {
+          const retryConfig = { ...config, token: newToken }
+          return this.executeWithRetry(retryConfig, attempt + 1, maxAttempts)
+        }
+      }
+
       const isRetryable = config.retryable !== false && error instanceof ApiError && error.isRetryable()
 
       if (attempt < maxAttempts && isRetryable) {
@@ -311,7 +336,7 @@ export class ApiClient {
 }
 
 // Create singleton instance
-export const apiClient = new ApiClient('https://api.wikiai.by')
+export const apiClient = new ApiClient(process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by')
 
 // For debugging in browser console
 if (typeof window !== 'undefined') {

@@ -54,11 +54,11 @@ export function useAdminData(
 
     switch (resource) {
       case 'users':
-        return '/admin/users'
+        return '/v1/accounts'
       case 'files':
-        return '/admin/files'
+        return '/v1/files'
       case 'reports':
-        return '/admin/reports'
+        return '/v1/reports'
       default:
         return null
     }
@@ -102,9 +102,9 @@ export function useAdminData(
       responseData = apiResult.data.response || apiResult.data
     }
 
-    // Handle both response.users and just users field
+    // Handle various API response formats
     const data = {
-      users: responseData?.users || [],
+      users: responseData?.accounts || responseData?.users || responseData?.items || [],
       files: responseData?.files || [],
       reports: responseData?.reports || [],
     }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { getApiUrl, getWsUrl } from "@/lib/config"
 
 interface WebSocketMessage {
   type: string
@@ -25,7 +26,7 @@ export function useWebSocketMessaging(token: string) {
   // Token validation function
   const validateToken = async (providedToken: string): Promise<string | null> => {
     try {
-      const response = await fetch("http://127.0.0.1:9001/organizations", {
+      const response = await fetch(getApiUrl("/v1/organizations"), {
         headers: {
           "Authorization": `Bearer ${providedToken}`,
           "Content-Type": "application/json"
@@ -37,18 +38,19 @@ export function useWebSocketMessaging(token: string) {
       } else if (response.status === 403) {
         // Token is invalid, try to refresh with hardcoded credentials
         console.log("WebSocket token expired, attempting to refresh...")
-        const refreshResponse = await fetch("http://127.0.0.1:9001/login", {
+        const refreshResponse = await fetch(getApiUrl("/v1/auth/cms-login"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: "admin@example.com", password: "admin123" })
+          body: JSON.stringify({ username: "admin", password: process.env.NEXT_PUBLIC_CMS_PASSWORD })
         })
 
         if (refreshResponse.ok) {
           const data = await refreshResponse.json()
-          if (data.status === "success" && data.token) {
+          const token = data.access_token
+          if (token) {
             console.log("WebSocket token refreshed successfully")
-            setCurrentToken(data.token)
-            return data.token
+            setCurrentToken(token)
+            return token
           }
         }
       }
@@ -93,7 +95,7 @@ export function useWebSocketMessaging(token: string) {
       return
     }
 
-    const wsUrl = `ws://127.0.0.1:9001/ws/messaging?token=${currentToken}`
+    const wsUrl = `${getWsUrl("/v1/ws/messaging")}?token=${currentToken}`
     console.log("WebSocket: Attempting connection to:", wsUrl.split('?token=')[0] + '?token=...')
     
     // Set connection timeout

@@ -18,8 +18,10 @@ import {
   ArrowRight,
   CheckCircle
 } from "lucide-react"
+import { landingPagesApi } from '@/lib/api'
 import { useTranslation } from '@/src/i18n'
 import LandingHeader from '@/components/landing-header'
+import { getCmsEndpointUrl } from "@/lib/config"
 
 export default function ContactPage() {
   const { t } = useTranslation()
@@ -39,7 +41,7 @@ export default function ContactPage() {
     setError("")
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/contact/submit", {
+      const response = await fetch(getCmsEndpointUrl("/contact/submit"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -51,7 +53,7 @@ export default function ContactPage() {
         })
       })
 
-      if (response.ok) {
+      if (result.status === "success") {
         setIsSubmitted(true)
         setFormData({ name: "", email: "", company: "", message: "" })
       } else {
