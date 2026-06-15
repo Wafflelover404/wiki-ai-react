@@ -932,23 +932,15 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
           // Import api helpers dynamically to avoid circular dependencies
           const { filesApi } = await import("@/lib/api")
           // Fallback to API endpoint if no content provided
-          const contentResult = await filesApi.getContent(token, file.id ? String(file.id) : file.filename)
-          if (contentResult.status !== 'success' || !contentResult.response) {
-            throw new Error('Failed to fetch file content')
-          }
-          const { content: fileContent, isBinary } = contentResult.response
-          const mimeType = file.content_type || getContentType(file.filename) || 'application/octet-stream'
-          let processedContent = fileContent
-          if (isBinary || fileContent.startsWith('data:')) {
-            const base64Content = fileContent.split(',')[1] || fileContent
-            const binaryString = atob(base64Content)
-            const bytes = new Uint8Array(binaryString.length)
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i)
+          const response = await fetch(`${API_CONFIG.BASE_URL}/v1/files/${encodeURIComponent(file.filename)}/content`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'ngrok-skip-browser-warning': 'true'
             }
-            blob = new Blob([bytes], { type: mimeType })
-          } else {
-            blob = new Blob([fileContent], { type: mimeType })
+          })
+          
+          if (!response.ok) {
+            throw new Error(`Download failed: ${response.statusText}`)
           }
         } else {
           throw new Error('No content or token available for download')
@@ -983,7 +975,7 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
         if (token) {
           try {
             const { API_CONFIG } = await import("@/lib/config")
-            window.open(`${API_CONFIG.BASE_URL}/v1/documents/${encodeURIComponent(file.filename)}/content`, '_blank')
+            window.open(`${API_CONFIG.BASE_URL}/v1/files/${encodeURIComponent(file.filename)}/content`, '_blank')
           } catch (fallbackErr) {
             console.error('Fallback open also failed:', fallbackErr)
           }

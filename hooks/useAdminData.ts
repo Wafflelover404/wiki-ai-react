@@ -56,7 +56,7 @@ export function useAdminData(
       case 'users':
         return '/v1/accounts'
       case 'files':
-        return '/v1/ai-agent/files'
+        return '/v1/files'
       case 'reports':
         return '/v1/reports'
       default:

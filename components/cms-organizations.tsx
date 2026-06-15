@@ -117,7 +117,8 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const refreshToken = async (): Promise<string | null> => {
     try {
       console.log("Attempting to refresh token with admin credentials...")
-      const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.CMS_LOGIN), {
+      const cmsPassword = process.env.NEXT_PUBLIC_CMS_PASSWORD
+      const response = await fetch(getApiUrl("/v1/auth/cms-login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: "admin", password: "pass123" })
@@ -125,7 +126,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
       if (response.ok) {
         const data = await response.json()
-        const token = data.access_token || data.token
+        const token = data.access_token
         if (token) {
           console.log("Token refreshed successfully, updating local reference")
           currentTokenRef.current = token
@@ -188,39 +189,10 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
       if (response.ok) {
         const data = await response.json()
-        let organizationsData: Organization[] = []
-
-        if (data && typeof data === "object") {
-          if (data.status === "success") {
-            if (Array.isArray(data.response?.organizations)) {
-              organizationsData = data.response.organizations
-            } else if (Array.isArray(data.response)) {
-              organizationsData = data.response
-            }
-          }
-
-          if (organizationsData.length === 0) {
-            if (Array.isArray(data.items)) {
-              organizationsData = data.items
-            } else if (Array.isArray(data.organizations)) {
-              organizationsData = data.organizations
-            } else if (Array.isArray(data.response?.items)) {
-              organizationsData = data.response.items
-            }
-          }
-        }
-
-        if (organizationsData.length > 0 || (data && data.status === "success")) {
-          console.log("Fetched organizations:", organizationsData)
-          setOrganizations(organizationsData)
-          setError(null)
-        } else if (data && data.status && data.status !== "success") {
-          setError(data.message || "Failed to fetch organizations")
-        } else {
-          console.log("Fetched organizations payload did not match expected format, using empty array", data)
-          setOrganizations(organizationsData)
-          setError(null)
-        }
+        const orgs = data.items || data.organizations || []
+        console.log("Fetched organizations:", orgs)
+        setOrganizations(orgs)
+        setError(null)
       } else {
         console.error(`HTTP ${response.status}: Failed to fetch organizations`)
         setError(`Failed to fetch organizations (${response.status})`)
@@ -240,11 +212,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
       if (response.ok) {
         const data = await response.json()
-        if (data.status === "success") {
-          setMessageThreads(data.response.threads || [])
-        } else {
-          setError(data.message || "Failed to fetch message threads")
-        }
+        setMessageThreads(data.threads || data.items || [])
       } else {
         setError(`HTTP ${response.status}: Failed to fetch message threads`)
       }
@@ -263,9 +231,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
       if (response.ok) {
         const data = await response.json()
-        if (data.status === "success") {
-          setUnreadCount(data.response.count || 0)
-        }
+        setUnreadCount(data.count || data.unread_count || 0)
       }
     } catch (err) {
       console.error("Failed to fetch unread count:", err)
@@ -282,9 +248,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
       if (response.ok) {
         const data = await response.json()
-        if (data.status === "success") {
-          setThreadMessages(data.response.messages || [])
-        }
+        setThreadMessages(data.messages || data.items || [])
       } else {
         setError(`HTTP ${response.status}: Failed to fetch thread messages`)
       }
@@ -297,8 +261,8 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
   const banOrganization = async (orgId: string) => {
     try {
       const response = await makeAuthenticatedRequest(
-        getApiUrl(`/v1/organizations/${orgId}`),
-        { method: "PATCH", body: JSON.stringify({ status: "suspended" }) }
+        getApiUrl(`/v1/organizations/${orgId}/reject`),
+        { method: "POST" }
       )
 
       if (response.ok) {
@@ -459,37 +423,32 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
       if (response.ok) {
         const data = await response.json()
-        if (data.status === "success") {
-          // Refresh message threads and switch to messages tab
-          await fetchMessageThreads()
+        await fetchMessageThreads()
+        
+        // Find the newly created thread
+        const updatedThreadsResponse = await makeAuthenticatedRequest(
+          getApiUrl("/v1/messages/threads"),
+          { method: "GET" }
+        )
+        
+        if (updatedThreadsResponse.ok) {
+          const threadsData = await updatedThreadsResponse.json()
+          const threads = threadsData.threads || threadsData.items || []
+          const newThread = threads.find((t: any) => t.subject === `Conversation with ${orgName}`)
           
-          // Find the newly created thread
-          const updatedThreadsResponse = await makeAuthenticatedRequest(
-        getApiUrl("/v1/messages/threads"),
-            { method: "GET" }
-          )
-          
-          if (updatedThreadsResponse.ok) {
-            const threadsData = await updatedThreadsResponse.json()
-            const threads = threadsData.response?.threads || []
-            const newThread = threads.find((t: any) => t.subject === `Conversation with ${orgName}`)
+          if (newThread) {
+            setSelectedThread(newThread)
+            await fetchThreadMessages(newThread.id)
             
-            if (newThread) {
-              setSelectedThread(newThread)
-              await fetchThreadMessages(newThread.id)
-              
-              // Switch to messages tab
-              const messagesTab = document.querySelector('[value="messages"]') as HTMLElement
-              if (messagesTab) {
-                messagesTab.click()
-              }
+            // Switch to messages tab
+            const messagesTab = document.querySelector('[value="messages"]') as HTMLElement
+            if (messagesTab) {
+              messagesTab.click()
             }
           }
-          
-          setError("Thread created successfully!")
-        } else {
-          setError(data.message || "Failed to create thread")
         }
+        
+        setError("Thread created successfully!")
       } else {
         setError("Failed to create thread")
       }

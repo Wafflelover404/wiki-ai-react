@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Lock, Key } from "lucide-react"
-import { apiRequest } from "@/lib/api"
+import { getApiUrl } from "@/lib/config"
 
 interface CMSLoginProps {
   onLogin: (token: string) => void
@@ -24,22 +24,22 @@ export default function CMSLogin({ onLogin }: CMSLoginProps) {
     setError("")
 
     try {
-      if (!username || !password) {
-        setError("Username and master key are required.")
-        return
-      }
+      if (username === "admin" && password) {
+        const response = await fetch(getApiUrl("/v1/auth/cms-login"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: "admin", password })
+        })
 
-      const result = await apiRequest({
-        url: "/v1/auth/cms-login",
-        method: "POST",
-        data: { username, password },
-      })
-
-      if (result.status === "success" && result.response) {
-        const data = result.response as Record<string, unknown>
-        const accessToken = (data.access_token as string) || (data.token as string)
-        if (accessToken) {
-          onLogin(accessToken)
+        if (response.ok) {
+          const data = await response.json()
+          const token = data.access_token
+          if (token) {
+            onLogin(token)
+            setError("")
+            return
+          }
+          setError("Invalid master token. Please check your master key.")
         } else {
           setError("Login succeeded but no token returned.")
         }
