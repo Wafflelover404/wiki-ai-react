@@ -36,12 +36,22 @@ export function useWebSocketMessaging(token: string) {
       if (response.ok) {
         return providedToken // Token is valid
       } else if (response.status === 403) {
-        // Token is invalid, try to refresh with hardcoded credentials
+        // Dev-only fallback: NEXT_PUBLIC_CMS_ADMIN_USERNAME/PASSWORD must be set explicitly
+        // (e.g. in .env.local) for this to attempt a silent re-login - matches the pattern in
+        // components/cms-content-manager.tsx and cms-organizations.tsx. There is no hardcoded
+        // credential here; in any environment where those vars aren't set (production), this
+        // just returns null and the caller falls back to a normal re-authentication prompt.
+        const cmsUsername = process.env.NEXT_PUBLIC_CMS_ADMIN_USERNAME
+        const cmsPassword = process.env.NEXT_PUBLIC_CMS_ADMIN_PASSWORD
+        if (!cmsUsername || !cmsPassword) {
+          console.warn("WebSocket token refresh skipped: NEXT_PUBLIC_CMS_ADMIN_USERNAME/PASSWORD not configured")
+          return null
+        }
         console.log("WebSocket token expired, attempting to refresh...")
         const refreshResponse = await fetch(getApiUrl("/v1/auth/cms-login"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: "admin", password: process.env.NEXT_PUBLIC_CMS_PASSWORD })
+          body: JSON.stringify({ username: cmsUsername, password: cmsPassword })
         })
 
         if (refreshResponse.ok) {

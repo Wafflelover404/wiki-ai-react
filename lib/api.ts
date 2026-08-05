@@ -531,9 +531,11 @@ export const filesApi = {
   // see the `contentChanged` check in knowledge-service's internal/documents/service.go Update().
   // Re-PUTting identical content is therefore a silent no-op, not a reindex.
   //
-  // Instead we delete the document and re-ingest it via POST /v1/documents, which always
-  // (re)builds chunks from scratch. NOTE: this mints a new document_id - callers must treat the
-  // returned id as the document's new identity and refresh any cached document list afterward.
+  // Instead we re-ingest the document via POST /v1/documents (which always (re)builds chunks
+  // from scratch) and only delete the old one once that succeeds - ingest-then-delete, not
+  // delete-then-ingest, so a failed re-ingest never destroys the only copy of the content.
+  // NOTE: this mints a new document_id - callers must treat the returned id as the document's
+  // new identity and refresh any cached document list afterward.
   reindex: async (token: string, documentId: string) => {
     const tenantId = await resolveTenantId(token)
     if (!tenantId) {
@@ -549,6 +551,33 @@ export const filesApi = {
       return { status: "error" as const, message: getResult.message || "Could not load document to reindex" }
     }
     const doc = getResult.response.document
+    // Same field-name fallback as getContent above, applied to every field
+    // we're about to re-ingest - not just content. Reading an undefined
+    // field here silently uploads an empty/garbage replacement while
+    // reporting success, and since the old document is deleted afterward,
+    // that would permanently wipe the content instead of reindexing it.
+    const content = doc.content || doc.raw_content || ""
+    const title = doc.title || doc.Title || doc.filename || doc.original_filename || doc.name || documentId
+    const docType = doc.doc_type || doc.DocType || "text/plain"
+    if (!content) {
+      return { status: "error" as const, message: "Document has no content to reindex" }
+    }
+
+    const ingestResult = await apiRequest<{ document_id: string }>({
+      url: API_CONFIG.ENDPOINTS.FILES_UPLOAD,
+      method: "POST",
+      token,
+      data: {
+        tenant_id: tenantId,
+        title,
+        content,
+        doc_type: docType,
+        metadata: doc.metadata || {},
+      },
+    })
+    if (ingestResult.status === "error") {
+      return ingestResult
+    }
 
     const deleteResult = await apiRequest({
       url: `${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentId)}`,
@@ -557,21 +586,18 @@ export const filesApi = {
       params: { tenant_id: tenantId },
     })
     if (deleteResult.status === "error") {
-      return deleteResult
+      // The new copy already exists at this point - surface the delete
+      // failure but don't undo the successful re-ingest, since undoing it
+      // would just reintroduce the exact stale-index problem reindex exists
+      // to fix. The caller ends up with both the old and new document until
+      // the leftover delete is retried.
+      return {
+        status: "error" as const,
+        message: `Reindexed successfully but failed to remove the old document: ${deleteResult.message || "unknown error"}`,
+      }
     }
 
-    return apiRequest<{ document_id: string }>({
-      url: API_CONFIG.ENDPOINTS.FILES_UPLOAD,
-      method: "POST",
-      token,
-      data: {
-        tenant_id: tenantId,
-        title: doc.title,
-        content: doc.content,
-        doc_type: doc.doc_type,
-        metadata: doc.metadata || {},
-      },
-    })
+    return ingestResult
   },
 }
 
