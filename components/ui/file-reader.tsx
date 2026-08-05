@@ -25,6 +25,7 @@ import {
   X,
   FileSpreadsheet,
 } from "lucide-react"
+import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism"
@@ -889,98 +890,86 @@ export const UnifiedFileReader: React.FC<FileReaderProps> = ({
     return <File className="h-4 w-4" />
   }
 
+  // Builds a Blob from either text or base64-encoded content, auto-detecting which.
+  const contentToBlob = (rawContent: string, mimeType: string): Blob => {
+    let processedContent = rawContent
+    if (processedContent.startsWith('data:')) {
+      processedContent = processedContent.split(',')[1] || processedContent
+    }
+    try {
+      const isBase64 = /^[A-Za-z0-9+/]*={0,2}$/.test(processedContent)
+      if (isBase64 && processedContent.length > 0 && processedContent.length % 4 === 0) {
+        const binaryString = atob(processedContent)
+        const bytes = new Uint8Array(binaryString.length)
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i)
+        }
+        return new Blob([bytes], { type: mimeType })
+      }
+      return new Blob([processedContent], { type: mimeType })
+    } catch {
+      return new Blob([processedContent], { type: mimeType })
+    }
+  }
+
   const handleDownload = async () => {
     if (!file) {
       console.error('Cannot download: No file provided')
       return
     }
-      try {
-        let blob: Blob
-        
-        if (content) {
-          // Use provided content to create blob
-          const mimeType = file.content_type || getContentType(file.filename) || 'application/octet-stream'
-          
-          // Handle base64 content
-          let processedContent = content
-          if (content.startsWith('data:')) {
-            // Remove data URL prefix if present
-            const base64Content = content.split(',')[1] || content
-            processedContent = base64Content
-          }
-          
-          // Check if content is base64 encoded
-          try {
-            const isBase64 = /^[A-Za-z0-9+/]*={0,2}$/.test(processedContent)
-            if (isBase64 && processedContent.length % 4 === 0) {
-              // Decode base64 to binary
-              const binaryString = atob(processedContent)
-              const bytes = new Uint8Array(binaryString.length)
-              for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i)
-              }
-              blob = new Blob([bytes], { type: mimeType })
-            } else {
-              // Use content as text
-              blob = new Blob([processedContent], { type: mimeType })
-            }
-          } catch {
-            // If base64 decoding fails, treat as text
-            blob = new Blob([processedContent], { type: mimeType })
-          }
-        } else if (token) {
-          // Import api helpers dynamically to avoid circular dependencies
-          const { filesApi } = await import("@/lib/api")
-          // Fallback to API endpoint if no content provided
-          const response = await fetch(`${API_CONFIG.BASE_URL}/v1/files/${encodeURIComponent(file.filename)}/content`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'ngrok-skip-browser-warning': 'true'
-            }
-          })
-          
-          if (!response.ok) {
-            throw new Error(`Download failed: ${response.statusText}`)
-          }
-        } else {
+    try {
+      const mimeType = file.content_type || getContentType(file.filename) || 'application/octet-stream'
+
+      let resolvedContent: string
+      if (content) {
+        resolvedContent = content
+      } else {
+        if (!token) {
           throw new Error('No content or token available for download')
         }
-        
-        const url = window.URL.createObjectURL(blob)
-        
-        // Create download link
-        const link = document.createElement('a')
-        link.href = url
-        link.download = file.filename
-        document.body.appendChild(link)
-        link.click()
-        
-        // Cleanup
-        document.body.removeChild(link)
-        window.URL.revokeObjectURL(url)
-      } catch (err) {
-        console.error('Download failed:', err)
-        // Provide user-friendly error messages
-        if (err instanceof Error) {
-          if (err.message.includes('404') || err.message.includes('Not Found')) {
-            console.error('File not found on server')
-          } else if (err.message.includes('403') || err.message.includes('Unauthorized')) {
-            console.error('Access denied - insufficient permissions')
-          } else {
-            console.error(`Download error: ${err.message}`)
-          }
+        // knowledge-service addresses documents by id only - there is no filename-keyed
+        // /content route. filesApi.getContent() resolves an id from a filename via a
+        // list-and-match lookup internally when given one, then fetches
+        // GET /v1/documents/{id}.
+        const { filesApi } = await import("@/lib/api")
+        const contentResult = await filesApi.getContent(token, file.id ? String(file.id) : file.filename)
+        if (contentResult.status !== 'success' || !contentResult.response) {
+          throw new Error(contentResult.message || 'Failed to fetch file content')
         }
-        
-        // Fallback to opening in new tab if we have a token (this will likely also fail, but provides user feedback)
-        if (token) {
-          try {
-            const { API_CONFIG } = await import("@/lib/config")
-            window.open(`${API_CONFIG.BASE_URL}/v1/files/${encodeURIComponent(file.filename)}/content`, '_blank')
-          } catch (fallbackErr) {
-            console.error('Fallback open also failed:', fallbackErr)
-          }
+        resolvedContent = contentResult.response.content
+      }
+
+      const blob = contentToBlob(resolvedContent, mimeType)
+      const url = window.URL.createObjectURL(blob)
+
+      // Create download link
+      const link = document.createElement('a')
+      link.href = url
+      link.download = file.filename
+      document.body.appendChild(link)
+      link.click()
+
+      // Cleanup
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Download failed:', err)
+      // Provide user-friendly error messages
+      let message = 'Download failed'
+      if (err instanceof Error) {
+        if (err.message.includes('404') || err.message.includes('Not Found')) {
+          message = 'File not found on server'
+        } else if (err.message.includes('403') || err.message.includes('Unauthorized')) {
+          message = "Access denied - insufficient permissions"
+        } else {
+          message = `Download error: ${err.message}`
         }
       }
+      // There is no working "open the raw file in a new tab" fallback: knowledge-service has no
+      // public unauthenticated content URL, and window.open() can't attach an Authorization
+      // header anyway. Surface the failure instead of silently opening a URL that would 401.
+      toast.error(message)
+    }
   }
 
   return (
