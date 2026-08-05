@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useApiData } from './useApiData'
 import { ApiError } from '@/lib/api-client'
+import { resolveTenantId } from '@/lib/api'
 
 interface AdminUser {
   id: string
@@ -49,6 +50,25 @@ export function useAdminData(
 ) {
   const [filters, setFilters] = useState<Record<string, any>>({})
 
+  // knowledge-service's document endpoints (GET /v1/documents) require tenant_id as a query
+  // parameter - see knowledge-service/internal/api/server.go requireTenantID(). Resolve it once
+  // per token before firing the request; 'files' is gated on this being available (see `skip`
+  // below) since a request without tenant_id will just 400.
+  const [tenantId, setTenantId] = useState<string | null>(null)
+  useEffect(() => {
+    if (resource !== 'files' || !options.token) {
+      setTenantId(null)
+      return
+    }
+    let cancelled = false
+    resolveTenantId(options.token).then((id) => {
+      if (!cancelled) setTenantId(id)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [resource, options.token])
+
   const getEndpoint = useCallback(() => {
     if (!resource) return null
 
@@ -56,7 +76,7 @@ export function useAdminData(
       case 'users':
         return '/v1/accounts'
       case 'files':
-        return '/v1/files'
+        return '/v1/documents' // knowledge-service documents; requires tenant_id param
       case 'reports':
         return '/v1/reports'
       default:
@@ -65,11 +85,12 @@ export function useAdminData(
   }, [resource])
 
   const endpoint = getEndpoint()
-  const skip = !endpoint || options.skip
+  const skip = !endpoint || options.skip || (resource === 'files' && !tenantId)
 
   // Use generic API hook with proper typing
   const apiResult = useApiData<any>(endpoint, {
     token: options.token,
+    params: resource === 'files' && tenantId ? { tenant_id: tenantId } : undefined,
     cache: true,
     cacheTTL: 1 * 60 * 1000, // 1 minute for admin data (more frequent)
     retryable: true,
@@ -102,10 +123,11 @@ export function useAdminData(
       responseData = apiResult.data.response || apiResult.data
     }
 
-    // Handle various API response formats
+    // Handle various API response formats. knowledge-service's document list
+    // (dtm.DocumentListResponse) uses `documents`, not `files` - map both.
     const data = {
       users: responseData?.accounts || responseData?.users || responseData?.items || [],
-      files: responseData?.files || [],
+      files: responseData?.files || responseData?.documents || [],
       reports: responseData?.reports || [],
     }
 
@@ -118,7 +140,17 @@ export function useAdminData(
       case 'users':
         return (data.users || []) as AdminUser[]
       case 'files':
-        return (data.files || []) as AdminFile[]
+        // knowledge-service's DocumentResult (dtm.DocumentResult) has no filename/size/
+        // uploaded_at fields - map its shape onto the AdminFile shape this hook has always
+        // exposed to callers (title -> filename, created_at -> uploaded_at, document_id -> id).
+        return (data.files || []).map((doc: any): AdminFile => ({
+          id: doc.document_id || doc.id,
+          filename: doc.title || doc.filename || doc.original_filename || 'Untitled',
+          original_filename: doc.metadata?.original_filename,
+          size: doc.file_size ?? (typeof doc.content === 'string' ? doc.content.length : undefined),
+          uploaded_at: doc.created_at || doc.upload_timestamp,
+          organization_id: doc.tenant_id || doc.organization_id,
+        }))
       case 'reports':
         return (data.reports || []) as AdminReport[]
       default:
