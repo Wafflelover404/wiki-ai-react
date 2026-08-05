@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useApiData } from './useApiData'
 import { ApiError } from '@/lib/api-client'
+import { resolveTenantId } from '@/lib/api'
 
 interface UserFile {
   filename: string
@@ -36,6 +37,25 @@ export function useUserData(
 ) {
   const [filters, setFilters] = useState<Record<string, any>>({})
 
+  // knowledge-service's document endpoints (GET /v1/documents) require tenant_id as a query
+  // parameter - see knowledge-service/internal/api/server.go requireTenantID(). Resolve it once
+  // per token before firing the request; 'files' is gated on this being available (see `skip`
+  // below) since a request without tenant_id will just 400.
+  const [tenantId, setTenantId] = useState<string | null>(null)
+  useEffect(() => {
+    if (resource !== 'files' || !options.token) {
+      setTenantId(null)
+      return
+    }
+    let cancelled = false
+    resolveTenantId(options.token).then((id) => {
+      if (!cancelled) setTenantId(id)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [resource, options.token])
+
   const getEndpoint = useCallback(() => {
     if (!resource) return null
 
@@ -43,22 +63,23 @@ export function useUserData(
       case 'profile':
         return '/v1/me'
       case 'files':
-        return '/v1/files' // User's files
+        return '/v1/documents' // User's documents (knowledge-service); requires tenant_id param
       default:
         return null
     }
   }, [resource])
 
   const endpoint = getEndpoint()
-  const skip = !endpoint || options.skip
+  const skip = !endpoint || options.skip || (resource === 'files' && !tenantId)
 
   // Use generic API hook with proper typing
   const apiResult = useApiData<{
     user?: UserProfile
-    documents?: UserFile[]
+    documents?: Array<Record<string, any>>
     files?: UserFile[]
   }>(endpoint, {
     token: options.token,
+    params: resource === 'files' && tenantId ? { tenant_id: tenantId } : undefined,
     cache: true,
     cacheTTL: 5 * 60 * 1000, // 5 minutes default
     retryable: true,
@@ -73,9 +94,20 @@ export function useUserData(
     switch (resource) {
       case 'profile':
         return apiResult.data.user || null
-      case 'files':
-        // Handle both 'documents' and 'files' response formats
-        return (apiResult.data.documents || apiResult.data.files || []) as UserFile[]
+      case 'files': {
+        // knowledge-service's DocumentResult (dtm.DocumentResult) has no filename/size/
+        // uploaded_at fields - map its shape onto the UserFile shape this hook has always
+        // exposed to callers (title -> filename, created_at -> uploaded_at, document_id -> id).
+        const documents = apiResult.data.documents || apiResult.data.files || []
+        return documents.map((doc: any): UserFile => ({
+          filename: doc.title || doc.filename || doc.original_filename || 'Untitled',
+          original_filename: doc.metadata?.original_filename,
+          size: doc.file_size ?? (typeof doc.content === 'string' ? doc.content.length : undefined),
+          uploaded_at: doc.created_at || doc.upload_timestamp,
+          id: doc.document_id || doc.id,
+          organization_id: doc.tenant_id || doc.organization_id,
+        }))
+      }
       default:
         return resource === 'profile' ? null : []
     }
