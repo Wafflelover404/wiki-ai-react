@@ -20,6 +20,9 @@ export interface RequestConfig {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE'
   data?: any
   token?: string
+  // Query string parameters, e.g. { tenant_id } for knowledge-service's /v1/documents endpoints,
+  // which require tenant_id as a query param (never in the body).
+  params?: Record<string, string>
   cache?: boolean
   cacheTTL?: number
   retryable?: boolean
@@ -96,7 +99,7 @@ export class ApiClient {
    * Main request method with retry, cache, and error handling
    */
   async request<T>(config: RequestConfig): Promise<ApiResponse<T>> {
-    const cacheKey = `${config.method}:${config.url}`
+    const cacheKey = `${config.method}:${config.url}${config.params ? `?${new URLSearchParams(config.params).toString()}` : ''}`
 
     // Return cached response if valid and cacheable
     if (config.cache && this.cache.has(cacheKey)) {
@@ -214,7 +217,11 @@ export class ApiClient {
       headers['Authorization'] = `Bearer ${config.token}`
     }
 
-    const url = `${this.baseUrl}${config.url}`
+    let url = `${this.baseUrl}${config.url}`
+    if (config.params && Object.keys(config.params).length > 0) {
+      const query = new URLSearchParams(config.params).toString()
+      url += (url.includes('?') ? '&' : '?') + query
+    }
     const timeout = config.timeout || 30000
 
     // Setup timeout
