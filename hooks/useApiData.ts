@@ -3,6 +3,9 @@ import { apiClient, ApiError, ApiResponse } from '@/lib/api-client'
 
 interface UseApiDataOptions {
   token?: string
+  // Query string parameters, e.g. { tenant_id } required by knowledge-service's /v1/documents
+  // endpoints.
+  params?: Record<string, string>
   cache?: boolean
   cacheTTL?: number
   retryable?: boolean
@@ -36,6 +39,7 @@ export function useApiData<T = unknown>(
 
   const {
     token,
+    params,
     cache = true,
     cacheTTL = 5 * 60 * 1000, // 5 minutes default
     retryable = true,
@@ -43,6 +47,10 @@ export function useApiData<T = unknown>(
     onError,
     onSuccess,
   } = options
+
+  // Stable dependency for the params object (callers frequently pass a fresh object literal each
+  // render, which would otherwise retrigger fetchData/useEffect on every render).
+  const paramsKey = params ? JSON.stringify(params) : ''
 
   const fetchData = useCallback(async () => {
     // Skip if no URL or skip is true
@@ -65,6 +73,7 @@ export function useApiData<T = unknown>(
         url,
         method: 'GET',
         token,
+        params,
         cache,
         cacheTTL,
         retryable,
@@ -98,7 +107,7 @@ export function useApiData<T = unknown>(
     } finally {
       setLoading(false)
     }
-  }, [url, token, cache, cacheTTL, retryable, skip, onError, onSuccess])
+  }, [url, token, paramsKey, cache, cacheTTL, retryable, skip, onError, onSuccess])
 
   // Auto-fetch on mount and when URL changes
   useEffect(() => {

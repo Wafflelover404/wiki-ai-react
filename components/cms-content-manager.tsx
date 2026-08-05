@@ -88,14 +88,25 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
     currentTokenRef.current = token
   }, [token])
 
-  // Token refresh helper
+  // Token refresh helper.
+  // Dev-only fallback: NEXT_PUBLIC_CMS_ADMIN_USERNAME/PASSWORD must be set explicitly (e.g. in
+  // .env.local for local development) for this to attempt a silent re-login. There is no
+  // hardcoded credential here - in any environment where those vars aren't set (production),
+  // this just returns null and the caller falls back to a normal 401, which should surface a
+  // re-authentication prompt rather than silently using a baked-in password.
   const refreshToken = async (): Promise<string | null> => {
+    const cmsUsername = process.env.NEXT_PUBLIC_CMS_ADMIN_USERNAME
+    const cmsPassword = process.env.NEXT_PUBLIC_CMS_ADMIN_PASSWORD
+    if (!cmsUsername || !cmsPassword) {
+      console.warn("CMS token refresh skipped: NEXT_PUBLIC_CMS_ADMIN_USERNAME/PASSWORD not configured")
+      return null
+    }
     try {
-      console.log("Attempting to refresh token with admin credentials...")
-      const cmsPassword = process.env.NEXT_PUBLIC_CMS_PASSWORD
+      console.log("Attempting to refresh token with configured CMS admin credentials...")
       const response = await fetch(getApiUrl("/v1/auth/cms-login"), {
         method: "POST",
-        data: { username: "admin", password: "pass123" },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: cmsUsername, password: cmsPassword }),
       })
 
       if (response.ok) {
