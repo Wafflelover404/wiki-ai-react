@@ -106,7 +106,10 @@ export async function apiRequest<T = unknown>({
               const newToken = (tokenPair?.access_token as string) || refreshData.token || refreshData.access_token
               const newRefreshToken = (tokenPair?.refresh_token as string) || refreshData.refresh_token
               if (newToken) {
-                localStorage.setItem("token", newToken)
+                // NOTE: must match the key lib/auth-context.tsx's AuthProvider reads ("auth_token").
+                // This used to write "token" here, which the live session context never read,
+                // silently desyncing a refreshed token from the session state.
+                localStorage.setItem("auth_token", newToken)
                 if (newRefreshToken) localStorage.setItem("refresh_token", newRefreshToken)
                 headers["Authorization"] = `Bearer ${newToken}`
                 const retryRes = await fetch(fullUrl, {
@@ -180,7 +183,9 @@ export const authApi = {
       const refreshToken = (tokenPair?.refresh_token as string) || (data.refresh_token as string) || ""
 
       if (typeof window !== "undefined") {
-        localStorage.setItem("token", accessToken)
+        // NOTE: must match the key lib/auth-context.tsx's AuthProvider reads ("auth_token") —
+        // see comment in the 401-retry logic above for why this key must be consistent everywhere.
+        localStorage.setItem("auth_token", accessToken)
         if (refreshToken) localStorage.setItem("refresh_token", refreshToken)
       }
 
@@ -297,16 +302,14 @@ export const filesApi = {
     })
   },
 
-  // GET /files/content or /v1/documents/{id} - returns content (text or base64 for binary files)
+  // knowledge-service has no filename-keyed /content sub-resource: content is returned as a field
+  // on GET /v1/documents/{id} (id-keyed only). If we're handed something that isn't already a raw
+  // document id (e.g. a filename/title from an older UI flow), resolve the id by listing documents
+  // and matching client-side, then fetch GET /v1/documents/{id}.
   getContent: async (token: string, documentIdOrFilename: string) => {
     const tenantId = await resolveTenantId(token)
     if (!tenantId) {
       return { status: "error" as const, message: "Tenant ID is required for file content requests" }
-    }
-
-    const headers: Record<string, string> = {
-      "ngrok-skip-browser-warning": "true",
-      Authorization: `Bearer ${token}`,
     }
 
     const resolveDocumentId = async (value: string): Promise<string | null> => {
@@ -333,84 +336,60 @@ export const filesApi = {
     }
 
     const documentId = await resolveDocumentId(documentIdOrFilename)
-    if (documentId) {
-      const response = await apiRequest<{ document: any }>({
-        url: `${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentId)}`,
-        token,
-        params: { tenant_id: tenantId },
-      })
-
-      if (response.status === "success" && response.response?.document) {
-        const document = response.response.document
-        return {
-          status: "success" as const,
-          response: {
-            content: document.content || document.raw_content || "",
-            isBinary: false,
-            docType: document.doc_type || document.DocType || "application/octet-stream",
-          },
-        }
-      }
+    if (!documentId) {
+      return { status: "error" as const, message: "Could not resolve document ID for content fetch" }
     }
 
-    // Fallback to legacy content route for filename-based file viewers
-    const response = await fetch(getApiUrl(`${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentIdOrFilename)}/content`), {
-      method: "GET",
-      headers,
+    const response = await apiRequest<{ document: any }>({
+      url: `${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentId)}`,
+      token,
+      params: { tenant_id: tenantId },
     })
 
-    if (!response.ok) {
-      return { status: "error" as const, message: `Failed to fetch file content: ${response.status}` }
+    if (response.status !== "success" || !response.response?.document) {
+      return { status: "error" as const, message: response.message || `Failed to fetch file content` }
     }
 
-    const contentType = response.headers.get('content-type')
-    const isJsonResponse = contentType && contentType.includes('application/json')
-    
-    if (isJsonResponse) {
-      const data = await response.json()
-      return {
-        status: "success" as const,
-        response: { 
-          content: data.content, 
-          isBinary: data.isBinary || false 
-        }
-      }
-    }
-
-    const isBinary = contentType && (
-      contentType.includes('application/pdf') ||
-      contentType.includes('application/msword') ||
-      contentType.includes('application/vnd.openxmlformats-officedocument') ||
-      contentType.includes('application/octet-stream')
-    )
-
-    if (isBinary) {
-      const blob = await response.blob()
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result)
-        reader.onerror = reject
-        reader.readAsDataURL(blob)
-      })
-      const base64Content = (base64 as string).split(',')[1]
-      return {
-        status: "success" as const,
-        response: { content: base64Content, isBinary: true }
-      }
-    }
-
-    const content = await response.text()
+    const document = response.response.document
+    // knowledge-service stores document content as plain text only (dtm.DocumentResult.Content is
+    // a string field) - there is no binary/base64 storage path, so isBinary is always false here.
+    // Callers (file-reader.tsx, admin/files, files page) still branch on isBinary for backward
+    // compatibility but that branch is now effectively dead since nothing sets it true anymore.
     return {
       status: "success" as const,
-      response: { content, isBinary: false }
+      response: {
+        content: document.content || document.raw_content || "",
+        isBinary: false,
+        docType: document.doc_type || document.DocType || "application/octet-stream",
+      },
     }
   },
 
-  // POST /upload - file upload via document ingest
+  // POST /v1/documents - file upload via document ingest.
+  // knowledge-service's ingest endpoint only accepts JSON with a plain-text `content` field
+  // (dtm.IngestRequest.Content is a string) - there is no multipart/binary upload path. We read
+  // each file's text client-side and reject file types that can't be meaningfully read as text
+  // (e.g. PDF/DOCX/images) rather than silently uploading mangled FileReader.readAsText() output.
   upload: async (token: string, files: File[]) => {
     const tenantId = await resolveTenantId(token)
     if (!tenantId) {
       return { status: "error" as const, message: "Tenant ID is required for file uploads" }
+    }
+
+    const BINARY_EXTENSIONS = new Set([
+      "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+      "png", "jpg", "jpeg", "gif", "webp", "bmp", "ico",
+      "zip", "rar", "7z", "tar", "gz",
+      "mp3", "mp4", "wav", "avi", "mov", "webm",
+      "exe", "bin", "dll",
+    ])
+    const TEXTY_MIME_TYPES = new Set(["application/json", "application/xml", "application/x-yaml", "application/x-subrip", ""])
+    const isLikelyBinary = (file: File): boolean => {
+      const ext = file.name.split(".").pop()?.toLowerCase() || ""
+      if (BINARY_EXTENSIONS.has(ext)) return true
+      const type = file.type || ""
+      if (type && !type.startsWith("text/") && !TEXTY_MIME_TYPES.has(type)) return true
+      return false
     }
 
     const readFileText = (file: File) =>
@@ -422,6 +401,13 @@ export const filesApi = {
       })
 
     for (const file of files) {
+      if (isLikelyBinary(file)) {
+        return {
+          status: "error" as const,
+          message: `"${file.name}" looks like a binary file. Only plain-text documents (txt, md, csv, json, html, code, srt, etc.) can be uploaded - the knowledge base stores document content as text.`,
+        }
+      }
+
       const content = await readFileText(file)
       const result = await apiRequest({
         url: API_CONFIG.ENDPOINTS.FILES_UPLOAD,
@@ -538,14 +524,55 @@ export const filesApi = {
     })
   },
 
-  // POST /files/index
-  index: (token: string) =>
-    apiRequest({
-      url: "/v1/files/index",
+  // Reindex a document. knowledge-service has no dedicated reindex endpoint.
+  //
+  // We can't implement this as "PUT the same content back": internal/documents.Service.Update only
+  // rebuilds chunks when the new content differs (byte-for-byte) from what's already stored -
+  // see the `contentChanged` check in knowledge-service's internal/documents/service.go Update().
+  // Re-PUTting identical content is therefore a silent no-op, not a reindex.
+  //
+  // Instead we delete the document and re-ingest it via POST /v1/documents, which always
+  // (re)builds chunks from scratch. NOTE: this mints a new document_id - callers must treat the
+  // returned id as the document's new identity and refresh any cached document list afterward.
+  reindex: async (token: string, documentId: string) => {
+    const tenantId = await resolveTenantId(token)
+    if (!tenantId) {
+      return { status: "error" as const, message: "Tenant ID is required for reindex requests" }
+    }
+
+    const getResult = await apiRequest<{ document: any }>({
+      url: `${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentId)}`,
+      token,
+      params: { tenant_id: tenantId },
+    })
+    if (getResult.status !== "success" || !getResult.response?.document) {
+      return { status: "error" as const, message: getResult.message || "Could not load document to reindex" }
+    }
+    const doc = getResult.response.document
+
+    const deleteResult = await apiRequest({
+      url: `${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentId)}`,
+      method: "DELETE",
+      token,
+      params: { tenant_id: tenantId },
+    })
+    if (deleteResult.status === "error") {
+      return deleteResult
+    }
+
+    return apiRequest<{ document_id: string }>({
+      url: API_CONFIG.ENDPOINTS.FILES_UPLOAD,
       method: "POST",
       token,
-      data: {},
-    }),
+      data: {
+        tenant_id: tenantId,
+        title: doc.title,
+        content: doc.content,
+        doc_type: doc.doc_type,
+        metadata: doc.metadata || {},
+      },
+    })
+  },
 }
 
 export async function resolveTenantId(token: string): Promise<string | null> {

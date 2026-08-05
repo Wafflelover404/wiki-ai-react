@@ -61,6 +61,7 @@ import {
   X,
   Maximize2,
   Minimize2,
+  RefreshCw,
 } from "lucide-react"
 import { toast } from "sonner"
 import { useTranslation } from "@/src/i18n"
@@ -107,9 +108,7 @@ export default function AdminFilesPage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [editingFile, setEditingFile] = useState<FileItem | null>(null)
-  const [editMetadata, setEditMetadata] = useState("")
+  const [reindexingId, setReindexingId] = useState<string | number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Multi-select state
@@ -158,33 +157,24 @@ export default function AdminFilesPage() {
     if (!uploadedFiles.length || !token) return
 
     setUploading(true)
-    const uploadPromises = uploadedFiles.map(async (file) => {
-      const formData = new FormData()
-      formData.append("file", file)
-      
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/v1/files`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-          body: formData,
-        })
-
-        if (response.ok) {
-          toast.success(`Uploaded ${file.name}`)
-        } else {
-          toast.error(`Failed to upload ${file.name}`)
-        }
-      } catch (error) {
-        toast.error(`Failed to upload ${file.name}`)
+    try {
+      // knowledge-service's ingest endpoint (POST /v1/documents) takes JSON with a plain-text
+      // `content` field - there is no multipart/binary upload path. filesApi.upload() reads each
+      // file's text client-side (FileReader.readAsText) and posts it as JSON; it rejects files
+      // that don't look like text rather than silently uploading garbled binary content.
+      const result = await filesApi.upload(token, uploadedFiles)
+      if (result.status === "success") {
+        toast.success(`Uploaded ${uploadedFiles.length} file(s)`)
+      } else {
+        toast.error(result.message || "Failed to upload files")
       }
     } catch (error) {
       toast.error("Failed to upload files")
+    } finally {
+      setUploadedFiles([])
+      setUploading(false)
+      fetchFiles()
     }
-    setUploadedFiles([])
-    setUploading(false)
-    fetchFiles()
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -229,6 +219,30 @@ export default function AdminFilesPage() {
       toast.error(t('files.failedToDeleteFile'))
     }
     setFileToDelete(null)
+  }
+
+  // Reindex rebuilds a document's chunks/embeddings. knowledge-service has no dedicated reindex
+  // endpoint, so filesApi.reindex() deletes and re-ingests the document (see comment there for why
+  // a simple re-PUT of identical content wouldn't actually trigger re-chunking). That mints a new
+  // document_id, so we just refetch the list afterward rather than trying to patch state in place.
+  const handleReindex = async (file: FileItem) => {
+    if (!token || !file.id) return
+
+    setReindexingId(file.id)
+    try {
+      const result = await filesApi.reindex(token, String(file.id))
+      if (result.status === "success") {
+        toast.success(`Reindexed ${file.filename}`)
+        fetchFiles()
+      } else {
+        toast.error(result.message || `Failed to reindex ${file.filename}`)
+      }
+    } catch (error) {
+      console.error("Failed to reindex file:", error)
+      toast.error(`Failed to reindex ${file.filename}`)
+    } finally {
+      setReindexingId(null)
+    }
   }
 
   // Multi-select functions
@@ -277,34 +291,13 @@ export default function AdminFilesPage() {
     }
   }
 
-  const handleEditMetadata = async () => {
-    if (!editingFile) return
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.wikiai.by'}/v1/files/${editingFile.filename}/metadata`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          metadata: editMetadata ? JSON.parse(editMetadata) : {}
-        }),
-      })
-
-      if (response.ok) {
-        toast.success(t('files.fileMetadataUpdated'))
-        fetchFiles()
-        setEditDialogOpen(false)
-        setEditingFile(null)
-        setEditMetadata("")
-      } else {
-        toast.error("Failed to update metadata")
-      }
-    } catch (error) {
-      toast.error("Failed to update metadata")
-    }
-  }
+  // NOTE: knowledge-service has no filename-keyed metadata endpoint (documents are addressed by
+  // id only, and there's no standalone "edit metadata" route - metadata is just one field of
+  // PUT /v1/documents/{id}). There was no real per-file metadata schema to preserve here, so the
+  // "Metadata" menu item below is left as an informational no-op instead of wiring it to a
+  // nonexistent endpoint. If a real metadata-editing UI is wanted later, it should resolve the
+  // document id (see filesApi.edit's resolveDocumentId pattern) and PUT { metadata: {...} } to
+  // /v1/documents/{id}.
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes"
@@ -689,6 +682,17 @@ export default function AdminFilesPage() {
                           }}>
                             <Edit className="h-4 w-4 mr-2" />
                             {t('fileManagement.metadata')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={reindexingId === file.id}
+                            onClick={() => handleReindex(file)}
+                          >
+                            {reindexingId === file.id ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                            )}
+                            Reindex
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
