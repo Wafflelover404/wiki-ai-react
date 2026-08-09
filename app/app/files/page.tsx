@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useTranslation } from "@/src/i18n"
 import { filesApi, apiRequest } from "@/lib/api"
 import { getApiUrl } from "@/lib/config"
-import { useUploadStatusPoll } from "@/hooks/use-upload-status-poll"
+import { useUploadStatusPoll, type UploadStatus } from "@/hooks/use-upload-status-poll"
 import { UploadStatusBadge } from "@/components/upload-status-badge"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
@@ -97,6 +97,7 @@ interface FileItem {
   name: string
   type: string
   size?: number
+  status?: string
 }
 
 interface FileReaderItem {
@@ -622,7 +623,8 @@ export default function FilesPage() {
         const fileItems: FileItem[] = (result.response.documents || []).map((doc: any) => ({
           name: doc.filename || 'Unknown',
           type: getFileType(doc.filename || 'Unknown'),
-          size: doc.file_size || 0
+          size: doc.file_size || 0,
+          status: doc.status || doc.Status || "indexed",
         }))
         setFiles(fileItems)
         setFilteredFiles(fileItems)
@@ -925,7 +927,10 @@ export default function FilesPage() {
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           {getFileIcon(file.name)}
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm truncate">{file.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-sm truncate">{file.name}</p>
+                              <UploadStatusBadge status={(file.status as UploadStatus) || "indexed"} />
+                            </div>
                             <p className="text-xs text-muted-foreground">{file.type}</p>
                           </div>
                         </div>
@@ -1039,7 +1044,10 @@ export default function FilesPage() {
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             {getFileIcon(file.name)}
                             <div className="min-w-0 flex-1">
-                              <p className="font-medium text-sm truncate">{file.name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-sm truncate">{file.name}</p>
+                                <UploadStatusBadge status={(file.status as UploadStatus) || "indexed"} />
+                              </div>
                               <p className="text-xs text-muted-foreground">{file.type}</p>
                             </div>
                           </div>

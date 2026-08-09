@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { filesApi, apiRequest } from "@/lib/api"
 import { getApiUrl } from "@/lib/config"
-import { useUploadStatusPoll } from "@/hooks/use-upload-status-poll"
+import { useUploadStatusPoll, type UploadStatus } from "@/hooks/use-upload-status-poll"
 import { UploadStatusBadge } from "@/components/upload-status-badge"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
@@ -607,7 +607,10 @@ export default function AdminFilesPage() {
                           />
                           {getFileIcon(file.content_type)}
                           <div>
-                            <h4 className="font-medium">{file.filename}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium">{file.filename}</h4>
+                              <UploadStatusBadge status={(file.status as UploadStatus) || "indexed"} />
+                            </div>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <span>{formatFileSize(file.size)}</span>
                               <span>{formatDate(file.upload_date)}</span>
