@@ -400,15 +400,27 @@ export const filesApi = {
         reader.readAsText(file)
       })
 
+    // Each file is independent - a failure on one (binary rejection, network
+    // error, backend validation) must not abort the rest of the batch, or a
+    // single bad file silently drops every file after it. Collect per-file
+    // outcomes and only report the batch as an error if something failed.
+    const failures: string[] = []
+    let succeeded = 0
+
     for (const file of files) {
       if (isLikelyBinary(file)) {
-        return {
-          status: "error" as const,
-          message: `"${file.name}" looks like a binary file. Only plain-text documents (txt, md, csv, json, html, code, srt, etc.) can be uploaded - the knowledge base stores document content as text.`,
-        }
+        failures.push(`"${file.name}": looks like a binary file - only plain-text documents (txt, md, csv, json, html, code, srt, etc.) can be uploaded`)
+        continue
       }
 
-      const content = await readFileText(file)
+      let content: string
+      try {
+        content = await readFileText(file)
+      } catch (err) {
+        failures.push(`"${file.name}": ${err instanceof Error ? err.message : "failed to read file"}`)
+        continue
+      }
+
       const result = await apiRequest({
         url: API_CONFIG.ENDPOINTS.FILES_UPLOAD,
         method: "POST",
@@ -425,8 +437,15 @@ export const filesApi = {
       })
 
       if (result.status === "error") {
-        return result
+        failures.push(`"${file.name}": ${result.message}`)
+      } else {
+        succeeded++
       }
+    }
+
+    if (failures.length > 0) {
+      const prefix = succeeded > 0 ? `${succeeded} of ${files.length} file(s) uploaded. ` : ""
+      return { status: "error" as const, message: `${prefix}Failed: ${failures.join("; ")}` }
     }
 
     return { status: "success" as const }
