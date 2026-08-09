@@ -476,6 +476,8 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
         return <Clock className="w-4 h-4 text-yellow-600" />
       case "rejected":
         return <XCircle className="w-4 h-4 text-red-600" />
+      case "suspended":
+        return <Ban className="w-4 h-4 text-orange-600" />
       case "on review":
         return <Ban className="w-4 h-4 text-orange-600" />
       default:
@@ -491,6 +493,8 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
       case "rejected":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+      case "suspended":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
       case "on review":
         return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
       default:
@@ -674,7 +678,32 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                         </Button>
                       </div>
                     )}
-                    {(org.status === "pending" || org.status === "active") && (
+                    {org.status === "active" && (
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => changeOrganizationStatus(org.id, "suspended")}
+                          className="text-orange-600 hover:text-orange-700 border-orange-300 hover:border-orange-400"
+                        >
+                          <Ban className="w-4 h-4 mr-1" />
+                          Suspend
+                        </Button>
+                      </div>
+                    )}
+                    {org.status === "suspended" && (
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={() => changeOrganizationStatus(org.id, "active")}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Reactivate
+                        </Button>
+                      </div>
+                    )}
+                    {(org.status === "pending" || org.status === "active" || org.status === "suspended") && (
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
@@ -894,6 +923,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                 >
                   <option value="pending">Pending</option>
                   <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
                   <option value="rejected">Rejected</option>
                 </select>
               </div>
@@ -918,6 +948,7 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                 <ul className="space-y-1 text-xs">
                   <li><strong>Pending:</strong> Awaiting approval (login blocked)</li>
                   <li><strong>Active:</strong> Approved and functional (login allowed)</li>
+                  <li><strong>Suspended:</strong> Temporarily disabled by admin (login blocked), can be reactivated</li>
                   <li><strong>Rejected:</strong> Rejected by admin (login blocked)</li>
                 </ul>
               </div>
