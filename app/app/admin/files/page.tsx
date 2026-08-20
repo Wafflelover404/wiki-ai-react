@@ -6,6 +6,8 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { filesApi, apiRequest } from "@/lib/api"
 import { getApiUrl } from "@/lib/config"
+import { useUploadStatusPoll, type UploadStatus } from "@/hooks/use-upload-status-poll"
+import { UploadStatusBadge } from "@/components/upload-status-badge"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -92,6 +94,11 @@ interface FileItem {
   upload_date: string
   content_type: string
   metadata?: any
+  status: string
+  // UnifiedFileReader (components/ui/file-reader.tsx) still requires its own
+  // `indexed: boolean` field on whatever it's passed - kept here, derived
+  // from the real status, purely for structural compatibility with that
+  // shared component's prop type.
   indexed: boolean
 }
 
@@ -107,6 +114,7 @@ export default function AdminFilesPage() {
   const [fileToDelete, setFileToDelete] = useState<{filename: string, id?: number} | null>(null)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
+  const { items: uploadItems, addResults: addUploadResults, clearTerminal: clearTerminalUploads } = useUploadStatusPoll(token)
   const [isDragging, setIsDragging] = useState(false)
   const [reindexingId, setReindexingId] = useState<string | number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -132,7 +140,8 @@ export default function AdminFilesPage() {
             upload_date: doc.upload_timestamp || doc.created_at || doc.updated_at || new Date().toISOString(),
             content_type: doc.doc_type || doc.DocType || "application/octet-stream",
             metadata: doc.metadata || null,
-            indexed: true,
+            status: doc.status || doc.Status || "indexed",
+            indexed: (doc.status || doc.Status || "indexed") === "indexed",
           }
         })
         setFiles(mappedFiles)
@@ -147,6 +156,20 @@ export default function AdminFilesPage() {
   useEffect(() => {
     fetchFiles()
   }, [fetchFiles])
+
+  const uploadItemsRef = useRef(uploadItems)
+  useEffect(() => {
+    const prevTerminal = new Set(
+      uploadItemsRef.current.filter((i) => i.status !== "pending" && i.status !== "indexing").map((i) => i.id)
+    )
+    const newlyTerminal = uploadItems.some(
+      (i) => i.status !== "pending" && i.status !== "indexing" && !prevTerminal.has(i.id)
+    )
+    uploadItemsRef.current = uploadItems
+    if (newlyTerminal) {
+      fetchFiles()
+    }
+  }, [uploadItems, fetchFiles])
 
   // Filter files based on search query
   const filteredFiles = files.filter(file =>
@@ -163,8 +186,9 @@ export default function AdminFilesPage() {
       // file's text client-side (FileReader.readAsText) and posts it as JSON; it rejects files
       // that don't look like text rather than silently uploading garbled binary content.
       const result = await filesApi.upload(token, uploadedFiles)
+      addUploadResults(result.results)
       if (result.status === "success") {
-        toast.success(`Uploaded ${uploadedFiles.length} file(s)`)
+        toast.success(`${uploadedFiles.length} file(s) queued for indexing`)
       } else {
         toast.error(result.message || "Failed to upload files")
       }
@@ -320,7 +344,7 @@ export default function AdminFilesPage() {
   }
 
   const totalSize = files.reduce((acc, file) => acc + file.size, 0)
-  const indexedCount = files.filter(file => file.indexed).length
+  const indexedCount = files.filter(file => file.status === "indexed").length
 
   return (
     <>
@@ -442,6 +466,20 @@ export default function AdminFilesPage() {
                   )}
                 </div>
               </div>
+
+              {uploadItems.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {uploadItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-1.5 text-sm">
+                      <span className="text-muted-foreground max-w-[10rem] truncate">{item.fileName}</span>
+                      <UploadStatusBadge status={item.status} />
+                    </div>
+                  ))}
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={clearTerminalUploads}>
+                    Clear
+                  </Button>
+                </div>
+              )}
 
               {uploadedFiles.length > 0 && (
                 <div className="space-y-2">
@@ -569,7 +607,10 @@ export default function AdminFilesPage() {
                           />
                           {getFileIcon(file.content_type)}
                           <div>
-                            <h4 className="font-medium">{file.filename}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium">{file.filename}</h4>
+                              <UploadStatusBadge status={(file.status as UploadStatus) || "indexed"} />
+                            </div>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <span>{formatFileSize(file.size)}</span>
                               <span>{formatDate(file.upload_date)}</span>
