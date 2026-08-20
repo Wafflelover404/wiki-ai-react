@@ -14,6 +14,13 @@ COPY . .
 ARG NEXT_PUBLIC_WS_URL
 ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-ws://localhost:9001}
 
+# next.config.mjs's rewrites() is evaluated once during `next build` to
+# generate the routes manifest, not per-request at server start, so
+# BACKEND_URL must be present as a build ARG here even though it's also
+# read as a runtime env var below (kept for local `next dev` parity).
+ARG BACKEND_URL
+ENV BACKEND_URL=${BACKEND_URL:-http://localhost:9001}
+
 RUN npm run build
 
 FROM base AS runner
@@ -32,8 +39,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# BACKEND_URL is intentionally not set here — it's read by next.config.mjs's
-# rewrites() when this process starts, not baked in at build time, so it's
-# set via `docker run -e` / compose `environment:` instead of a Dockerfile
-# ARG/ENV. See next.config.mjs for its default.
 CMD ["node", "server.js"]
