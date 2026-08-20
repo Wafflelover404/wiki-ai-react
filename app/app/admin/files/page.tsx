@@ -112,6 +112,7 @@ export default function AdminFilesPage() {
   const [fileToDelete, setFileToDelete] = useState<{filename: string, id?: number} | null>(null)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
+  const { items: uploadItems, addResults: addUploadResults, clearTerminal: clearTerminalUploads } = useUploadStatusPoll(token)
   const [isDragging, setIsDragging] = useState(false)
   const [reindexingId, setReindexingId] = useState<string | number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -495,6 +496,20 @@ export default function AdminFilesPage() {
                   )}
                 </div>
               </div>
+
+              {uploadItems.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {uploadItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-1.5 text-sm">
+                      <span className="text-muted-foreground max-w-[10rem] truncate">{item.fileName}</span>
+                      <UploadStatusBadge status={item.status} />
+                    </div>
+                  ))}
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={clearTerminalUploads}>
+                    Clear
+                  </Button>
+                </div>
+              )}
 
               {uploadedFiles.length > 0 && (
                 <div className="space-y-2">

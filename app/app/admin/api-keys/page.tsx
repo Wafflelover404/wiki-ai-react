@@ -183,15 +183,6 @@ export default function ApiKeysPage() {
       // Fetch-on-condition pattern; fetchKeys sets keys/loading state from
       // the async response.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchKeys()
-    }
-  }, [isAdmin, fetchKeys])
-
-  useEffect(() => {
-    if (selectedKeyId) {
-      // Fetch-on-condition pattern; fetchKeyDetails sets key-detail state
-      // from the async response.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchKeyDetails(selectedKeyId)
     }
   }, [selectedKeyId, fetchKeyDetails])

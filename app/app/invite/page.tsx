@@ -29,7 +29,9 @@ interface InviteInfo {
   org_name: string
   email?: string
   role: string
+  allowed_files: string[]
   expires_at: string
+  created_by: string
   message?: string
 }
 
@@ -220,6 +222,11 @@ export default function InvitePage() {
                       </div>
                     </div>
                     
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Invited by</span>
+                      <span className="text-sm font-medium">{inviteInfo.created_by}</span>
+                    </div>
+
                     {inviteInfo.message && (
                       <div className="pt-2 border-t">
                         <p className="text-sm text-muted-foreground italic">

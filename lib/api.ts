@@ -1184,7 +1184,9 @@ export const adminApi = {
       org_name: string
       email?: string
       role: string
+      allowed_files: string[]
       expires_at: string
+      created_by: string
       message?: string
     }>({
       url: `/v1/invites/${token}`,
