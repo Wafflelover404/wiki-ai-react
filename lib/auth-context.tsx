@@ -65,8 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    // One-time auth bootstrap from localStorage on mount.
     const storedToken = localStorage.getItem("auth_token")
     if (storedToken) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       validateAndSetToken(storedToken).finally(() => setIsLoading(false))
     } else {
       setIsLoading(false)

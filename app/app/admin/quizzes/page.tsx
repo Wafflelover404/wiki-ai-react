@@ -109,17 +109,13 @@ export default function AdminQuizzesPage() {
     questions: []
   })
 
-  useEffect(() => {
-    fetchQuizzes()
-  }, [])
-
   const fetchQuizzes = async () => {
     try {
       setLoading(true)
       if (!token) return
       const response = await dashboardApi.getQuizzes(token)
       if (response.status === "success" && response.response) {
-        setQuizzes(response.response.quizzes)
+        setQuizzes(response.response.items ?? [])
       }
     } catch (error) {
       toast.error("Failed to fetch quizzes")
@@ -127,6 +123,13 @@ export default function AdminQuizzesPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // Fetch-on-mount pattern; fetchQuizzes sets quizzes/loading state
+    // from the async response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchQuizzes()
+  }, [])
 
   const fetchQuizStats = async (quizId: string) => {
     try {

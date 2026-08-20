@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi } from "@/lib/api"
 import { getActualSiteUrl } from "@/lib/config"
@@ -77,7 +77,6 @@ export default function InvitesPage() {
   const { token, isAdmin, isLoading: authLoading, user: currentUser } = useAuth()
   const { t } = useTranslation()
   const [invites, setInvites] = useState<Invite[]>([])
-  const [filteredInvites, setFilteredInvites] = useState<Invite[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [allFiles, setAllFiles] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -105,7 +104,6 @@ export default function InvitesPage() {
 
       if (invitesRes.status === "success" && invitesRes.response) {
         setInvites(invitesRes.response.invites || [])
-        setFilteredInvites(invitesRes.response.invites || [])
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
@@ -122,22 +120,23 @@ export default function InvitesPage() {
 
   useEffect(() => {
     if (isAdmin) {
+      // Standard fetch-on-condition pattern; fetchData sets invites/loading
+      // state from the async response.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchData()
     }
   }, [isAdmin, fetchData])
 
-  useEffect(() => {
-    if (searchQuery) {
-      const filtered = invites.filter(
-        (invite) =>
-          invite.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          invite.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          invite.created_by.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      setFilteredInvites(filtered)
-    } else {
-      setFilteredInvites(invites)
-    }
+  // Derived directly from invites/searchQuery during render instead of a
+  // separate state+effect.
+  const filteredInvites = useMemo(() => {
+    if (!searchQuery) return invites
+    return invites.filter(
+      (invite) =>
+        invite.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invite.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invite.created_by.toLowerCase().includes(searchQuery.toLowerCase())
+    )
   }, [searchQuery, invites])
 
   const handleCreateInvite = async () => {

@@ -75,6 +75,9 @@ export default function InvitePage() {
   }, [token])
 
   useEffect(() => {
+    // Fetch-on-mount pattern; fetchInviteInfo sets invite/loading state
+    // from the async response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchInviteInfo()
   }, [fetchInviteInfo])
 
@@ -155,7 +158,7 @@ export default function InvitePage() {
               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                 <Mail className="w-6 h-6 text-primary" />
               </div>
-              <CardTitle className="text-2xl">You're Invited!</CardTitle>
+              <CardTitle className="text-2xl">You&apos;re Invited!</CardTitle>
               <CardDescription>
                 Join our platform and start collaborating
               </CardDescription>
@@ -226,7 +229,7 @@ export default function InvitePage() {
                     {inviteInfo.message && (
                       <div className="pt-2 border-t">
                         <p className="text-sm text-muted-foreground italic">
-                          "{inviteInfo.message}"
+                          &quot;{inviteInfo.message}&quot;
                         </p>
                       </div>
                     )}

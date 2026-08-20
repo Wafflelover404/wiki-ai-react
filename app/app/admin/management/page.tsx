@@ -124,12 +124,6 @@ export default function AdminManagementPage() {
     }
   }, [authLoading, isAdmin])
 
-  useEffect(() => {
-    if (isAdmin) {
-      loadData()
-    }
-  }, [isAdmin])
-
   const loadData = async () => {
     if (!token) return
 
@@ -183,6 +177,15 @@ export default function AdminManagementPage() {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (isAdmin) {
+      // Fetch-on-condition pattern; loadData sets several list/loading
+      // state fields from the async responses.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadData()
+    }
+  }, [isAdmin])
 
   // User management functions
   const handleCreateUser = async () => {
@@ -371,7 +374,7 @@ export default function AdminManagementPage() {
   }
 
   const filteredFiles = files.filter(file =>
-    file.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    file.filename?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     file.original_filename?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -793,7 +796,7 @@ export default function AdminManagementPage() {
                         </Button>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Save this key securely. It won't be shown again.
+                        Save this key securely. It won&apos;t be shown again.
                       </p>
                     </AlertDescription>
                   </Alert>

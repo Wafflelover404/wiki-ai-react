@@ -2091,8 +2091,10 @@ export const dashboardApi = {
     if (category) params.category = category
     if (difficulty) params.difficulty = difficulty
 
+    // learning-service's GET /v1/admin/quizzes returns {items, next_cursor},
+    // not {quizzes: [...]} - see internal/learning/server.go's listQuizzes.
     return apiRequest<{
-      quizzes: Array<{
+      items: Array<{
         id: string
         title: string
         description: string
@@ -2113,6 +2115,7 @@ export const dashboardApi = {
         updated_at: string
         organization_id: string
       }>
+      next_cursor: string | null
     }>({
       url: "/v1/admin/quizzes",
       token,

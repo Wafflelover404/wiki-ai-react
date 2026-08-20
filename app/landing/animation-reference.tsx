@@ -584,6 +584,36 @@ const PLANS = [
 /* ─────────────────────────────────────────────────────────────
    PAGE
 ───────────────────────────────────────────────────────────── */
+// Hoisted to module scope (not defined inside LandingPage's render body) so
+// their identity is stable across renders instead of remounting on every
+// LandingPage re-render.
+const Check = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+
+const Divider = ({ glow = false }: { glow?: boolean }) => (
+  <div className={glow ? "wai-divider-glow" : "wai-divider"} style={{ marginBottom: 80 }} />
+)
+
+const SectionHead = ({
+  tag, tagCls = "", title, sub, center = true,
+}: { tag: string; tagCls?: string; title: string; sub?: string; center?: boolean }) => (
+  <div className={`wai-r ${center ? "text-center" : ""}`} style={{ marginBottom: 52 }}>
+    <span className={`wai-tag ${tagCls}`} style={{ marginBottom: 14, display: "inline-flex" }}>{tag}</span>
+    <h2
+      style={{ fontSize: "clamp(1.75rem,4vw,2.75rem)", fontWeight: 750, lineHeight: 1.12, letterSpacing: "-.025em", marginBottom: 14 }}
+      dangerouslySetInnerHTML={{ __html: title }}
+    />
+    {sub && (
+      <p style={{ color: "var(--muted-fg)", maxWidth: 480, margin: center ? "0 auto" : "0", lineHeight: 1.7, fontSize: 16 }}>
+        {sub}
+      </p>
+    )}
+  </div>
+)
+
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
   const [splash, setSplash] = useState(true)
@@ -595,33 +625,6 @@ export default function LandingPage() {
     window.addEventListener("scroll", fn)
     return () => window.removeEventListener("scroll", fn)
   }, [])
-
-  const Check = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  )
-
-  const Divider = ({ glow = false }) => (
-    <div className={glow ? "wai-divider-glow" : "wai-divider"} style={{ marginBottom: 80 }} />
-  )
-
-  const SectionHead = ({
-    tag, tagCls = "", title, sub, center = true,
-  }: { tag: string; tagCls?: string; title: string; sub?: string; center?: boolean }) => (
-    <div className={`wai-r ${center ? "text-center" : ""}`} style={{ marginBottom: 52 }}>
-      <span className={`wai-tag ${tagCls}`} style={{ marginBottom: 14, display: "inline-flex" }}>{tag}</span>
-      <h2
-        style={{ fontSize: "clamp(1.75rem,4vw,2.75rem)", fontWeight: 750, lineHeight: 1.12, letterSpacing: "-.025em", marginBottom: 14 }}
-        dangerouslySetInnerHTML={{ __html: title }}
-      />
-      {sub && (
-        <p style={{ color: "var(--muted-fg)", maxWidth: 480, margin: center ? "0 auto" : "0", lineHeight: 1.7, fontSize: 16 }}>
-          {sub}
-        </p>
-      )}
-    </div>
-  )
 
   return (
     <>
@@ -881,7 +884,7 @@ export default function LandingPage() {
                 Your Telegram bot, <span className="wai-g-blue">powered by real company data</span>
               </h2>
               <p className="text-muted-foreground mb-7" style={{ fontSize: 15, lineHeight: 1.75 }}>
-                Deploy WikiAI as the brain behind your internal Telegram bot, Slack assistant, or website widget. It doesn't hallucinate — it cites the exact document and section.
+                Deploy WikiAI as the brain behind your internal Telegram bot, Slack assistant, or website widget. It doesn&apos;t hallucinate — it cites the exact document and section.
               </p>
               <div className="flex flex-col gap-3">
                 {["Answers sourced from actual company docs", "Cites exact file name and paragraph", "Queries Bitrix CRM context on the fly", "Works in Russian, English, any language", "Escalates to human when confidence is low"].map((item, i) => (
@@ -956,10 +959,10 @@ export default function LandingPage() {
               <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(59,130,246,.12),transparent 70%)", top: "-30%", left: "50%", transform: "translateX(-50%)", pointerEvents: "none" }} />
               <div style={{ fontSize: 44, marginBottom: 18 }}>🧠</div>
               <h2 style={{ fontSize: "clamp(1.75rem,4vw,2.75rem)", fontWeight: 750, letterSpacing: "-.025em", marginBottom: 16 }}>
-                Ready to unite your<br /><span className="wai-g-blue">company's knowledge?</span>
+                Ready to unite your<br /><span className="wai-g-blue">company&apos;s knowledge?</span>
               </h2>
               <p className="text-muted-foreground" style={{ maxWidth: 440, margin: "0 auto 34px", lineHeight: 1.7 }}>
-                Join hundreds of companies who've replaced scattered wikis, folders, and endless colleague interruptions with WikiAI.
+                Join hundreds of companies who&apos;ve replaced scattered wikis, folders, and endless colleague interruptions with WikiAI.
               </p>
               <div className="flex gap-3 justify-center flex-wrap">
                 <button className="wai-btn wai-btn-blue wai-btn-lg">🚀 Start Free — No Card Needed</button>

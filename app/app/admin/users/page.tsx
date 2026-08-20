@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { adminApi } from "@/lib/api"
 import { getActualSiteUrl } from "@/lib/config"
@@ -56,7 +56,6 @@ export default function UsersPage() {
   const { token, isAdmin, isLoading: authLoading, user: currentUser } = useAuth()
   const { t } = useTranslation()
   const [users, setUsers] = useState<UserAccount[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<UserAccount[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
 
@@ -95,7 +94,6 @@ export default function UsersPage() {
 
       if (usersRes.status === "success" && usersRes.response) {
         setUsers(usersRes.response.accounts || [])
-        setFilteredUsers(usersRes.response.accounts || [])
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
@@ -113,6 +111,9 @@ export default function UsersPage() {
 
   useEffect(() => {
     if (isAdmin) {
+      // Fetch-on-condition pattern; fetchData sets users/loading state
+      // from the async response.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchData()
     }
   }, [isAdmin, fetchData])
@@ -128,18 +129,16 @@ export default function UsersPage() {
     return () => clearInterval(interval)
   }, [isAdmin, token, fetchData])
 
-  useEffect(() => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      const filtered = users.filter(
-        (user) =>
-          user.username.toLowerCase().includes(q) ||
-          (user.role && user.role.toLowerCase().includes(q)),
-      )
-      setFilteredUsers(filtered)
-    } else {
-      setFilteredUsers(users)
-    }
+  // Derived directly from users/searchQuery during render instead of a
+  // separate state+effect.
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery) return users
+    const q = searchQuery.toLowerCase()
+    return users.filter(
+      (user) =>
+        user.username.toLowerCase().includes(q) ||
+        (user.role && user.role.toLowerCase().includes(q)),
+    )
   }, [searchQuery, users])
 
   const handleCreateUser = async () => {

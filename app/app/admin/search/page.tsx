@@ -57,12 +57,6 @@ function FileViewerModal({ isOpen, onClose, document, searchChunk }: { isOpen: b
   const [isLoading, setIsLoading] = useState(false)
   const { token } = useAuth()
 
-  useEffect(() => {
-    if (isOpen && token && (document.document_id || document.title)) {
-      fetchFullContent()
-    }
-  }, [isOpen, document.document_id, document.title, token])
-
   const fetchFullContent = async () => {
     setIsLoading(true)
     try {
@@ -107,6 +101,15 @@ function FileViewerModal({ isOpen, onClose, document, searchChunk }: { isOpen: b
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (isOpen && token && (document.document_id || document.title)) {
+      // Fetch-on-condition pattern; fetchFullContent sets content/loading
+      // state from the async response.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchFullContent()
+    }
+  }, [isOpen, document.document_id, document.title, token])
 
   const highlightSearchChunk = (content: string, chunk?: string) => {
     if (!chunk) return content
@@ -252,11 +255,6 @@ export default function AdminSearchPage() {
     }
   }, [messages])
 
-  useEffect(() => {
-    loadSettings()
-    loadPluginStatus()
-  }, [])
-
   const loadSettings = () => {
     const saved = localStorage.getItem('searchSettings')
     if (saved) {
@@ -298,6 +296,14 @@ export default function AdminSearchPage() {
       setLoadingPlugins(false)
     }
   }
+
+  useEffect(() => {
+    // Fetch/load-on-mount pattern; both set local settings/plugin state
+    // from localStorage / the async API response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadSettings()
+    loadPluginStatus()
+  }, [])
 
   const loadCatalogs = async () => {
     if (!token) return
@@ -359,7 +365,7 @@ export default function AdminSearchPage() {
           source: snippet.source || 'document',
           score: snippet.final_score ?? snippet.score ?? 0,
         })) || [],
-        timestamp: new Date(Date.now()),
+        timestamp: new Date(),
       }
       setMessages(prev => [...prev, sourcesMessage])
       
@@ -369,7 +375,7 @@ export default function AdminSearchPage() {
           id: crypto.randomUUID(),
           role: "assistant",
           content: "Generating AI overview...",
-          timestamp: new Date(Date.now()),
+          timestamp: new Date(),
         }
         setMessages(prev => [...prev, overviewLoadingMessage])
       }
@@ -384,7 +390,7 @@ export default function AdminSearchPage() {
           id: crypto.randomUUID(),
           role: "overview",
           content: data.content || "",
-          timestamp: new Date(Date.now()),
+          timestamp: new Date(),
         }]
       })
     }
@@ -407,7 +413,7 @@ export default function AdminSearchPage() {
       id: crypto.randomUUID(),
       role: "user",
       content: input.trim(),
-      timestamp: new Date(Date.now()),
+      timestamp: new Date(),
     }
     setMessages(prev => [...prev, userMessage])
 
@@ -425,7 +431,7 @@ export default function AdminSearchPage() {
         id: crypto.randomUUID(),
         role: "assistant",
         content: "Sorry, I encountered an error while searching. Please try again.",
-        timestamp: new Date(Date.now()),
+        timestamp: new Date(),
       }
       setMessages((prev) => [...prev, errorMessage])
       setInput("")
@@ -494,7 +500,7 @@ export default function AdminSearchPage() {
                     id: crypto.randomUUID(),
                     role: "assistant",
                     content: `🤖 AI Agent: ${message.message}`,
-                    timestamp: new Date(Date.now())
+                    timestamp: new Date()
                   }
                   setMessages(prev => [...prev, statusMessage])
                 }
@@ -524,7 +530,7 @@ export default function AdminSearchPage() {
                     content: `Found ${searchResults.length} relevant sources:`,
                     sources: sources,
                     searchResults: searchResults,
-                    timestamp: new Date(Date.now()),
+                    timestamp: new Date(),
                   }])
                   
                   if (showAiOverview && !loadingMessageAdded) {
@@ -533,7 +539,7 @@ export default function AdminSearchPage() {
                       id: crypto.randomUUID(),
                       role: "assistant",
                       content: "Generating AI overview...",
-                      timestamp: new Date(Date.now()),
+                      timestamp: new Date(),
                     }])
                   }
                 }
@@ -553,7 +559,7 @@ export default function AdminSearchPage() {
                     id: crypto.randomUUID(),
                     role: "overview",
                     content: message.data?.answer || message.data || "",
-                    timestamp: new Date(Date.now()),
+                    timestamp: new Date(),
                   }]
                 })
                 break
@@ -632,7 +638,7 @@ export default function AdminSearchPage() {
             source: chunk.source || 'document',
             score: chunk.final_score ?? 0,
           })),
-          timestamp: new Date(Date.now()),
+          timestamp: new Date(),
         }
         setMessages(prev => [...prev, sourcesMessage])
       }
@@ -642,7 +648,7 @@ export default function AdminSearchPage() {
           id: crypto.randomUUID(),
           role: "overview",
           content: aiAnswer,
-          timestamp: new Date(Date.now()),
+          timestamp: new Date(),
         }
         setMessages(prev => [...prev, overviewMessage])
       }

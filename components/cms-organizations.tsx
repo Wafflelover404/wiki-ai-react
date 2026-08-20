@@ -630,8 +630,8 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
 
         <TabsContent value="organizations" className="space-y-4">
           <div className="grid gap-4">
-            {organizations.map((org: Organization) => (
-              <Card key={org.id || org.name || `org-${Math.random()}`}>
+            {organizations.map((org: Organization, index: number) => (
+              <Card key={org.id || org.name || `org-${index}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
@@ -784,9 +784,9 @@ export default function CMSOrganizations({ token }: CMSOrganizationsProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4 max-h-96 overflow-y-auto">
-                      {threadMessages.map((message: Message) => (
+                      {threadMessages.map((message: Message, index: number) => (
                         <div
-                          key={message.id || Math.random()}
+                          key={message.id || index}
                           className={`flex items-start space-x-3 p-3 rounded-lg ${
                             message.sender_type === "admin"
                               ? "bg-blue-50 dark:bg-blue-950"

@@ -54,7 +54,7 @@ import {
   Download,
   Loader2,
   File,
-  Image,
+  Image as ImageIcon,
   FileCode,
   FileArchive,
   Calendar,
@@ -154,6 +154,9 @@ export default function AdminFilesPage() {
   }, [token])
 
   useEffect(() => {
+    // Fetch-on-mount pattern; fetchFiles sets files/loading state from the
+    // async response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchFiles()
   }, [fetchFiles])
 
@@ -362,7 +365,7 @@ export default function AdminFilesPage() {
   }
 
   const getFileIcon = (contentType: string) => {
-    if (contentType.startsWith("image/")) return <Image className="h-4 w-4" />
+    if (contentType.startsWith("image/")) return <ImageIcon className="h-4 w-4" />
     if (contentType.includes("pdf")) return <FileText className="h-4 w-4" />
     if (contentType.includes("text") || contentType.includes("code")) return <FileCode className="h-4 w-4" />
     if (contentType.includes("zip") || contentType.includes("archive")) return <FileArchive className="h-4 w-4" />

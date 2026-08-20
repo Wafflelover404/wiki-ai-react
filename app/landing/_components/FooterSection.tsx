@@ -6,6 +6,30 @@ interface FooterLink {
   textKey: string;
 }
 
+// Hoisted to module scope (not defined inside FooterSection's render body)
+// so its identity is stable across renders; takes the translator as a prop
+// instead of closing over it.
+function LinkCol({ titleKey, links, t }: { titleKey: string; links: FooterLink[]; t: (key: string) => string }) {
+  return (
+    <div>
+      <div className="text-xs font-bold text-foreground mb-3 uppercase tracking-[0.05em]">
+        {t(titleKey)}
+      </div>
+      <div className="flex flex-col gap-2">
+        {links.map((l) => (
+          <a
+            key={l.key}
+            href={`#${l.key}`}
+            className="text-xs text-muted-foreground/50 no-underline hover:text-muted-foreground transition-colors"
+          >
+            {t(l.textKey)}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function FooterSection() {
   const { t } = useTranslation();
 
@@ -38,27 +62,6 @@ export default function FooterSection() {
     { key: "security", textKey: "landing.footer.bottomLinks.security" },
   ];
 
-  function LinkCol({ titleKey, links }: { titleKey: string; links: FooterLink[] }) {
-    return (
-      <div>
-        <div className="text-xs font-bold text-foreground mb-3 uppercase tracking-[0.05em]">
-          {t(titleKey)}
-        </div>
-        <div className="flex flex-col gap-2">
-          {links.map((l) => (
-            <a
-              key={l.key}
-              href={`#${l.key}`}
-              className="text-xs text-muted-foreground/50 no-underline hover:text-muted-foreground transition-colors"
-            >
-              {t(l.textKey)}
-            </a>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <footer className="border-t border-border px-[6%] pt-14 pb-8">
       <div className="max-w-[1060px] mx-auto">
@@ -67,9 +70,9 @@ export default function FooterSection() {
         </p>
 
         <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-6 mb-8">
-          <LinkCol titleKey="landing.footer.product" links={productLinks} />
-          <LinkCol titleKey="landing.footer.useCases" links={useCaseLinks} />
-          <LinkCol titleKey="landing.footer.company" links={companyLinks} />
+          <LinkCol titleKey="landing.footer.product" links={productLinks} t={t} />
+          <LinkCol titleKey="landing.footer.useCases" links={useCaseLinks} t={t} />
+          <LinkCol titleKey="landing.footer.company" links={companyLinks} t={t} />
         </div>
 
         <div className="flex justify-between items-center pt-6 border-t border-border flex-wrap gap-3">

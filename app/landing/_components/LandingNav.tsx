@@ -16,6 +16,9 @@ export default function LandingNav({ scrolled }: LandingNavProps) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  // Standard hydration-safety mount flag (defers client-only rendering
+  // until after the initial SSR-matching render).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   const links = [

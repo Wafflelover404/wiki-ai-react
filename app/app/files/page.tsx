@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useTranslation } from "@/src/i18n"
 import { filesApi, apiRequest } from "@/lib/api"
@@ -225,6 +225,10 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
   useEffect(() => {
     console.log("PDFViewer: Starting to load PDF", { filename, contentLength: content?.length })
 
+    // Resetting loading/error state ahead of the actual side effects below
+    // (base64 decode, Blob creation, URL.createObjectURL), which must run
+    // in an effect since content/filename can change on every prop update.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true)
     setError("")
 
@@ -254,7 +258,7 @@ function PDFViewer({ filename, content }: { filename: string; content: string })
       setError(`Failed to load PDF: ${err instanceof Error ? err.message : 'Unknown error'}`)
       setIsLoading(false)
     }
-  }, [content])
+  }, [content, filename])
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 3))
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5))
@@ -412,6 +416,9 @@ function WordViewer({ filename, content }: { filename: string; content: string }
   useEffect(() => {
     console.log("WordViewer: Starting to load Word document", { filename, contentLength: content?.length })
 
+    // Same as PDFViewer above: resetting state ahead of the real side
+    // effects (base64 decode, Blob creation) that must run in an effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true)
     setError("")
 
@@ -600,7 +607,6 @@ export default function FilesPage() {
   const { t } = useTranslation()
   const { token, isAdmin } = useAuth()
   const [files, setFiles] = useState<FileItem[]>([])
-  const [filteredFiles, setFilteredFiles] = useState<FileItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
@@ -639,7 +645,6 @@ export default function FilesPage() {
           }
         })
         setFiles(fileItems)
-        setFilteredFiles(fileItems)
       }
     } catch (error) {
       console.error("Failed to fetch files:", error)
@@ -649,17 +654,20 @@ export default function FilesPage() {
     }
   }, [token])
 
+  // Standard fetch-on-mount pattern (fetchFiles sets loading/files/error
+  // state from the async response), not a case that can be derived during
+  // render.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchFiles()
   }, [fetchFiles])
 
-  useEffect(() => {
-    if (searchQuery) {
-      const filtered = files.filter((file) => file.name.toLowerCase().includes(searchQuery.toLowerCase()))
-      setFilteredFiles(filtered)
-    } else {
-      setFilteredFiles(files)
-    }
+  // Derived directly from files/searchQuery during render instead of a
+  // separate state+effect - filteredFiles was always exactly one of these
+  // two expressions, so there was nothing to synchronize with an effect.
+  const filteredFiles = useMemo(() => {
+    if (!searchQuery) return files
+    return files.filter((file) => file.name.toLowerCase().includes(searchQuery.toLowerCase()))
   }, [searchQuery, files])
 
   const uploadPoll = useUploadStatusPoll(token)
