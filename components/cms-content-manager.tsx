@@ -9,13 +9,15 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { 
-  Plus, Edit, Trash, Eye, Save, X, 
+import {
+  Plus, Edit, Trash, Eye, Save, X,
   FileText, Users, MessageSquare, TrendingUp,
-  Search, Filter, RefreshCw, Building
+  Search, Filter, RefreshCw, Building, Activity
 } from "lucide-react"
 import { getCmsEndpointUrl, getApiUrl } from "@/lib/config"
 import CMSOrganizations from "./cms-organizations"
+import CMSUsers from "./cms-users"
+import CMSSystemHealth from "./cms-system-health"
 
 interface CMSContentManagerProps {
   token: string
@@ -471,6 +473,14 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
             <Building className="w-4 h-4 mr-2" />
             Organizations
           </TabsTrigger>
+          <TabsTrigger value="users">
+            <Users className="w-4 h-4 mr-2" />
+            Users
+          </TabsTrigger>
+          <TabsTrigger value="system-health">
+            <Activity className="w-4 h-4 mr-2" />
+            System Health
+          </TabsTrigger>
           <TabsTrigger value="contacts">
             <MessageSquare className="w-4 h-4 mr-2" />
             Contact Submissions
@@ -614,6 +624,14 @@ export default function CMSContentManager({ token }: CMSContentManagerProps) {
 
         <TabsContent value="organizations" className="space-y-4">
           <CMSOrganizations token={token} />
+        </TabsContent>
+
+        <TabsContent value="users" className="space-y-4">
+          <CMSUsers token={token} />
+        </TabsContent>
+
+        <TabsContent value="system-health" className="space-y-4">
+          <CMSSystemHealth token={token} />
         </TabsContent>
       </Tabs>
     </div>
