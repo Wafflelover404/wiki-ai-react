@@ -75,6 +75,12 @@ import {
 import { toast } from "sonner"
 
 // Helper function to determine content type from filename
+// knowledge-service's DocumentResult has no "filename" field - a document's
+// name is returned as "title" (see models/dtm/document.go), with
+// metadata.original_filename as a fallback (set by filesApi.upload).
+const getDocName = (doc: any): string =>
+  doc.title || doc.Title || doc.filename || doc.metadata?.original_filename || "Unknown"
+
 const getContentType = (filename: string): string => {
   const ext = filename.split('.').pop()?.toLowerCase()
   switch (ext) {
@@ -622,13 +628,16 @@ export default function FilesPage() {
     try {
       const result = await filesApi.list(token)
       if (result.status === "success" && result.response?.documents) {
-        const fileItems: FileItem[] = (result.response.documents || []).map((doc: any) => ({
-          name: doc.filename || 'Unknown',
-          type: getFileType(doc.filename || 'Unknown'),
-          size: doc.file_size || 0,
-          documentId: doc.document_id || doc.DocumentID || doc.id,
-          status: doc.status || doc.Status,
-        }))
+        const fileItems: FileItem[] = (result.response.documents || []).map((doc: any) => {
+          const name = getDocName(doc)
+          return {
+            name,
+            type: getFileType(name),
+            size: doc.file_size || 0,
+            documentId: doc.document_id || doc.DocumentID || doc.id,
+            status: doc.status || doc.Status,
+          }
+        })
         setFiles(fileItems)
         setFilteredFiles(fileItems)
       }
@@ -729,12 +738,12 @@ export default function FilesPage() {
       const result = await filesApi.list(token)
       if (result.status === "success" && result.response?.documents) {
         // Find file in list to get actual file data
-        const fileData = result.response.documents.find((doc: any) => doc.filename === filename)
+        const fileData = result.response.documents.find((doc: any) => getDocName(doc) === filename)
         if (fileData) {
           const fileItem: FileReaderItem = {
-            filename: fileData.filename || filename,
+            filename: getDocName(fileData),
             size: fileData.file_size || 0,
-            upload_date: fileData.upload_timestamp || new Date().toISOString(),
+            upload_date: fileData.upload_timestamp || (fileData as any).created_at || new Date().toISOString(),
             content_type: 'application/octet-stream',
             indexed: false
           }
@@ -769,13 +778,13 @@ export default function FilesPage() {
       const result = await filesApi.list(token)
       if (result.status === "success" && result.response?.documents) {
         // Find the file in the list to get actual file data
-        const fileData = result.response.documents.find((doc: any) => doc.filename === filename)
+        const fileData = result.response.documents.find((doc: any) => getDocName(doc) === filename)
         if (fileData) {
           const fileItem: FileReaderItem = {
-            filename: fileData.filename || filename,
+            filename: getDocName(fileData),
             size: fileData.file_size || 0,
-            upload_date: fileData.upload_timestamp || new Date().toISOString(),
-            content_type: getContentType(fileData.filename || filename),
+            upload_date: fileData.upload_timestamp || (fileData as any).created_at || new Date().toISOString(),
+            content_type: getContentType(getDocName(fileData)),
             indexed: false
           }
           setSelectedFile(fileItem)
