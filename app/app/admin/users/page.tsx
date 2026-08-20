@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { adminApi } from "@/lib/api"
+import { adminApi, authApi } from "@/lib/api"
 import { getActualSiteUrl } from "@/lib/config"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
@@ -45,8 +45,9 @@ import { redirect } from "next/navigation"
 import { useTranslation } from "@/src/i18n"
 
 interface UserAccount {
-  id?: number
+  id: string
   username: string
+  email?: string
   role: string
   organization_id?: string
   created_at?: string
@@ -63,14 +64,14 @@ export default function UsersPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [newUsername, setNewUsername] = useState("")
   const [newPassword, setNewPassword] = useState("")
-  const [newRole, setNewRole] = useState("user")
+  const [newRole, setNewRole] = useState("member")
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState("")
 
   // Create invite state
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState("")
-  const [inviteRole, setInviteRole] = useState("user")
+  const [inviteRole, setInviteRole] = useState("member")
   const [inviteExpiresInDays, setInviteExpiresInDays] = useState(7)
   const [inviteMessage, setInviteMessage] = useState("")
   const [isCreatingInvite, setIsCreatingInvite] = useState(false)
@@ -83,17 +84,24 @@ export default function UsersPage() {
   const [isSaving, setIsSaving] = useState(false)
 
   // Delete user state
-  const [deleteUsername, setDeleteUsername] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<UserAccount | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const fetchData = useCallback(async () => {
     if (!token) return
 
     try {
-      const usersRes = await adminApi.listAccounts(token)
+      const usersRes = await authApi.listMembers(token)
 
       if (usersRes.status === "success" && usersRes.response) {
-        setUsers(usersRes.response.accounts || [])
+        setUsers(
+          usersRes.response.items.map((m) => ({
+            id: m.user_id,
+            username: m.username,
+            email: m.email,
+            role: m.role,
+          }))
+        )
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
@@ -166,7 +174,7 @@ export default function UsersPage() {
         setIsCreateOpen(false)
         setNewUsername("")
         setNewPassword("")
-        setNewRole("user")
+        setNewRole("member")
         setCreateError("")
         fetchData()
       } else {
@@ -200,10 +208,10 @@ export default function UsersPage() {
         // Use actual site URL instead of backend-generated localhost link
         const siteUrl = getActualSiteUrl()
         const inviteLink = `${siteUrl}/invite?token=${result.response.token}`
-        setCreatedInvite({ ...result.response, link: inviteLink })
+        setCreatedInvite({ ...result.response.invite, link: inviteLink })
         setIsInviteOpen(false)
         setInviteEmail("")
-        setInviteRole("user")
+        setInviteRole("member")
         setInviteExpiresInDays(7)
         setInviteMessage("")
         setInviteError("")
@@ -235,10 +243,7 @@ export default function UsersPage() {
 
     setIsSaving(true)
     try {
-      const result = await adminApi.editUser(token, {
-        username: editUser.username,
-        role: editRole,
-      })
+      const result = await authApi.updateMemberRole(token, editUser.id, editRole)
 
       if (result.status === "success") {
         toast.success("User updated successfully")
@@ -256,15 +261,15 @@ export default function UsersPage() {
   }
 
   const handleDeleteUser = async () => {
-    if (!token || !deleteUsername) return
+    if (!token || !deleteTarget) return
 
     setIsDeleting(true)
     try {
-      const result = await adminApi.deleteUser(token, deleteUsername)
+      const result = await adminApi.deleteUser(token, deleteTarget.id)
 
       if (result.status === "success") {
         toast.success("User deleted successfully")
-        setDeleteUsername(null)
+        setDeleteTarget(null)
         fetchData()
       } else {
         toast.error(result.message || "Failed to delete user")
@@ -359,7 +364,7 @@ export default function UsersPage() {
                         <SelectValue placeholder={t('userManagement.selectRole')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="user">
+                        <SelectItem value="member">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4" />
                             {t('userManagement.roleOptions.user')}
@@ -499,7 +504,7 @@ export default function UsersPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onClick={() => setDeleteUsername(user.username)}
+                                onClick={() => setDeleteTarget(user)}
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
                                 {t('actions.delete')}
@@ -544,7 +549,7 @@ export default function UsersPage() {
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="user">
+                        <SelectItem value="member">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4" />
                             User
@@ -630,7 +635,7 @@ export default function UsersPage() {
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="user">
+                        <SelectItem value="member">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4" />
                             User
@@ -801,12 +806,12 @@ export default function UsersPage() {
         )}
 
         {/* Delete User Confirmation */}
-        <AlertDialog open={!!deleteUsername} onOpenChange={() => setDeleteUsername(null)}>
+        <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t('userManagement.deleteUser2')}</AlertDialogTitle>
               <AlertDialogDescription>
-                {t('userManagement.areYouSureYouWantToDelete')} &quot;{deleteUsername}&quot;? {t('userManagement.thisActionCannotBeUndone')}.
+                {t('userManagement.areYouSureYouWantToDelete')} &quot;{deleteTarget?.username}&quot;? {t('userManagement.thisActionCannotBeUndone')}.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

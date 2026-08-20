@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { adminApi, filesApi, apiKeysApi, pluginsApi, catalogsApi } from "@/lib/api"
+import { adminApi, authApi, filesApi, apiKeysApi, pluginsApi, catalogsApi } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -58,6 +58,7 @@ import {
 import { redirect } from "next/navigation"
 
 interface User {
+  id: string
   username: string
   role: string
   last_login?: string
@@ -98,7 +99,7 @@ export default function AdminManagementPage() {
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false)
   const [isEditUserOpen, setIsEditUserOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [newUser, setNewUser] = useState({ username: "", password: "", role: "user" })
+  const [newUser, setNewUser] = useState({ username: "", password: "", role: "member" })
   const [showPassword, setShowPassword] = useState(false)
 
   // Files state
@@ -129,7 +130,7 @@ export default function AdminManagementPage() {
 
     try {
       const [usersRes, filesRes, keysRes, catalogsRes, pluginsRes] = await Promise.all([
-        adminApi.listAccounts(token),
+        authApi.listMembers(token),
         filesApi.list(token),
         apiKeysApi.list(token),
         catalogsApi.list(token),
@@ -137,7 +138,13 @@ export default function AdminManagementPage() {
       ])
 
       if (usersRes.status === "success") {
-        setUsers(usersRes.response?.accounts || [])
+        setUsers(
+          (usersRes.response?.items || []).map((m) => ({
+            id: m.user_id,
+            username: m.username,
+            role: m.role,
+          }))
+        )
       }
       if (filesRes.status === "success") {
         setFiles(filesRes.response?.documents || [])
@@ -196,7 +203,7 @@ export default function AdminManagementPage() {
       if (result.status === "success") {
         toast.success("User created successfully")
         setIsCreateUserOpen(false)
-        setNewUser({ username: "", password: "", role: "user" })
+        setNewUser({ username: "", password: "", role: "member" })
         loadData()
       } else {
         toast.error(result.message || "Failed to create user")
@@ -210,10 +217,7 @@ export default function AdminManagementPage() {
     if (!token || !selectedUser) return
 
     try {
-      const result = await adminApi.editUser(token, {
-        username: selectedUser.username,
-        role: selectedUser.role,
-      })
+      const result = await authApi.updateMemberRole(token, selectedUser.id, selectedUser.role)
       if (result.status === "success") {
         toast.success("User updated successfully")
         setIsEditUserOpen(false)
@@ -227,11 +231,11 @@ export default function AdminManagementPage() {
     }
   }
 
-  const handleDeleteUser = async (username: string) => {
+  const handleDeleteUser = async (userId: string, username: string) => {
     if (!token || !confirm(`Are you sure you want to delete user "${username}"?`)) return
 
     try {
-      const result = await adminApi.deleteUser(token, username)
+      const result = await adminApi.deleteUser(token, userId)
       if (result.status === "success") {
         toast.success("User deleted successfully")
         loadData()
@@ -510,7 +514,7 @@ export default function AdminManagementPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="user">User</SelectItem>
+                              <SelectItem value="member">User</SelectItem>
                               <SelectItem value="admin">Admin</SelectItem>
                             </SelectContent>
                           </Select>
@@ -567,7 +571,7 @@ export default function AdminManagementPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive"
-                              onClick={() => handleDeleteUser(user.username)}
+                              onClick={() => handleDeleteUser(user.id, user.username)}
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
                               Delete
@@ -604,7 +608,7 @@ export default function AdminManagementPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="member">User</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
                       </Select>

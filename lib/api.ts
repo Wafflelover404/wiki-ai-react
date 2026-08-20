@@ -71,15 +71,21 @@ export async function apiRequest<T = unknown>({
 
     const responseClone = response.clone()
     let result: any
-    try {
-      result = await response.json()
-    } catch (jsonError) {
-      const responseText = await responseClone.text()
-      console.error('Failed to parse JSON response:', jsonError)
-      console.error('Response text:', responseText)
-      result = {
-        detail: `Invalid JSON response: ${response.status} ${response.statusText}`,
-        raw_text: responseText,
+    if (response.status === 204) {
+      // No Content - nothing to parse, and calling .json() on an empty
+      // body always throws. Success is determined by response.ok below.
+      result = {}
+    } else {
+      try {
+        result = await response.json()
+      } catch (jsonError) {
+        const responseText = await responseClone.text()
+        console.error('Failed to parse JSON response:', jsonError)
+        console.error('Response text:', responseText)
+        result = {
+          detail: `Invalid JSON response: ${response.status} ${response.statusText}`,
+          raw_text: responseText,
+        }
       }
     }
 
@@ -249,7 +255,10 @@ export const authApi = {
     }),
 
   listMembers: (token: string) =>
-    apiRequest<{ members: Array<{ user_id: string; username: string; role: string }> }>({
+    apiRequest<{
+      items: Array<{ user_id: string; username: string; email?: string; role: string; status: string }>
+      next_cursor: string | null
+    }>({
       url: "/v1/organizations/members",
       token,
     }),
@@ -1101,10 +1110,13 @@ export const adminApi = {
       data: userData,
     }),
 
-  // POST /user/edit
+  // POST /user/edit - identity-service's EditUserRequest only supports
+  // user_id (required), username, email, status - no role or password.
+  // Role changes go through authApi.updateMemberRole; there is no
+  // admin-initiated password reset endpoint.
   editUser: (
     token: string,
-    userData: { username: string; role?: string; password?: string; allowed_files?: string[] },
+    userData: { user_id: string; username?: string; email?: string; status?: string },
   ) =>
     apiRequest({
       url: "/v1/user/edit",
@@ -1113,13 +1125,14 @@ export const adminApi = {
       data: userData,
     }),
 
-  // DELETE /user/delete with ?username=...
-  deleteUser: (token: string, username: string) =>
+  // DELETE /user/delete - identity-service reads user_id from the JSON body,
+  // not a query param.
+  deleteUser: (token: string, userId: string) =>
     apiRequest({
       url: "/v1/user/delete",
       method: "DELETE",
       token,
-      params: { username },
+      data: { user_id: userId },
     }),
 
   // Invite management endpoints
@@ -1128,14 +1141,17 @@ export const adminApi = {
     inviteData: { email?: string; role: string; allowed_files?: string[]; expires_in_days?: number; message?: string }
   ) =>
     apiRequest<{
-      invite_id: string
+      invite: {
+        id: string
+        organization_id: string
+        email?: string
+        role: string
+        expires_at: string
+        created_by: string
+        created_at: string
+      }
       token: string
       link: string
-      email?: string
-      role: string
-      expires_at: string
-      created_by: string
-      organization_id?: string
     }>({
       url: "/v1/invites",
       method: "POST",
@@ -1145,19 +1161,18 @@ export const adminApi = {
 
   listInvites: (token: string) =>
     apiRequest<{
-      invites: Array<{
+      items: Array<{
         id: string
-        token: string
-        link: string
+        organization_id: string
         email?: string
         role: string
         expires_at: string
         created_at: string
         created_by: string
-        is_used: boolean
+        used_at?: string
+        revoked_at?: string
       }>
-      count: number
-      listed_by: string
+      next_cursor: string | null
     }>({
       url: "/v1/invites",
       token,
@@ -1166,11 +1181,10 @@ export const adminApi = {
   getInviteInfo: (token: string) =>
     apiRequest<{
       valid: boolean
+      org_name: string
       email?: string
       role: string
-      allowed_files: string[]
       expires_at: string
-      created_by: string
       message?: string
     }>({
       url: `/v1/invites/${token}`,

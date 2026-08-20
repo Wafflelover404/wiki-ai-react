@@ -28,11 +28,10 @@ import { useTheme } from "next-themes"
 
 interface InviteInfo {
   valid: boolean
+  org_name: string
   email?: string
   role: string
-  allowed_files: string[]
   expires_at: string
-  created_by: string
   message?: string
 }
 
@@ -243,11 +242,6 @@ function InvitePageContent() {
                           {new Date(inviteInfo.expires_at).toLocaleDateString()}
                         </span>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Invited by</span>
-                      <span className="text-sm font-medium">{inviteInfo.created_by}</span>
                     </div>
                     
                     {inviteInfo.message && (
