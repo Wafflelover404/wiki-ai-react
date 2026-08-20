@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth-context"
 import { useTranslation } from "@/src/i18n"
 import { filesApi, apiRequest } from "@/lib/api"
 import { getApiUrl } from "@/lib/config"
+import { useUploadStatusPoll, type UploadStatus } from "@/hooks/use-upload-status-poll"
+import { UploadStatusBadge } from "@/components/upload-status-badge"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -95,6 +97,7 @@ interface FileItem {
   name: string
   type: string
   size?: number
+  status?: string
 }
 
 interface FileReaderItem {
@@ -592,6 +595,7 @@ export default function FilesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
+  const { items: uploadItems, addResults: addUploadResults, clearTerminal: clearTerminalUploads } = useUploadStatusPoll(token)
 
   // View/Edit state
   const [selectedFile, setSelectedFile] = useState<FileReaderItem | null>(null)
@@ -619,7 +623,8 @@ export default function FilesPage() {
         const fileItems: FileItem[] = (result.response.documents || []).map((doc: any) => ({
           name: doc.filename || 'Unknown',
           type: getFileType(doc.filename || 'Unknown'),
-          size: doc.file_size || 0
+          size: doc.file_size || 0,
+          status: doc.status || doc.Status || "indexed",
         }))
         setFiles(fileItems)
         setFilteredFiles(fileItems)
@@ -635,6 +640,20 @@ export default function FilesPage() {
   useEffect(() => {
     fetchFiles()
   }, [fetchFiles])
+
+  const uploadItemsRef = useRef(uploadItems)
+  useEffect(() => {
+    const prevTerminal = new Set(
+      uploadItemsRef.current.filter((i) => i.status !== "pending" && i.status !== "indexing").map((i) => i.id)
+    )
+    const newlyTerminal = uploadItems.some(
+      (i) => i.status !== "pending" && i.status !== "indexing" && !prevTerminal.has(i.id)
+    )
+    uploadItemsRef.current = uploadItems
+    if (newlyTerminal) {
+      fetchFiles()
+    }
+  }, [uploadItems, fetchFiles])
 
   useEffect(() => {
     if (searchQuery) {
@@ -652,12 +671,13 @@ export default function FilesPage() {
     setIsUploading(true)
     try {
       const result = await filesApi.upload(token, Array.from(uploadedFiles))
+      addUploadResults(result.results)
       if (result.status === "success") {
-        toast.success(`${uploadedFiles.length} file(s) uploaded successfully`)
-        fetchFiles()
+        toast.success(`${uploadedFiles.length} file(s) queued for indexing`)
       } else {
         toast.error(result.message || "Upload failed")
       }
+      fetchFiles()
     } catch (error) {
       console.error("Upload error:", error)
       toast.error("Failed to upload files")
@@ -829,6 +849,19 @@ export default function FilesPage() {
               </Button>
             </div>
           </div>
+          {uploadItems.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {uploadItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-1.5 text-sm">
+                  <span className="text-muted-foreground max-w-[10rem] truncate">{item.fileName}</span>
+                  <UploadStatusBadge status={item.status} />
+                </div>
+              ))}
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={clearTerminalUploads}>
+                Clear
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -894,7 +927,10 @@ export default function FilesPage() {
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           {getFileIcon(file.name)}
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm truncate">{file.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-sm truncate">{file.name}</p>
+                              <UploadStatusBadge status={(file.status as UploadStatus) || "indexed"} />
+                            </div>
                             <p className="text-xs text-muted-foreground">{file.type}</p>
                           </div>
                         </div>
@@ -1008,7 +1044,10 @@ export default function FilesPage() {
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             {getFileIcon(file.name)}
                             <div className="min-w-0 flex-1">
-                              <p className="font-medium text-sm truncate">{file.name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-sm truncate">{file.name}</p>
+                                <UploadStatusBadge status={(file.status as UploadStatus) || "indexed"} />
+                              </div>
                               <p className="text-xs text-muted-foreground">{file.type}</p>
                             </div>
                           </div>

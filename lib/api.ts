@@ -285,6 +285,19 @@ export const authApi = {
     }),
 }
 
+// Per-file outcome of filesApi.upload() - document_id/status are null when
+// the file never reached the server (client-side binary rejection, read
+// error, or a request-level failure); otherwise status reflects ingest's
+// immediate response ("pending" for a fresh upload, "duplicate" for
+// identical existing content) - actual indexing happens in the background,
+// see filesApi.getStatus/useUploadStatusPoll.
+export interface FileUploadResult {
+  file: File
+  documentId: string | null
+  status: string | null
+  error?: string
+}
+
 export const filesApi = {
   // GET /files/list returns { status: 'success', response: { documents: [...] } }
   list: async (token: string) => {
@@ -370,10 +383,20 @@ export const filesApi = {
   // (dtm.IngestRequest.Content is a string) - there is no multipart/binary upload path. We read
   // each file's text client-side and reject file types that can't be meaningfully read as text
   // (e.g. PDF/DOCX/images) rather than silently uploading mangled FileReader.readAsText() output.
-  upload: async (token: string, files: File[]) => {
+  //
+  // Ingest is now asynchronous server-side: this call returns almost immediately with
+  // status "pending" per file (or "duplicate" if identical content already exists), not
+  // "indexed" - actual chunking/embedding happens in the background. Callers that want to
+  // show live per-file progress should feed `results` into useUploadStatusPoll and call
+  // filesApi.getStatus() to follow each file to a terminal state.
+  upload: async (token: string, files: File[]): Promise<{
+    status: "success" | "error"
+    message?: string
+    results: FileUploadResult[]
+  }> => {
     const tenantId = await resolveTenantId(token)
     if (!tenantId) {
-      return { status: "error" as const, message: "Tenant ID is required for file uploads" }
+      return { status: "error" as const, message: "Tenant ID is required for file uploads", results: [] }
     }
 
     const BINARY_EXTENSIONS = new Set([
@@ -406,10 +429,13 @@ export const filesApi = {
     // outcomes and only report the batch as an error if something failed.
     const failures: string[] = []
     let succeeded = 0
+    const results: FileUploadResult[] = []
 
     for (const file of files) {
       if (isLikelyBinary(file)) {
-        failures.push(`"${file.name}": looks like a binary file - only plain-text documents (txt, md, csv, json, html, code, srt, etc.) can be uploaded`)
+        const error = `looks like a binary file - only plain-text documents (txt, md, csv, json, html, code, srt, etc.) can be uploaded`
+        failures.push(`"${file.name}": ${error}`)
+        results.push({ file, documentId: null, status: null, error })
         continue
       }
 
@@ -417,11 +443,13 @@ export const filesApi = {
       try {
         content = await readFileText(file)
       } catch (err) {
-        failures.push(`"${file.name}": ${err instanceof Error ? err.message : "failed to read file"}`)
+        const error = err instanceof Error ? err.message : "failed to read file"
+        failures.push(`"${file.name}": ${error}`)
+        results.push({ file, documentId: null, status: null, error })
         continue
       }
 
-      const result = await apiRequest({
+      const result = await apiRequest<{ document_id: string; status: string }>({
         url: API_CONFIG.ENDPOINTS.FILES_UPLOAD,
         method: "POST",
         token,
@@ -438,17 +466,40 @@ export const filesApi = {
 
       if (result.status === "error") {
         failures.push(`"${file.name}": ${result.message}`)
+        results.push({ file, documentId: null, status: null, error: result.message })
       } else {
         succeeded++
+        results.push({
+          file,
+          documentId: result.response?.document_id ?? null,
+          status: result.response?.status ?? null,
+        })
       }
     }
 
     if (failures.length > 0) {
       const prefix = succeeded > 0 ? `${succeeded} of ${files.length} file(s) uploaded. ` : ""
-      return { status: "error" as const, message: `${prefix}Failed: ${failures.join("; ")}` }
+      return { status: "error" as const, message: `${prefix}Failed: ${failures.join("; ")}`, results }
     }
 
-    return { status: "success" as const }
+    return { status: "success" as const, results }
+  },
+
+  // GET /v1/documents/{id}/status - lightweight polling target for async
+  // ingest (WAI-52/53): status + chunk_count only, no content or embedding
+  // data, since this is meant to be called every ~2s per in-flight upload.
+  getStatus: async (token: string, documentId: string) => {
+    const tenantId = await resolveTenantId(token)
+    if (!tenantId) {
+      return { status: "error" as const, message: "Tenant ID is required for status requests" }
+    }
+    return apiRequest<{
+      document: { document_id: string; status: string; chunk_count: number; title?: string; updated_at?: string }
+    }>({
+      url: `${API_CONFIG.ENDPOINTS.FILES_LIST}/${encodeURIComponent(documentId)}/status`,
+      token,
+      params: { tenant_id: tenantId },
+    })
   },
 
   // PATCH/PUT /v1/documents/{id}
