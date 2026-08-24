@@ -179,9 +179,19 @@ export default function ApiKeysPage() {
   }, [authLoading, isAdmin])
 
   useEffect(() => {
-    if (isAdmin && selectedKeyId) {
+    if (isAdmin) {
       // Fetch-on-condition pattern; fetchKeys sets keys/loading state from
-      // the async response.
+      // the async response. Without this, isLoading never leaves its
+      // initial `true` and the page shows a permanent spinner — fetchKeys
+      // was previously only ever called after a create/delete action, never
+      // on mount.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchKeys()
+    }
+  }, [isAdmin, fetchKeys])
+
+  useEffect(() => {
+    if (isAdmin && selectedKeyId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchKeyDetails(selectedKeyId)
     }
