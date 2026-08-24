@@ -2116,7 +2116,7 @@ export const dashboardApi = {
         description: string
         category: string
         difficulty: "easy" | "medium" | "hard"
-        time_limit: number
+        time_limit_minutes: number
         passing_score: number
         questions: Array<{
           id: string
@@ -2146,7 +2146,7 @@ export const dashboardApi = {
       description: string
       category: string
       difficulty: "easy" | "medium" | "hard"
-      time_limit: number
+      time_limit_minutes: number
       passing_score: number
       questions: Array<{
         id: string
@@ -2171,7 +2171,7 @@ export const dashboardApi = {
     description: string
     category: string
     difficulty: "easy" | "medium" | "hard"
-    time_limit: number  
+    time_limit_minutes: number  
     passing_score: number
     questions: Array<{
       id: string
@@ -2232,7 +2232,7 @@ export const dashboardApi = {
     description?: string
     category?: string
     difficulty?: "easy" | "medium" | "hard"
-    time_limit?: number
+    time_limit_minutes?: number
     passing_score?: number
     questions?: Array<{
       id?: string

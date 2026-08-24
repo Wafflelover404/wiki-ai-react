@@ -44,7 +44,7 @@ interface Quiz {
   description: string
   category: string
   difficulty: "easy" | "medium" | "hard"
-  time_limit: number
+  time_limit_minutes: number
   passing_score: number
   questions: Question[]
   created_at: string
@@ -80,7 +80,7 @@ interface QuizFormData {
   description: string
   category: string
   difficulty: "easy" | "medium" | "hard"
-  time_limit: number
+  time_limit_minutes: number
   passing_score: number
   questions: Question[]
 }
@@ -104,7 +104,7 @@ export default function AdminQuizzesPage() {
     description: "",
     category: "",
     difficulty: "medium",
-    time_limit: 15,
+    time_limit_minutes: 15,
     passing_score: 70,
     questions: []
   })
@@ -205,7 +205,7 @@ export default function AdminQuizzesPage() {
           description: "",
           category: "",
           difficulty: "medium",
-          time_limit: 15,
+          time_limit_minutes: 15,
           passing_score: 70,
           questions: []
         })
@@ -370,7 +370,7 @@ export default function AdminQuizzesPage() {
           description: `Automatically generated quiz from document: ${selectedFile}`,
           category: "AI Generated",
           difficulty: "medium",
-          time_limit: 15,
+          time_limit_minutes: 15,
           passing_score: 70,
           questions: convertedQuestions
         }
@@ -390,7 +390,7 @@ export default function AdminQuizzesPage() {
             description: "Automatically generated quiz about your knowledge base",
             category: "General Knowledge",
             difficulty: "medium",
-            time_limit: 10,
+            time_limit_minutes: 10,
             passing_score: 75,
             questions: [
               {
@@ -564,12 +564,12 @@ export default function AdminQuizzesPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="time_limit">{t('quizManagement.timeLimitMinutes')}</Label>
+                      <Label htmlFor="time_limit_minutes">{t('quizManagement.timeLimitMinutes')}</Label>
                       <Input
-                        id="time_limit"
+                        id="time_limit_minutes"
                         type="number"
-                        value={formData.time_limit}
-                        onChange={(e) => setFormData(prev => ({ ...prev, time_limit: parseInt(e.target.value) }))}
+                        value={formData.time_limit_minutes}
+                        onChange={(e) => setFormData(prev => ({ ...prev, time_limit_minutes: parseInt(e.target.value) }))}
                       />
                     </div>
                     <div className="space-y-2">
@@ -806,7 +806,7 @@ export default function AdminQuizzesPage() {
                         </Badge>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Clock className="w-4 h-4" />
-                          {quiz.time_limit} min
+                          {quiz.time_limit_minutes} min
                         </div>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Target className="w-4 h-4" />
@@ -837,7 +837,7 @@ export default function AdminQuizzesPage() {
                             description: quiz.description,
                             category: quiz.category,
                             difficulty: quiz.difficulty,
-                            time_limit: quiz.time_limit,
+                            time_limit_minutes: quiz.time_limit_minutes,
                             passing_score: quiz.passing_score,
                             questions: quiz.questions
                           })
@@ -949,12 +949,12 @@ export default function AdminQuizzesPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-time_limit">{t('quizManagement.timeLimitMinutes')}</Label>
+                  <Label htmlFor="edit-time_limit_minutes">{t('quizManagement.timeLimitMinutes')}</Label>
                   <Input
-                    id="edit-time_limit"
+                    id="edit-time_limit_minutes"
                     type="number"
-                    value={formData.time_limit}
-                    onChange={(e) => setFormData(prev => ({ ...prev, time_limit: parseInt(e.target.value) }))}
+                    value={formData.time_limit_minutes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, time_limit_minutes: parseInt(e.target.value) }))}
                   />
                 </div>
                 <div className="space-y-2">

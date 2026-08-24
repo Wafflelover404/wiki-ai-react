@@ -106,7 +106,7 @@ export default function QuizzesPage() {
         },
         body: JSON.stringify({
           answers: answers,
-          time_spent: selectedQuiz.time_limit * 60 - timeRemaining
+          time_spent: selectedQuiz.time_limit_minutes * 60 - timeRemaining
         })
       })
 
@@ -151,7 +151,7 @@ export default function QuizzesPage() {
     setQuizStarted(true)
     setCurrentQuestionIndex(0)
     setAnswers({})
-    setTimeRemaining(quiz.time_limit * 60)
+    setTimeRemaining(quiz.time_limit_minutes * 60)
     setQuizCompleted(false)
     setQuizResults(null)
   }
@@ -197,7 +197,7 @@ export default function QuizzesPage() {
     if (!selectedQuiz || !selectedQuiz.questions) return
     
     const { score, totalPoints, passed } = calculateScore()
-    const timeSpent = selectedQuiz.time_limit * 60 - timeRemaining
+    const timeSpent = selectedQuiz.time_limit_minutes * 60 - timeRemaining
     
     const result: QuizResult = {
       quizId: selectedQuiz.id,
@@ -417,7 +417,7 @@ export default function QuizzesPage() {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        {quiz.time_limit} {t('quizzes.min')}
+                        {quiz.time_limit_minutes} {t('quizzes.min')}
                       </div>
                       <div className="flex items-center gap-1">
                         <Target className="w-4 h-4" />

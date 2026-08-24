@@ -726,7 +726,7 @@ export default function AdminSearchPage() {
                       </p>
 
                       <div className="grid gap-3 w-full max-w-lg">
-                        <p className="text-sm font-medium text-muted-foreground">{t('search.tryAsking')}:</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t('search.tryAsking')}</p>
                         {suggestedQuestions.map((question, index) => (
                           <Button
                             key={index}
