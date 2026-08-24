@@ -179,13 +179,13 @@ export default function ApiKeysPage() {
   }, [authLoading, isAdmin])
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && selectedKeyId) {
       // Fetch-on-condition pattern; fetchKeys sets keys/loading state from
       // the async response.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchKeyDetails(selectedKeyId)
     }
-  }, [selectedKeyId, fetchKeyDetails])
+  }, [isAdmin, selectedKeyId, fetchKeyDetails])
 
   // Countdown timer for API key display
   useEffect(() => {
