@@ -320,7 +320,7 @@ export const filesApi = {
     }
 
     return apiRequest<{
-      documents: Array<{ id: number; filename: string; upload_timestamp: string; organization_id: string; file_size: number }>
+      documents: Array<{ document_id: string; title: string; created_at: string; updated_at: string; tenant_id: string; chunk_count: number }>
     }>({
       url: API_CONFIG.ENDPOINTS.FILES_LIST,
       token,

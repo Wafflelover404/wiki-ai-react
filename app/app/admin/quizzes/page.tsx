@@ -1056,17 +1056,17 @@ export default function AdminQuizzesPage() {
                     ) : (
                       availableFiles.map((file) => (
                         <div
-                          key={file.id}
+                          key={file.document_id}
                           className={`p-3 border rounded cursor-pointer transition-colors ${
-                            selectedFile === file.filename
+                            selectedFile === file.title
                               ? 'bg-primary text-primary-foreground'
                               : 'hover:bg-muted'
                           }`}
-                          onClick={() => setSelectedFile(file.filename)}
+                          onClick={() => setSelectedFile(file.title)}
                         >
-                          <div className="font-medium">{file.filename}</div>
+                          <div className="font-medium">{file.title}</div>
                           <div className="text-sm text-muted-foreground">
-                            {new Date(file.upload_timestamp).toLocaleDateString()} • {(file.file_size / 1024).toFixed(1)} KB
+                            {new Date(file.created_at).toLocaleDateString()} • {file.chunk_count} chunks
                           </div>
                         </div>
                       ))

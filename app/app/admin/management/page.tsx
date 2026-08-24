@@ -66,10 +66,10 @@ interface User {
 }
 
 interface File {
-  filename: string
-  original_filename?: string
-  size?: number
-  uploaded_at?: string
+  document_id: string
+  title: string
+  chunk_count?: number
+  created_at?: string
 }
 
 interface ApiKey {
@@ -378,8 +378,7 @@ export default function AdminManagementPage() {
   }
 
   const filteredFiles = files.filter(file =>
-    file.filename?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    file.original_filename?.toLowerCase().includes(searchQuery.toLowerCase())
+    file.title?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
@@ -700,17 +699,17 @@ export default function AdminManagementPage() {
                 <ScrollArea className="h-[400px]">
                   <div className="space-y-3">
                     {filteredFiles.map((file) => (
-                      <div key={file.filename} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={file.document_id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
                             <FileText className="w-5 h-5 text-green-600" />
                           </div>
                           <div>
-                            <p className="font-medium">{file.original_filename || file.filename}</p>
+                            <p className="font-medium">{file.title}</p>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              {file.size && <span>{(file.size / 1024).toFixed(1)} KB</span>}
-                              {file.uploaded_at && (
-                                <span>Uploaded: {new Date(file.uploaded_at).toLocaleDateString()}</span>
+                              {typeof file.chunk_count === "number" && <span>{file.chunk_count} chunks</span>}
+                              {file.created_at && (
+                                <span>Uploaded: {new Date(file.created_at).toLocaleDateString()}</span>
                               )}
                             </div>
                           </div>
@@ -730,7 +729,7 @@ export default function AdminManagementPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive"
-                              onClick={() => handleDeleteFile(file.filename)}
+                              onClick={() => handleDeleteFile(file.title)}
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
                               Delete
