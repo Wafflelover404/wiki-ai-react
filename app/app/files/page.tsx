@@ -750,8 +750,8 @@ export default function FilesPage() {
         if (fileData) {
           const fileItem: FileReaderItem = {
             filename: getDocName(fileData),
-            size: fileData.file_size || 0,
-            upload_date: fileData.upload_timestamp || (fileData as any).created_at || new Date().toISOString(),
+            size: (fileData as any).file_size || 0,
+            upload_date: (fileData as any).upload_timestamp || (fileData as any).created_at || new Date().toISOString(),
             content_type: 'application/octet-stream',
             indexed: false
           }
@@ -790,8 +790,8 @@ export default function FilesPage() {
         if (fileData) {
           const fileItem: FileReaderItem = {
             filename: getDocName(fileData),
-            size: fileData.file_size || 0,
-            upload_date: fileData.upload_timestamp || (fileData as any).created_at || new Date().toISOString(),
+            size: (fileData as any).file_size || 0,
+            upload_date: (fileData as any).upload_timestamp || (fileData as any).created_at || new Date().toISOString(),
             content_type: getContentType(getDocName(fileData)),
             indexed: false
           }
