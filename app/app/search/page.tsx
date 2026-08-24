@@ -94,8 +94,17 @@ interface Catalog {
   total_products: number
 }
 
+function isTokenExpiringSoon(token: string, bufferMs = 10000): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return typeof payload.exp === 'number' && payload.exp * 1000 < Date.now() + bufferMs
+  } catch {
+    return false
+  }
+}
+
 export default function AdminSearchPage() {
-  const { token, user } = useAuth()
+  const { token, user, refreshToken } = useAuth()
   const { t } = useTranslation()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
@@ -363,14 +372,25 @@ export default function AdminSearchPage() {
     if (!token) {
       throw new Error('Authentication token is required for WebSocket search')
     }
-    const tenantId = await resolveTenantId(token)
+    // The WS connection carries its own token in the URL and isn't covered by
+    // the REST-call refresh interceptor — a still-mounted search page can
+    // easily outlive the 15-minute access token, so refresh proactively
+    // rather than let the socket fail with an opaque 1006 close.
+    let activeToken = token
+    if (isTokenExpiringSoon(activeToken)) {
+      const refreshed = await refreshToken()
+      if (refreshed) {
+        activeToken = localStorage.getItem('auth_token') || activeToken
+      }
+    }
+    const tenantId = await resolveTenantId(activeToken)
     return new Promise((resolve, reject) => {
       try {
 
         // WebSocket isn't proxied through the same-origin rewrite (see
         // next.config.mjs) — it needs the real backend address, which is
         // what NEXT_PUBLIC_WS_URL (via getWsUrl) is for.
-        const wsUrl = getWsUrl(`/v1/query/stream?token=${encodeURIComponent(token || '')}`)
+        const wsUrl = getWsUrl(`/v1/query/stream?token=${encodeURIComponent(activeToken || '')}`)
         
         console.log('Connecting to WebSocket:', wsUrl)
         
