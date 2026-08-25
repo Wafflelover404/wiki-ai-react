@@ -347,7 +347,17 @@ export default function AdminSearchPage() {
     try {
       // Use WebSocket for real-time search (like Vue implementation)
       if (typeof WebSocket !== 'undefined') {
-        await performWebSocketQuery(input.trim())
+        try {
+          await performWebSocketQuery(input.trim())
+        } catch (wsError) {
+          // The WS endpoint isn't proxied through this server (see
+          // getWsUrl's callers) and depends on the deployment's ingress
+          // supporting the Upgrade handshake — that hop can fail even when
+          // the equivalent HTTP /v1/search request would succeed. Fall back
+          // to it rather than surfacing a hard failure to the user.
+          console.error("WebSocket query failed, falling back to HTTP:", wsError)
+          await performHttpQuery(input.trim())
+        }
       } else {
         // Fallback to HTTP
         await performHttpQuery(input.trim())
