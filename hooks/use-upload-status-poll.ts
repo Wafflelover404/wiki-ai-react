@@ -12,13 +12,13 @@ export interface UploadStatusEntry {
   message?: string
 }
 
-const POLL_INTERVAL_MS = 2000
+const POLL_INTERVAL_MS = 5000
 const TERMINAL_STATUSES: UploadStatusValue[] = ["indexed", "failed", "duplicate", "error"]
 
 // Frontend counterpart to knowledge-service's async ingest (WAI-52) and its
 // GET /v1/documents/{id}/status endpoint (WAI-53). Ingest now returns almost
 // immediately with status "pending" instead of blocking until indexing
-// finishes, so this hook polls each in-flight upload's status every ~2s
+// finishes, so this hook polls each in-flight upload's status every ~5s
 // until it reaches a terminal state (indexed/failed/duplicate), letting the
 // UI show live pending -> indexing -> indexed/failed progress per file.
 export function useUploadStatusPoll(token: string | null) {
