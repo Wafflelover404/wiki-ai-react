@@ -457,6 +457,14 @@ export const filesApi = {
         continue
       }
 
+      // Prefer the filename extension over the browser-reported MIME type:
+      // browsers report an empty type for many plain-text formats (.srt,
+      // .log, .yaml, ...), and file.type || "text/plain" was masking that
+      // with a doc_type of "text/plain" - which knowledge-service's
+      // resolveDocType then trusts as explicit, skipping its own
+      // extension-based inference (and, for .srt specifically, skipping the
+      // dedicated subtitle parser entirely).
+      const ext = file.name.split(".").pop()?.toLowerCase()
       const result = await apiRequest<{ document_id: string; status: string }>({
         url: API_CONFIG.ENDPOINTS.FILES_UPLOAD,
         method: "POST",
@@ -465,7 +473,7 @@ export const filesApi = {
           tenant_id: tenantId,
           title: file.name,
           content,
-          doc_type: file.type || "text/plain",
+          doc_type: ext || file.type || "text/plain",
           metadata: {
             original_filename: file.name,
           },
